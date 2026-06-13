@@ -1,0 +1,84 @@
+aid: cognee
+name: Cognee
+description: >
+  Cognee is an open-source AI memory and knowledge graph platform that enables developers
+  to build persistent, structured memory for AI agents and LLM applications. The platform
+  provides a REST API and Python/TypeScript SDKs for ingesting documents and data from
+  28+ sources, processing them through a six-stage ECL (Extract, Cognify, Load) pipeline,
+  and storing the resulting entities and relationships in a hybrid graph-vector-relational
+  store. Developers can query the knowledge graph using 13+ search modes including semantic
+  graph completion, RAG completion, and temporal search. Cognee is available as a managed
+  cloud service on AWS, GCP, and Azure, or as a self-hosted deployment via Docker, Modal,
+  Railway, Fly.io, and Render.
+type: Index
+image: https://kinlane-productions.s3.amazonaws.com/apis-json/apis-json-logo.jpg
+url: https://raw.githubusercontent.com/api-evangelist/cognee/refs/heads/main/apis.yml
+created: "2026-06-12"
+modified: "2026-06-12"
+specificationVersion: "0.19"
+tags:
+  - AI
+  - Memory
+  - Knowledge Graph
+  - RAG
+  - Agents
+  - Graph Database
+  - Vector Search
+  - LLM
+  - Open Source
+
+apis:
+  - name: Cognee REST API
+    description: >
+      The Cognee REST API provides endpoints for the complete AI memory lifecycle, including
+      data ingestion, knowledge graph construction, and semantic retrieval. Core endpoints
+      cover adding raw text or documents, triggering the cognify pipeline that extracts
+      entities and relationships via LLM, executing multi-mode search queries, managing
+      datasets, and creating agent identities. The API uses X-Api-Key header authentication
+      for cloud deployments and Bearer token auth for self-hosted instances.
+    image: https://kinlane-productions.s3.amazonaws.com/apis-json/apis-json-logo.jpg
+    humanURL: https://docs.cognee.ai/api-reference/introduction
+    baseURL: https://api.cognee.ai
+    tags:
+      - AI Memory
+      - Knowledge Graph
+      - REST API
+    properties:
+      - type: Documentation
+        url: https://docs.cognee.ai/api-reference/introduction
+      - type: OpenAPI
+        url: https://api.cognee.ai/docs
+      - type: SwaggerUI
+        url: https://api.cognee.ai/docs
+
+common:
+  - type: Website
+    url: https://www.cognee.ai/
+  - type: Documentation
+    url: https://docs.cognee.ai/
+  - type: GitHubOrg
+    url: https://github.com/topoteretes
+  - type: GitHubRepository
+    url: https://github.com/topoteretes/cognee
+  - type: LinkedIn
+    url: https://www.linkedin.com/company/cognee-ai
+  - type: Blog
+    url: https://www.cognee.ai/blog
+  - type: Pricing
+    url: https://www.cognee.ai/pricing
+  - type: CostCalculator
+    url: https://www.cognee.ai/cost-calculator
+  - type: X
+    url: https://x.com/cognee_
+  - type: Discord
+    url: https://discord.gg/m63hxKsp4p
+  - type: Plans
+    url: plans/cognee-plans-pricing.yml
+  - type: RateLimits
+    url: rate-limits/cognee-rate-limits.yml
+  - type: FinOps
+    url: finops/cognee-finops.yml
+
+maintainers:
+  - FN: Kin Lane
+    email: kin@apievangelist.com

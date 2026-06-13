@@ -1,0 +1,114 @@
+specificationVersion: "1.0"
+id: cognee-finops
+name: Cognee FinOps Framework
+description: >
+  FinOps guidance for managing and optimizing spend on the Cognee AI memory and knowledge
+  graph platform. Cognee costs span three dimensions: (1) the Cognee subscription plan
+  for managed cloud hosting, (2) pass-through LLM inference costs from the underlying
+  language model used during the cognify pipeline, and (3) infrastructure costs for vector
+  and graph storage. The cost calculator at https://www.cognee.ai/cost-calculator helps
+  estimate all three components before committing to a plan.
+url: https://www.cognee.ai/pricing
+
+focus:
+  - dimension: ProviderCost
+    description: Cognee subscription plan charges (Free / Developer / Cloud Team / Enterprise)
+    metrics:
+      - name: MonthlySubscription
+        unit: USD/month
+        values:
+          Free: 0
+          Developer: 35
+          CloudTeam: 200
+          Enterprise: custom
+
+  - dimension: UsageCost
+    description: >
+      Top-up document pack purchases when the plan's base document allowance is exhausted.
+      Charged per top-up purchased, not metered automatically.
+    metrics:
+      - name: DocumentTopUp1k
+        unit: USD/pack
+        value: 35
+        coverage: 1000 docs / 1 GB
+      - name: DocumentTopUp3k
+        unit: USD/pack
+        value: 100
+        coverage: 3000 docs / 3 GB
+      - name: DocumentTopUp15k
+        unit: USD/pack
+        value: 750
+        coverage: 15000 docs / 15 GB
+
+  - dimension: PassThroughCost
+    description: >
+      LLM inference costs billed directly by the chosen language model provider during
+      the cognify extraction and summarization pipeline. These are not collected by
+      Cognee; they are paid separately to the LLM provider (e.g., OpenAI, Anthropic,
+      DeepSeek). Cognee supports 29 LLM providers, with per-million-token rates ranging
+      from ~$0.28/$0.42 (DeepSeek V3) to $15/$75 (Claude Opus).
+    metrics:
+      - name: EmbeddingCost
+        provider: OpenAI
+        model: text-embedding-3-small
+        unit: USD/million tokens
+        inputRate: 0.02
+      - name: EmbeddingCostLarge
+        provider: OpenAI
+        model: text-embedding-3-large
+        unit: USD/million tokens
+        inputRate: 0.13
+      - name: GraphExtractionCost
+        description: Typical LLM call cost for graph entity/relationship extraction
+        unit: USD/million tokens
+        range:
+          low: 0.28
+          high: 15.00
+
+  - dimension: InfrastructureCost
+    description: >
+      Monthly storage costs for the vector database and graph database backends.
+      Cognee supports multiple backends; costs vary by provider and tier chosen.
+    metrics:
+      - name: VectorStoreFree
+        provider: Qdrant Free
+        unit: USD/month
+        value: 0
+      - name: VectorStoreStandard
+        provider: Qdrant Standard
+        unit: USD/month
+        value: 10
+      - name: GraphDBFree
+        provider: Neo4j AuraDB Free
+        unit: USD/month
+        value: 0
+      - name: GraphDBEnterprise
+        provider: Neo4j AuraDB Enterprise
+        unit: USD/month
+        range:
+          low: 65
+          high: 146
+
+optimization:
+  - strategy: ChooseEfficientLLM
+    description: >
+      Select a cost-efficient LLM for the cognify pipeline (e.g., DeepSeek V3 or
+      GPT-4o Mini) for bulk ingestion tasks. Reserve premium models (Claude Opus,
+      GPT-4o) for high-stakes retrieval or reasoning workloads.
+  - strategy: BatchIngestion
+    description: >
+      Batch document ingestion into larger jobs to reduce per-call overhead and
+      maximize throughput under the included API call quota before purchasing top-up packs.
+  - strategy: SelfHostForHighVolume
+    description: >
+      At high document volumes, self-hosting Cognee on Modal, Railway, or Fly.io may
+      reduce per-document costs by eliminating subscription markup and giving direct
+      control over LLM and storage provider selection.
+  - strategy: UseCostCalculator
+    description: >
+      Use Cognee's cost calculator (https://www.cognee.ai/cost-calculator) to estimate
+      total cost across LLM, embedding, compute, and storage before scaling ingestion.
+  - strategy: MonitorAPICallUsage
+    description: >
+      Track monthly API call consumption against the 10,000-call plan limit to avoid
+      unexpected top-up pack purchases. Monitor via the Cognee platform dashboard.

@@ -1,0 +1,73 @@
+specificationVersion: "0.1"
+id: cognee-rate-limits
+name: Cognee Rate Limits
+description: >
+  Rate limit information for the Cognee AI memory and knowledge graph REST API.
+  Cloud-hosted limits are tied to the active subscription plan. Self-hosted
+  (local Docker or private cloud) deployments have no imposed rate limits.
+url: https://docs.cognee.ai/api-reference/introduction
+
+rateLimits:
+  - name: Free Plan API Calls
+    description: >
+      The Free tier does not publish a hard API call ceiling but access is intended
+      for exploration and development use only. Heavy production workloads should
+      upgrade to a paid plan.
+    plan: Free
+    type: requests
+    limit: unspecified
+    period: month
+    scope: account
+
+  - name: Developer Plan API Calls
+    description: >
+      Developer plan includes 10,000 API calls per month. Additional document
+      storage and processing capacity can be added via top-up packs priced per
+      document volume.
+    plan: Developer
+    type: requests
+    limit: 10000
+    period: month
+    scope: account
+    overagePolicy: >
+      Additional capacity available via top-up packs: +1,000 docs for $35,
+      +3,000 docs for $100, or +15,000 docs for $750.
+
+  - name: Cloud (Team) Plan API Calls
+    description: >
+      Cloud Team plan includes 10,000 API calls per month shared across up to 10
+      user accounts. Additional document capacity available via top-up packs.
+    plan: Cloud (Team)
+    type: requests
+    limit: 10000
+    period: month
+    scope: account
+    overagePolicy: >
+      Additional capacity available via top-up packs: +1,000 docs for $35,
+      +3,000 docs for $100, or +15,000 docs for $750.
+
+  - name: Enterprise Plan API Calls
+    description: >
+      Enterprise (On-Prem) plans have custom rate limits negotiated based on
+      deployment size, infrastructure, and contractual requirements.
+    plan: On-Prem (Enterprise)
+    type: requests
+    limit: custom
+    period: month
+    scope: account
+
+  - name: Self-Hosted (Local/Docker)
+    description: >
+      Self-hosted Cognee deployments running locally or in a private cloud impose
+      no API rate limits. Throughput is constrained only by the underlying
+      infrastructure resources.
+    plan: Self-Hosted
+    type: requests
+    limit: unlimited
+    period: none
+    scope: instance
+
+notes:
+  - Limits are enforced at the account level, not per individual API key.
+  - The API base URL for cloud is https://api.cognee.ai with a documented 99.9% uptime SLA.
+  - For detailed or updated rate limit information contact support via Discord (https://discord.gg/m63hxKsp4p) or via the dedicated Slack channel on Team/Enterprise plans.
