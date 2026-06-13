@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://api.cognee.ai/schemas/dataset",
+  "title": "Cognee Dataset",
+  "description": "A dataset resource in the Cognee platform, representing a named container for ingested data and its associated knowledge graph",
+  "type": "object",
+  "required": ["id", "name", "created_at", "owner_id"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Unique identifier for the dataset"
+    },
+    "name": {
+      "type": "string",
+      "description": "Human-readable name for the dataset",
+      "example": "research_papers"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Timestamp when the dataset was created"
+    },
+    "updated_at": {
+      "type": ["string", "null"],
+      "format": "date-time",
+      "description": "Timestamp of the last update to the dataset"
+    },
+    "owner_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "ID of the user who owns this dataset"
+    }
+  }
+}

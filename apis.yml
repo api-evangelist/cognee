@@ -50,6 +50,8 @@ apis:
         url: https://api.cognee.ai/docs
       - type: SwaggerUI
         url: https://api.cognee.ai/docs
+      - type: OpenAPI
+        url: openapi/cognee-rest-api-openapi.yml
 
 common:
   - type: Website
@@ -78,6 +80,12 @@ common:
     url: rate-limits/cognee-rate-limits.yml
   - type: FinOps
     url: finops/cognee-finops.yml
+  - type: Vocabulary
+    url: vocabulary/cognee-vocabulary.yml
+  - type: JSONLDContext
+    url: json-ld/cognee-context.jsonld
+  - type: Blog
+    url: blogs/blogs.json
 
 maintainers:
   - FN: Kin Lane

@@ -1,0 +1,145 @@
+vocabulary:
+  title: Cognee API Vocabulary
+  description: Canonical terms and definitions used across the Cognee AI memory and knowledge graph platform
+  version: "1.0.0"
+  source: https://docs.cognee.ai/api-reference/introduction
+
+terms:
+
+  - term: dataset
+    definition: >
+      A named container for ingested data within Cognee. Each dataset holds one or more
+      data items (files, URLs, documents) and its associated knowledge graph. Datasets
+      are owned by a user and subject to permission-based access control.
+    type: resource
+    relatedEndpoints:
+      - GET /api/v1/datasets
+      - POST /api/v1/datasets
+      - DELETE /api/v1/datasets/{dataset_id}
+
+  - term: cognify
+    definition: >
+      The core intelligence pipeline that transforms raw ingested data into a structured
+      knowledge graph. The six-stage ECL process includes: document classification,
+      text chunking, entity extraction via LLM, relationship detection, vector embedding
+      generation, and content summarization. Also refers to the POST /api/v1/cognify endpoint.
+    type: operation
+    acronym: ECL (Extract, Cognify, Load)
+    relatedEndpoints:
+      - POST /api/v1/cognify
+
+  - term: knowledge_graph
+    definition: >
+      A graph-structured representation of entities and their relationships extracted
+      from ingested data. Stored in a hybrid graph-vector-relational backend. The graph
+      is the primary data structure queried by search endpoints.
+    type: data-model
+    aliases:
+      - graph
+
+  - term: search_type
+    definition: >
+      An enumerated value specifying which retrieval strategy to use when querying the
+      knowledge graph. Cognee supports 16 search types including semantic, graph-based,
+      RAG, temporal, agentic, and Cypher query modes.
+    type: enumeration
+    values:
+      - SUMMARIES: Return summarized content nodes
+      - CHUNKS: Return raw text chunks
+      - RAG_COMPLETION: Retrieval-augmented generation using vector similarity
+      - TRIPLET_COMPLETION: Complete answers using graph triplets
+      - GRAPH_COMPLETION: LLM answer synthesis using graph traversal (default)
+      - GRAPH_COMPLETION_DECOMPOSITION: Decompose query before graph completion
+      - GRAPH_SUMMARY_COMPLETION: Graph completion over summarized nodes
+      - CYPHER: Execute a Cypher graph query directly
+      - NATURAL_LANGUAGE: Natural language to graph query translation
+      - GRAPH_COMPLETION_COT: Chain-of-thought graph completion
+      - GRAPH_COMPLETION_CONTEXT_EXTENSION: Graph completion with extended context window
+      - FEELING_LUCKY: Best-effort automatic search mode selection
+      - TEMPORAL: Search for time-anchored entities and events
+      - CODING_RULES: Search for coding patterns and rules
+      - CHUNKS_LEXICAL: Lexical (keyword) chunk retrieval
+      - AGENTIC_COMPLETION: Multi-step agentic search with tool use
+
+  - term: node_set
+    definition: >
+      A list of string labels used during data ingestion to tag and group related data
+      points within the knowledge graph. Node sets enable targeted search scoping via
+      the node_name parameter on search requests.
+    type: concept
+    relatedFields:
+      - add.node_set
+      - search.node_name
+
+  - term: pipeline_run
+    definition: >
+      A single execution of the add or cognify pipeline against one or more datasets.
+      Each pipeline run has a unique UUID and a lifecycle status of pending, running,
+      completed, or failed. Background runs can be monitored via the WebSocket endpoint.
+    type: resource
+    statuses:
+      - pending
+      - running
+      - completed
+      - failed
+
+  - term: agent
+    definition: >
+      An AI agent identity in Cognee, represented as a system user with a dedicated
+      API key. Agents can interact with the Cognee API autonomously using their own
+      credentials, enabling multi-agent memory architectures.
+    type: resource
+    relatedEndpoints:
+      - GET /api/v1/agents/list
+      - POST /api/v1/agents/create
+
+  - term: ontology
+    definition: >
+      A structured vocabulary or taxonomy (in RDF/OWL format) that can be uploaded to
+      Cognee and referenced during the cognify pipeline to constrain and guide entity
+      extraction and knowledge graph construction.
+    type: concept
+    relatedFields:
+      - cognify.ontology_key
+
+  - term: add
+    definition: >
+      The ingestion operation that accepts files, HTTP URLs, or GitHub repository URLs
+      and stores them in a dataset for subsequent cognify processing. Corresponds to
+      the POST /api/v1/add endpoint.
+    type: operation
+    relatedEndpoints:
+      - POST /api/v1/add
+
+  - term: chunk
+    definition: >
+      A segment of text produced by splitting an ingested document during the cognify
+      pipeline. Chunk size is configurable via the chunk_size parameter. Chunks are
+      the atomic unit for LLM processing and vector embedding.
+    type: data-model
+    relatedFields:
+      - cognify.chunk_size
+      - cognify.chunks_per_batch
+
+  - term: vector_store
+    definition: >
+      The vector database backend used by Cognee to store embeddings for semantic
+      similarity search. Supported providers include LanceDB, ChromaDB, and pgvector.
+    type: infrastructure
+    supportedProviders:
+      - lancedb
+      - chromadb
+      - pgvector
+
+  - term: llm_provider
+    definition: >
+      The Large Language Model service used by Cognee for entity extraction, graph
+      construction, and completion-type searches. Supported providers include OpenAI,
+      Anthropic, Google Gemini, Mistral, and Ollama (local).
+    type: infrastructure
+    supportedProviders:
+      - openai
+      - anthropic
+      - gemini
+      - mistral
+      - ollama

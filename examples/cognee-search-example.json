@@ -1,0 +1,97 @@
+{
+  "title": "Cognee API Usage Examples",
+  "description": "Representative request/response examples for the Cognee REST API",
+  "examples": [
+    {
+      "title": "Add a file to a dataset",
+      "description": "Upload a PDF document to the 'research_papers' dataset",
+      "endpoint": "POST /api/v1/add",
+      "contentType": "multipart/form-data",
+      "request": {
+        "datasetName": "research_papers",
+        "run_in_background": false
+      },
+      "notes": "The 'data' field accepts file uploads, HTTP URLs, or GitHub repository URLs"
+    },
+    {
+      "title": "Cognify a dataset",
+      "description": "Transform the 'research_papers' dataset into a knowledge graph",
+      "endpoint": "POST /api/v1/cognify",
+      "request": {
+        "datasets": ["research_papers"],
+        "run_in_background": false,
+        "custom_prompt": "Extract entities focusing on research methodologies, authors, and findings. Identify key relationships between concepts.",
+        "data_per_batch": 20
+      },
+      "response": {
+        "status": "completed",
+        "pipeline_run_id": "550e8400-e29b-41d4-a716-446655440000"
+      }
+    },
+    {
+      "title": "Semantic graph completion search",
+      "description": "Ask a natural language question and receive LLM-synthesized answer from the knowledge graph",
+      "endpoint": "POST /api/v1/search",
+      "request": {
+        "search_type": "GRAPH_COMPLETION",
+        "query": "What are the main conclusions across the research papers?",
+        "datasets": ["research_papers"],
+        "top_k": 10,
+        "system_prompt": "Answer the question using the provided context. Be as brief as possible.",
+        "only_context": false
+      }
+    },
+    {
+      "title": "RAG completion search",
+      "description": "Perform retrieval-augmented generation over the knowledge graph",
+      "endpoint": "POST /api/v1/search",
+      "request": {
+        "search_type": "RAG_COMPLETION",
+        "query": "Summarize the key methodologies used in the papers",
+        "datasets": ["research_papers"],
+        "top_k": 5
+      }
+    },
+    {
+      "title": "Temporal search",
+      "description": "Search for time-based relationships and events in the graph",
+      "endpoint": "POST /api/v1/search",
+      "request": {
+        "search_type": "TEMPORAL",
+        "query": "What events happened in 2023?",
+        "datasets": ["my_documents"],
+        "top_k": 10
+      }
+    },
+    {
+      "title": "Agentic completion search",
+      "description": "Multi-step agentic search with tool use",
+      "endpoint": "POST /api/v1/search",
+      "request": {
+        "search_type": "AGENTIC_COMPLETION",
+        "query": "Find all entities related to machine learning and their connections",
+        "datasets": ["research_papers"],
+        "top_k": 20,
+        "max_iter": 5
+      }
+    },
+    {
+      "title": "Get dataset processing status",
+      "description": "Check whether the cognify pipeline has completed for a dataset",
+      "endpoint": "GET /api/v1/datasets/status?dataset=550e8400-e29b-41d4-a716-446655440000&pipeline=cognify_pipeline",
+      "response": {
+        "550e8400-e29b-41d4-a716-446655440000": "completed"
+      }
+    },
+    {
+      "title": "Create an agent identity",
+      "description": "Create an AI agent identity with its own API key",
+      "endpoint": "POST /api/v1/agents/create?name=my-research-agent",
+      "response": {
+        "agent_id": "6ba7b810-9dad-11d1-80b4-00c04fd430c8",
+        "agent_email": "my-research-agent@cognee.agent",
+        "agent_api_key": "cog_agent_xxxxxxxxxxxxxxxx"
+      }
+    }
+  ]
+}

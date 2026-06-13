@@ -1,0 +1,182 @@
+{
+  "@context": {
+    "@version": 1.1,
+    "cognee": "https://api.cognee.ai/vocab/",
+    "schema": "https://schema.org/",
+    "xsd": "http://www.w3.org/2001/XMLSchema#",
+    "hydra": "http://www.w3.org/ns/hydra/core#",
+
+    "Dataset": {
+      "@id": "cognee:Dataset",
+      "@type": "@id"
+    },
+    "DataItem": {
+      "@id": "cognee:DataItem",
+      "@type": "@id"
+    },
+    "KnowledgeGraph": {
+      "@id": "cognee:KnowledgeGraph",
+      "@type": "@id"
+    },
+    "GraphNode": {
+      "@id": "cognee:GraphNode",
+      "@type": "@id"
+    },
+    "GraphEdge": {
+      "@id": "cognee:GraphEdge",
+      "@type": "@id"
+    },
+    "Agent": {
+      "@id": "cognee:Agent",
+      "@type": "@id"
+    },
+    "SearchResult": {
+      "@id": "cognee:SearchResult",
+      "@type": "@id"
+    },
+    "PipelineRun": {
+      "@id": "cognee:PipelineRun",
+      "@type": "@id"
+    },
+
+    "id": "@id",
+    "name": {
+      "@id": "schema:name",
+      "@type": "xsd:string"
+    },
+    "description": {
+      "@id": "schema:description",
+      "@type": "xsd:string"
+    },
+    "createdAt": {
+      "@id": "schema:dateCreated",
+      "@type": "xsd:dateTime"
+    },
+    "updatedAt": {
+      "@id": "schema:dateModified",
+      "@type": "xsd:dateTime"
+    },
+    "ownerId": {
+      "@id": "cognee:ownerId",
+      "@type": "xsd:string"
+    },
+    "mimeType": {
+      "@id": "schema:encodingFormat",
+      "@type": "xsd:string"
+    },
+    "extension": {
+      "@id": "cognee:extension",
+      "@type": "xsd:string"
+    },
+    "rawDataLocation": {
+      "@id": "cognee:rawDataLocation",
+      "@type": "xsd:string"
+    },
+    "datasetId": {
+      "@id": "cognee:datasetId",
+      "@type": "xsd:string"
+    },
+    "label": {
+      "@id": "rdfs:label",
+      "@type": "xsd:string"
+    },
+    "type": {
+      "@id": "cognee:nodeType",
+      "@type": "xsd:string"
+    },
+    "properties": {
+      "@id": "cognee:properties",
+      "@type": "@json"
+    },
+    "source": {
+      "@id": "cognee:edgeSource",
+      "@type": "xsd:string"
+    },
+    "target": {
+      "@id": "cognee:edgeTarget",
+      "@type": "xsd:string"
+    },
+    "nodes": {
+      "@id": "cognee:nodes",
+      "@container": "@set"
+    },
+    "edges": {
+      "@id": "cognee:edges",
+      "@container": "@set"
+    },
+    "searchType": {
+      "@id": "cognee:searchType",
+      "@type": "xsd:string"
+    },
+    "query": {
+      "@id": "cognee:query",
+      "@type": "xsd:string"
+    },
+    "topK": {
+      "@id": "cognee:topK",
+      "@type": "xsd:integer"
+    },
+    "onlyContext": {
+      "@id": "cognee:onlyContext",
+      "@type": "xsd:boolean"
+    },
+    "pipelineRunId": {
+      "@id": "cognee:pipelineRunId",
+      "@type": "xsd:string"
+    },
+    "status": {
+      "@id": "cognee:status",
+      "@type": "xsd:string"
+    },
+    "agentId": {
+      "@id": "cognee:agentId",
+      "@type": "xsd:string"
+    },
+    "agentEmail": {
+      "@id": "cognee:agentEmail",
+      "@type": "xsd:string"
+    },
+    "agentApiKey": {
+      "@id": "cognee:agentApiKey",
+      "@type": "xsd:string"
+    },
+    "nodeSet": {
+      "@id": "cognee:nodeSet",
+      "@container": "@set",
+      "@type": "xsd:string"
+    },
+    "ontologyKey": {
+      "@id": "cognee:ontologyKey",
+      "@container": "@set",
+      "@type": "xsd:string"
+    },
+    "llmProvider": {
+      "@id": "cognee:llmProvider",
+      "@type": "xsd:string"
+    },
+    "vectorDbProvider": {
+      "@id": "cognee:vectorDbProvider",
+      "@type": "xsd:string"
+    },
+    "chunkSize": {
+      "@id": "cognee:chunkSize",
+      "@type": "xsd:integer"
+    },
+    "customPrompt": {
+      "@id": "cognee:customPrompt",
+      "@type": "xsd:string"
+    },
+    "graphSchema": {
+      "@id": "cognee:graphSchema",
+      "@type": "@json"
+    },
+    "version": {
+      "@id": "schema:version",
+      "@type": "xsd:string"
+    },
+    "health": {
+      "@id": "cognee:health",
+      "@type": "xsd:string"
+    }
+  }
+}

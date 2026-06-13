@@ -1,0 +1,1203 @@
+openapi: 3.0.3
+info:
+  title: Cognee REST API
+  description: >
+    The Cognee REST API provides endpoints for the complete AI memory lifecycle,
+    including data ingestion, knowledge graph construction, and semantic retrieval.
+    Core endpoints cover adding raw text or documents, triggering the cognify pipeline
+    that extracts entities and relationships via LLM, executing multi-mode search queries,
+    managing datasets, and creating agent identities. The API uses X-Api-Key header
+    authentication for cloud deployments and Bearer token auth for self-hosted instances.
+  version: 1.0.0
+  contact:
+    name: Cognee Support
+    url: https://docs.cognee.ai/api-reference/introduction
+  license:
+    name: Apache 2.0
+    url: https://github.com/topoteretes/cognee/blob/main/LICENSE
+
+externalDocs:
+  description: Cognee API Reference
+  url: https://docs.cognee.ai/api-reference/introduction
+
+servers:
+  - url: https://api.cognee.ai
+    description: Cognee Cloud (managed)
+  - url: http://localhost:8000
+    description: Self-hosted (Docker / local)
+
+security:
+  - BearerAuth: []
+  - ApiKeyAuth: []
+
+tags:
+  - name: data
+    description: Data ingestion and deletion operations
+  - name: cognify
+    description: Knowledge graph construction pipeline
+  - name: search
+    description: Semantic and graph search queries
+  - name: datasets
+    description: Dataset management and introspection
+  - name: agents
+    description: AI agent identity management
+  - name: settings
+    description: System configuration (LLM and vector DB)
+  - name: health
+    description: Service health probes
+
+paths:
+  /api/v1/add:
+    post:
+      operationId: addData
+      summary: Add data to a dataset
+      description: >
+        Add data to a dataset for processing and knowledge graph construction.
+        Accepts files, HTTP URLs (if ALLOW_HTTP_REQUESTS is enabled), or GitHub
+        repository URLs. Either datasetName or datasetId must be provided.
+      tags:
+        - data
+      security:
+        - BearerAuth: []
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                data:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+                  description: List of files or URLs to upload
+                datasetName:
+                  type: string
+                  description: Name of the target dataset
+                  example: research_papers
+                datasetId:
+                  type: string
+                  format: uuid
+                  description: UUID of an existing dataset
+                  example: ""
+                node_set:
+                  type: array
+                  items:
+                    type: string
+                  description: Node identifiers for graph organization and access control
+                  default: [""]
+                run_in_background:
+                  type: boolean
+                  description: Run add pipeline asynchronously
+                  default: false
+      responses:
+        "200":
+          description: Data added successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                description: Add operation result with status and metadata
+        "400":
+          description: Neither datasetId nor datasetName provided
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: User does not have permission to add to dataset
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "422":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal server error or pipeline failure
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/v1/cognify:
+    post:
+      operationId: cognifyDatasets
+      summary: Transform datasets into knowledge graphs
+      description: >
+        Core intelligence endpoint that converts raw data into semantic knowledge graphs.
+        Performs document classification, text chunking, entity extraction via LLM,
+        relationship detection, vector embedding generation, and content summarization.
+      tags:
+        - cognify
+      security:
+        - BearerAuth: []
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CognifyPayload"
+            example:
+              datasets:
+                - research_papers
+              run_in_background: false
+              custom_prompt: >
+                Extract entities focusing on technical concepts and their relationships.
+              ontology_key:
+                - medical_ontology_v1
+      responses:
+        "200":
+          description: >
+            Blocking: complete pipeline run info with entity counts and duration.
+            Background: pipeline run metadata including pipeline_run_id.
+          content:
+            application/json:
+              schema:
+                type: object
+        "400":
+          description: No datasets or dataset_ids provided, or datasets not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Permission denied
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "422":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Pipeline failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/v1/cognify/subscribe/{pipeline_run_id}:
+    get:
+      operationId: subscribeToCognifyProgress
+      summary: Subscribe to cognify pipeline progress via WebSocket
+      description: >
+        WebSocket endpoint to receive real-time pipeline run events. Sends JSON
+        messages with pipeline_run_id, status, and graph payload until the run
+        completes or the client disconnects.
+      tags:
+        - cognify
+      parameters:
+        - name: pipeline_run_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: UUID of the pipeline run to subscribe to
+      responses:
+        "101":
+          description: WebSocket connection established
+        "403":
+          description: Authentication required (cookie-based JWT)
+
+  /api/v1/search:
+    get:
+      operationId: getSearchHistory
+      summary: Get search history for the authenticated user
+      description: >
+        Retrieves the search history for the authenticated user, returning a list
+        of previously executed searches with their timestamps.
+      tags:
+        - search
+      security:
+        - BearerAuth: []
+        - ApiKeyAuth: []
+      responses:
+        "200":
+          description: List of search history items
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SearchHistoryItem"
+        "403":
+          description: Permission denied
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+    post:
+      operationId: search
+      summary: Search the knowledge graph
+      description: >
+        Perform semantic search across the knowledge graph using one of 16 search types
+        including GRAPH_COMPLETION, RAG_COMPLETION, SUMMARIES, CHUNKS, CYPHER, TEMPORAL,
+        AGENTIC_COMPLETION and more. Supports dataset scoping and pagination.
+      tags:
+        - search
+      security:
+        - BearerAuth: []
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SearchPayload"
+            example:
+              search_type: GRAPH_COMPLETION
+              query: What are the main topics in the research papers?
+              datasets:
+                - research_papers
+              top_k: 10
+              only_context: false
+      responses:
+        "200":
+          description: List of search results from the knowledge graph
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SearchResult"
+        "403":
+          description: Permission denied (returns empty list)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "422":
+          description: Validation error or search prerequisites not met
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/v1/datasets:
+    get:
+      operationId: getDatasets
+      summary: List all accessible datasets
+      description: >
+        Retrieves all datasets the authenticated user has read permission for,
+        including metadata such as ID, name, creation time, and owner.
+      tags:
+        - datasets
+      security:
+        - BearerAuth: []
+        - ApiKeyAuth: []
+      responses:
+        "200":
+          description: List of datasets
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Dataset"
+        "418":
+          description: Error retrieving datasets
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+    post:
+      operationId: createDataset
+      summary: Create a new dataset
+      description: >
+        Creates a new dataset with the specified name. If a dataset with the same name
+        already exists for the user, returns the existing dataset. The user is
+        automatically granted all permissions on the created dataset.
+      tags:
+        - datasets
+      security:
+        - BearerAuth: []
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+              properties:
+                name:
+                  type: string
+                  description: Name for the new dataset
+                  example: my_documents
+      responses:
+        "200":
+          description: Created or existing dataset
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Dataset"
+        "418":
+          description: Error creating dataset
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+    delete:
+      operationId: deleteAllDatasets
+      summary: Delete all user datasets
+      description: >
+        Permanently deletes all datasets and associated data owned by the authenticated
+        user. If no datasets exist, this operation is a no-op.
+      tags:
+        - datasets
+      security:
+        - BearerAuth: []
+        - ApiKeyAuth: []
+      responses:
+        "200":
+          description: All datasets deleted
+
+  /api/v1/datasets/status:
+    get:
+      operationId: getDatasetStatus
+      summary: Get dataset processing status
+      description: >
+        Retrieves the current processing status for one or more datasets.
+        If one pipeline is specified, returns a flat {dataset_id: status} map.
+        If multiple pipelines are specified, returns a nested {dataset_id: {pipeline: status}} map.
+      tags:
+        - datasets
+      security:
+        - BearerAuth: []
+        - ApiKeyAuth: []
+      parameters:
+        - name: dataset
+          in: query
+          style: form
+          explode: true
+          schema:
+            type: array
+            items:
+              type: string
+              format: uuid
+          description: List of dataset UUIDs to check
+        - name: pipeline
+          in: query
+          style: form
+          explode: true
+          schema:
+            type: array
+            items:
+              type: string
+              enum:
+                - add_pipeline
+                - cognify_pipeline
+          description: Pipeline names to check (default cognify_pipeline)
+      responses:
+        "200":
+          description: Status map for requested datasets
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  type: string
+                  enum:
+                    - pending
+                    - running
+                    - completed
+                    - failed
+        "500":
+          description: Error retrieving status
+
+  /api/v1/datasets/{dataset_id}:
+    delete:
+      operationId: deleteDataset
+      summary: Delete a dataset by ID
+      description: >
+        Permanently deletes a dataset and all its associated data.
+        Requires delete permissions on the dataset.
+      tags:
+        - datasets
+      security:
+        - BearerAuth: []
+        - ApiKeyAuth: []
+      parameters:
+        - $ref: "#/components/parameters/DatasetId"
+      responses:
+        "200":
+          description: Dataset deleted
+        "404":
+          description: Dataset not found or access denied
+        "500":
+          description: Error during deletion
+
+  /api/v1/datasets/{dataset_id}/data:
+    get:
+      operationId: getDatasetData
+      summary: List all data items in a dataset
+      description: >
+        Returns metadata for all data items (documents, files, etc.) in the specified
+        dataset. Each item includes name, type, MIME type, and storage location.
+      tags:
+        - datasets
+      security:
+        - BearerAuth: []
+        - ApiKeyAuth: []
+      parameters:
+        - $ref: "#/components/parameters/DatasetId"
+      responses:
+        "200":
+          description: List of data items
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DataItem"
+        "404":
+          description: Dataset not found
+        "500":
+          description: Internal error
+
+  /api/v1/datasets/{dataset_id}/data/{data_id}:
+    delete:
+      operationId: deleteDataItem
+      summary: Delete a specific data item from a dataset
+      description: >
+        Removes a specific data item from a dataset while keeping the dataset intact.
+        Requires delete permissions on the dataset.
+      tags:
+        - datasets
+      security:
+        - BearerAuth: []
+        - ApiKeyAuth: []
+      parameters:
+        - $ref: "#/components/parameters/DatasetId"
+        - name: data_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Unique identifier of the data item
+      responses:
+        "200":
+          description: Data item deleted
+        "404":
+          description: Dataset or data item not found
+        "500":
+          description: Error during deletion
+
+  /api/v1/datasets/{dataset_id}/data/{data_id}/raw:
+    get:
+      operationId: downloadRawData
+      summary: Download the raw data file for a data item
+      description: >
+        Returns the original unprocessed data file for a specific data item.
+        Supports local filesystem and S3 storage backends.
+      tags:
+        - datasets
+      security:
+        - BearerAuth: []
+        - ApiKeyAuth: []
+      parameters:
+        - $ref: "#/components/parameters/DatasetId"
+        - name: data_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Unique identifier of the data item
+      responses:
+        "200":
+          description: Raw file download
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        "404":
+          description: Dataset or data item not found
+        "501":
+          description: Storage scheme not supported
+
+  /api/v1/datasets/{dataset_id}/graph:
+    get:
+      operationId: getDatasetGraph
+      summary: Get knowledge graph for a dataset
+      description: >
+        Retrieves the knowledge graph visualization data for a specific dataset,
+        including all nodes and edges representing entity relationships.
+      tags:
+        - datasets
+      security:
+        - BearerAuth: []
+        - ApiKeyAuth: []
+      parameters:
+        - $ref: "#/components/parameters/DatasetId"
+      responses:
+        "200":
+          description: Knowledge graph nodes and edges
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Graph"
+        "404":
+          description: Dataset not found
+        "500":
+          description: Error retrieving graph
+
+  /api/v1/datasets/{dataset_id}/schema:
+    get:
+      operationId: getDatasetSchema
+      summary: Get graph schema for a dataset
+      description: Returns the stored graph schema and custom prompt for a dataset.
+      tags:
+        - datasets
+      security:
+        - BearerAuth: []
+        - ApiKeyAuth: []
+      parameters:
+        - $ref: "#/components/parameters/DatasetId"
+      responses:
+        "200":
+          description: Dataset schema and custom prompt
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  graph_schema:
+                    type: object
+                    nullable: true
+                  custom_prompt:
+                    type: string
+                    nullable: true
+        "404":
+          description: Dataset not found
+
+    put:
+      operationId: updateDatasetSchema
+      summary: Update graph schema for a dataset
+      description: >
+        Store or update the graph schema and custom prompt for a dataset.
+        Requires write permissions on the dataset.
+      tags:
+        - datasets
+      security:
+        - BearerAuth: []
+        - ApiKeyAuth: []
+      parameters:
+        - $ref: "#/components/parameters/DatasetId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                graph_schema:
+                  type: object
+                  nullable: true
+                  description: JSON schema for the knowledge graph structure
+                custom_prompt:
+                  type: string
+                  nullable: true
+                  description: Custom extraction prompt for this dataset
+      responses:
+        "200":
+          description: Schema updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+        "404":
+          description: Dataset not found
+
+  /api/v1/settings:
+    get:
+      operationId: getSettings
+      summary: Get current system settings
+      description: >
+        Retrieves the current configuration for LLM provider and vector database.
+        Supports openai, ollama, anthropic, gemini, mistral for LLM and
+        lancedb, chromadb, pgvector for vector DB.
+      tags:
+        - settings
+      security:
+        - BearerAuth: []
+        - ApiKeyAuth: []
+      responses:
+        "200":
+          description: Current system settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Settings"
+
+    post:
+      operationId: saveSettings
+      summary: Save or update system settings
+      description: >
+        Updates LLM provider configuration and/or vector database configuration.
+        Partial updates are supported — only the provided fields are changed.
+      tags:
+        - settings
+      security:
+        - BearerAuth: []
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SettingsPayload"
+            example:
+              llm:
+                provider: openai
+                model: gpt-4o
+                api_key: sk-...
+              vector_db:
+                provider: lancedb
+                url: /var/lancedb
+                api_key: ""
+      responses:
+        "200":
+          description: Settings saved
+
+  /api/v1/health:
+    get:
+      operationId: healthCheck
+      summary: Liveness/readiness health check
+      description: >
+        Basic health probe returning system readiness and version.
+        Returns 503 when the service is unhealthy.
+      tags:
+        - health
+      responses:
+        "200":
+          description: Service is healthy and ready
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+        "503":
+          description: Service is not ready
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+
+  /api/v1/health/detailed:
+    get:
+      operationId: detailedHealthCheck
+      summary: Detailed health check with component status
+      description: >
+        Comprehensive health status including per-component details.
+        Returns 503 when any component is unhealthy or degraded.
+      tags:
+        - health
+      responses:
+        "200":
+          description: Detailed health status
+          content:
+            application/json:
+              schema:
+                type: object
+        "503":
+          description: One or more components unhealthy
+
+  /api/v1/agents/list:
+    get:
+      operationId: listAgents
+      summary: List all agent identities for the authenticated user
+      description: Returns all AI agent identities created by the authenticated user.
+      tags:
+        - agents
+      security:
+        - BearerAuth: []
+        - ApiKeyAuth: []
+      responses:
+        "200":
+          description: List of agent identities
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Agent"
+
+  /api/v1/agents/create:
+    post:
+      operationId: createAgent
+      summary: Create a new agent identity
+      description: >
+        Creates a new AI agent identity with a unique name. Returns the agent's
+        ID, email, and API key for use in subsequent API calls.
+      tags:
+        - agents
+      security:
+        - BearerAuth: []
+        - ApiKeyAuth: []
+      parameters:
+        - name: name
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Unique name for the agent
+          example: my-research-agent
+      responses:
+        "200":
+          description: Agent created with API key
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AgentWithApiKey"
+        "409":
+          description: Agent with that name already exists
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Bearer token authentication for self-hosted instances
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-Api-Key
+      description: API key authentication for Cognee Cloud deployments
+
+  parameters:
+    DatasetId:
+      name: dataset_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Unique identifier of the dataset
+
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Short error message
+        detail:
+          type: string
+          nullable: true
+          description: Detailed error description
+      required:
+        - error
+
+    SearchType:
+      type: string
+      enum:
+        - SUMMARIES
+        - CHUNKS
+        - RAG_COMPLETION
+        - TRIPLET_COMPLETION
+        - GRAPH_COMPLETION
+        - GRAPH_COMPLETION_DECOMPOSITION
+        - GRAPH_SUMMARY_COMPLETION
+        - CYPHER
+        - NATURAL_LANGUAGE
+        - GRAPH_COMPLETION_COT
+        - GRAPH_COMPLETION_CONTEXT_EXTENSION
+        - FEELING_LUCKY
+        - TEMPORAL
+        - CODING_RULES
+        - CHUNKS_LEXICAL
+        - AGENTIC_COMPLETION
+      description: Type of search to perform against the knowledge graph
+
+    SearchPayload:
+      type: object
+      required:
+        - query
+      properties:
+        search_type:
+          $ref: "#/components/schemas/SearchType"
+          default: GRAPH_COMPLETION
+        datasets:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: Dataset names to search (resolved to datasets owned by caller)
+        dataset_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          nullable: true
+          description: Dataset UUIDs to search (allows cross-user access if permitted)
+          example: []
+        query:
+          type: string
+          description: The search query string
+          default: What is in the document?
+        system_prompt:
+          type: string
+          nullable: true
+          description: System prompt for completion-type searches
+          default: Answer the question using the provided context. Be as brief as possible.
+        node_name:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: Filter results to specific node_sets from the add pipeline
+        top_k:
+          type: integer
+          nullable: true
+          description: Maximum number of results to return
+          default: 10
+        only_context:
+          type: boolean
+          description: Return only context without LLM completion call
+          default: false
+        verbose:
+          type: boolean
+          description: Return verbose results
+          default: false
+        skills:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: Skills to enable for agentic search
+        tools:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: Tools to enable for agentic search
+        max_iter:
+          type: integer
+          nullable: true
+          description: Maximum iterations for agentic search
+
+    SearchHistoryItem:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        text:
+          type: string
+        user:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+      required:
+        - id
+        - text
+        - user
+        - created_at
+
+    SearchResult:
+      type: object
+      description: A single result node from the knowledge graph
+      additionalProperties: true
+
+    CognifyPayload:
+      type: object
+      properties:
+        datasets:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: Dataset names to process (resolved to datasets owned by caller)
+        dataset_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          nullable: true
+          description: Dataset UUIDs to process
+          example: []
+        run_in_background:
+          type: boolean
+          description: Execute pipeline asynchronously
+          default: false
+        graph_model:
+          type: object
+          nullable: true
+          description: Custom graph model schema for entity extraction
+          example: {}
+        custom_prompt:
+          type: string
+          nullable: true
+          description: Custom prompt for entity extraction and graph generation
+          default: ""
+        chunk_size:
+          type: integer
+          nullable: true
+          description: Maximum tokens per chunk (auto-sized if omitted)
+          example: 4096
+        ontology_key:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: Keys of previously uploaded ontology files to use
+          example: []
+        chunks_per_batch:
+          type: integer
+          nullable: true
+          description: Number of chunks to process per task batch
+          example: 36
+        data_per_batch:
+          type: integer
+          nullable: true
+          description: Maximum data items to process concurrently within a dataset
+          default: 20
+          example: 20
+
+    Dataset:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+          nullable: true
+        owner_id:
+          type: string
+          format: uuid
+      required:
+        - id
+        - name
+        - created_at
+        - owner_id
+
+    DataItem:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+          nullable: true
+        extension:
+          type: string
+        mime_type:
+          type: string
+        raw_data_location:
+          type: string
+        dataset_id:
+          type: string
+          format: uuid
+      required:
+        - id
+        - name
+        - created_at
+        - extension
+        - mime_type
+        - raw_data_location
+        - dataset_id
+
+    GraphNode:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        label:
+          type: string
+        type:
+          type: string
+        properties:
+          type: object
+      required:
+        - id
+        - label
+        - type
+        - properties
+
+    GraphEdge:
+      type: object
+      properties:
+        source:
+          type: string
+          format: uuid
+        target:
+          type: string
+          format: uuid
+        label:
+          type: string
+      required:
+        - source
+        - target
+        - label
+
+    Graph:
+      type: object
+      properties:
+        nodes:
+          type: array
+          items:
+            $ref: "#/components/schemas/GraphNode"
+        edges:
+          type: array
+          items:
+            $ref: "#/components/schemas/GraphEdge"
+      required:
+        - nodes
+        - edges
+
+    LLMConfig:
+      type: object
+      properties:
+        provider:
+          type: string
+          enum:
+            - openai
+            - ollama
+            - anthropic
+            - gemini
+            - mistral
+        model:
+          type: string
+        api_key:
+          type: string
+      required:
+        - provider
+        - model
+        - api_key
+
+    VectorDBConfig:
+      type: object
+      properties:
+        provider:
+          type: string
+          enum:
+            - lancedb
+            - chromadb
+            - pgvector
+        url:
+          type: string
+        api_key:
+          type: string
+      required:
+        - provider
+        - url
+        - api_key
+
+    Settings:
+      type: object
+      properties:
+        llm:
+          $ref: "#/components/schemas/LLMConfig"
+        vector_db:
+          $ref: "#/components/schemas/VectorDBConfig"
+      required:
+        - llm
+        - vector_db
+
+    SettingsPayload:
+      type: object
+      properties:
+        llm:
+          $ref: "#/components/schemas/LLMConfig"
+        vector_db:
+          $ref: "#/components/schemas/VectorDBConfig"
+
+    Agent:
+      type: object
+      properties:
+        agent_id:
+          type: string
+          format: uuid
+        agent_email:
+          type: string
+        api_key_label:
+          type: string
+          nullable: true
+      required:
+        - agent_id
+        - agent_email
+
+    AgentWithApiKey:
+      type: object
+      properties:
+        agent_id:
+          type: string
+          format: uuid
+        agent_email:
+          type: string
+        agent_api_key:
+          type: string
+      required:
+        - agent_id
+        - agent_email
+        - agent_api_key
+
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum:
+            - ready
+            - not ready
+        health:
+          type: string
+          enum:
+            - healthy
+            - unhealthy
+            - degraded
+        version:
+          type: string
+      required:
+        - status
+        - health

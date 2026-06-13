@@ -1,0 +1,100 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://api.cognee.ai/schemas/search-payload",
+  "title": "Cognee Search Payload",
+  "description": "Request body for the POST /api/v1/search endpoint",
+  "type": "object",
+  "required": ["query"],
+  "properties": {
+    "search_type": {
+      "type": "string",
+      "enum": [
+        "SUMMARIES",
+        "CHUNKS",
+        "RAG_COMPLETION",
+        "TRIPLET_COMPLETION",
+        "GRAPH_COMPLETION",
+        "GRAPH_COMPLETION_DECOMPOSITION",
+        "GRAPH_SUMMARY_COMPLETION",
+        "CYPHER",
+        "NATURAL_LANGUAGE",
+        "GRAPH_COMPLETION_COT",
+        "GRAPH_COMPLETION_CONTEXT_EXTENSION",
+        "FEELING_LUCKY",
+        "TEMPORAL",
+        "CODING_RULES",
+        "CHUNKS_LEXICAL",
+        "AGENTIC_COMPLETION"
+      ],
+      "default": "GRAPH_COMPLETION",
+      "description": "Type of search to perform against the knowledge graph"
+    },
+    "datasets": {
+      "type": ["array", "null"],
+      "items": {
+        "type": "string"
+      },
+      "description": "Dataset names to scope the search (resolved to datasets owned by caller)"
+    },
+    "dataset_ids": {
+      "type": ["array", "null"],
+      "items": {
+        "type": "string",
+        "format": "uuid"
+      },
+      "description": "Dataset UUIDs to scope the search (allows cross-user access if permitted)"
+    },
+    "query": {
+      "type": "string",
+      "description": "The natural language search query",
+      "default": "What is in the document?"
+    },
+    "system_prompt": {
+      "type": ["string", "null"],
+      "description": "System prompt to use for completion-type searches",
+      "default": "Answer the question using the provided context. Be as brief as possible."
+    },
+    "node_name": {
+      "type": ["array", "null"],
+      "items": {
+        "type": "string"
+      },
+      "description": "Filter results to specific node_sets defined during the add pipeline"
+    },
+    "top_k": {
+      "type": ["integer", "null"],
+      "minimum": 1,
+      "default": 10,
+      "description": "Maximum number of results to return"
+    },
+    "only_context": {
+      "type": "boolean",
+      "default": false,
+      "description": "Return only context without making an LLM completion call"
+    },
+    "verbose": {
+      "type": "boolean",
+      "default": false,
+      "description": "Return verbose result details"
+    },
+    "skills": {
+      "type": ["array", "null"],
+      "items": {
+        "type": "string"
+      },
+      "description": "Skills to enable for agentic search modes"
+    },
+    "tools": {
+      "type": ["array", "null"],
+      "items": {
+        "type": "string"
+      },
+      "description": "Tools to enable for agentic search modes"
+    },
+    "max_iter": {
+      "type": ["integer", "null"],
+      "minimum": 1,
+      "description": "Maximum number of iterations for agentic search"
+    }
+  }
+}
