@@ -7,5 +7,14 @@
   "notes": "No RSS/Atom feed detected as of 2026-06-12. Cognee distributes content via Substack newsletter at https://aimemory.substack.com/ and social channels (Discord, X, LinkedIn). Check Substack for feed: https://aimemory.substack.com/feed",
   "substackUrl": "https://aimemory.substack.com/",
   "lastChecked": "2026-06-12",
-  "posts": []
+  "posts": [],
+  "repo": "cognee",
+  "feeds": [
+    {
+      "source": "https://www.linkedin.com/company/cognee-ai",
+      "error": "HTTPError"
+    }
+  ],
+  "post_count": 0,
+  "fetched": "2026-06-14T20:42:17Z"
 }
