@@ -11,7 +11,7 @@ description: >
   cloud service on AWS, GCP, and Azure, or as a self-hosted deployment via Docker, Modal,
   Railway, Fly.io, and Render.
 type: Index
-image: https://kinlane-productions.s3.amazonaws.com/apis-json/apis-json-logo.jpg
+image: https://kinlane-images.s3.amazonaws.com/shared/apis-json/apis-json-logo.jpg
 url: https://raw.githubusercontent.com/api-evangelist/cognee/refs/heads/main/apis.yml
 created: "2026-06-12"
 modified: "2026-06-12"
@@ -36,7 +36,7 @@ apis:
       entities and relationships via LLM, executing multi-mode search queries, managing
       datasets, and creating agent identities. The API uses X-Api-Key header authentication
       for cloud deployments and Bearer token auth for self-hosted instances.
-    image: https://kinlane-productions.s3.amazonaws.com/apis-json/apis-json-logo.jpg
+    image: https://kinlane-images.s3.amazonaws.com/shared/apis-json/apis-json-logo.jpg
     humanURL: https://docs.cognee.ai/api-reference/introduction
     baseURL: https://api.cognee.ai
     tags:
