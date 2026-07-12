@@ -1,0 +1,24 @@
+generated: '2026-07-11'
+method: derived
+source: openapi/cognee-rest-api-openapi.yml
+summary:
+  types:
+  - apiKey
+  - http
+  api_key_in:
+  - header
+schemes:
+- name: BearerAuth
+  type: http
+  scheme: bearer
+  bearerFormat: JWT
+  description: Bearer token authentication for self-hosted instances
+  sources:
+  - openapi/cognee-rest-api-openapi.yml
+- name: ApiKeyAuth
+  type: apiKey
+  in: header
+  parameter: X-Api-Key
+  description: API key authentication for Cognee Cloud deployments
+  sources:
+  - openapi/cognee-rest-api-openapi.yml
