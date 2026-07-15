@@ -54,6 +54,8 @@ apis:
         url: openapi/cognee-rest-api-openapi.yml
 
 common:
+  - type: AgenticAccess
+    url: agentic-access/cognee-agentic-access.yml
   - type: DomainSecurity
     url: security/cognee-domain-security.yml
   - type: Authentication
