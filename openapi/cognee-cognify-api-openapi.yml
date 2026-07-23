@@ -1,0 +1,189 @@
+openapi: 3.0.3
+info:
+  title: Cognee REST agents cognify API
+  description: 'The Cognee REST API provides endpoints for the complete AI memory lifecycle, including data ingestion, knowledge graph construction, and semantic retrieval. Core endpoints cover adding raw text or documents, triggering the cognify pipeline that extracts entities and relationships via LLM, executing multi-mode search queries, managing datasets, and creating agent identities. The API uses X-Api-Key header authentication for cloud deployments and Bearer token auth for self-hosted instances.
+
+    '
+  version: 1.0.0
+  contact:
+    name: Cognee Support
+    url: https://docs.cognee.ai/api-reference/introduction
+  license:
+    name: Apache 2.0
+    url: https://github.com/topoteretes/cognee/blob/main/LICENSE
+servers:
+- url: https://api.cognee.ai
+  description: Cognee Cloud (managed)
+- url: http://localhost:8000
+  description: Self-hosted (Docker / local)
+security:
+- BearerAuth: []
+- ApiKeyAuth: []
+tags:
+- name: cognify
+  description: Knowledge graph construction pipeline
+paths:
+  /api/v1/cognify:
+    post:
+      operationId: cognifyDatasets
+      summary: Transform datasets into knowledge graphs
+      description: 'Core intelligence endpoint that converts raw data into semantic knowledge graphs. Performs document classification, text chunking, entity extraction via LLM, relationship detection, vector embedding generation, and content summarization.
+
+        '
+      tags:
+      - cognify
+      security:
+      - BearerAuth: []
+      - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CognifyPayload'
+            example:
+              datasets:
+              - research_papers
+              run_in_background: false
+              custom_prompt: 'Extract entities focusing on technical concepts and their relationships.
+
+                '
+              ontology_key:
+              - medical_ontology_v1
+      responses:
+        '200':
+          description: 'Blocking: complete pipeline run info with entity counts and duration. Background: pipeline run metadata including pipeline_run_id.
+
+            '
+          content:
+            application/json:
+              schema:
+                type: object
+        '400':
+          description: No datasets or dataset_ids provided, or datasets not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Permission denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Pipeline failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/cognify/subscribe/{pipeline_run_id}:
+    get:
+      operationId: subscribeToCognifyProgress
+      summary: Subscribe to cognify pipeline progress via WebSocket
+      description: 'WebSocket endpoint to receive real-time pipeline run events. Sends JSON messages with pipeline_run_id, status, and graph payload until the run completes or the client disconnects.
+
+        '
+      tags:
+      - cognify
+      parameters:
+      - name: pipeline_run_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: UUID of the pipeline run to subscribe to
+      responses:
+        '101':
+          description: WebSocket connection established
+        '403':
+          description: Authentication required (cookie-based JWT)
+components:
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Short error message
+        detail:
+          type: string
+          nullable: true
+          description: Detailed error description
+      required:
+      - error
+    CognifyPayload:
+      type: object
+      properties:
+        datasets:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: Dataset names to process (resolved to datasets owned by caller)
+        dataset_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          nullable: true
+          description: Dataset UUIDs to process
+          example: []
+        run_in_background:
+          type: boolean
+          description: Execute pipeline asynchronously
+          default: false
+        graph_model:
+          type: object
+          nullable: true
+          description: Custom graph model schema for entity extraction
+          example: {}
+        custom_prompt:
+          type: string
+          nullable: true
+          description: Custom prompt for entity extraction and graph generation
+          default: ''
+        chunk_size:
+          type: integer
+          nullable: true
+          description: Maximum tokens per chunk (auto-sized if omitted)
+          example: 4096
+        ontology_key:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: Keys of previously uploaded ontology files to use
+          example: []
+        chunks_per_batch:
+          type: integer
+          nullable: true
+          description: Number of chunks to process per task batch
+          example: 36
+        data_per_batch:
+          type: integer
+          nullable: true
+          description: Maximum data items to process concurrently within a dataset
+          default: 20
+          example: 20
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Bearer token authentication for self-hosted instances
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-Api-Key
+      description: API key authentication for Cognee Cloud deployments
+externalDocs:
+  description: Cognee API Reference
+  url: https://docs.cognee.ai/api-reference/introduction

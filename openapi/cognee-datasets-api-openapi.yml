@@ -1,0 +1,495 @@
+openapi: 3.0.3
+info:
+  title: Cognee REST agents datasets API
+  description: 'The Cognee REST API provides endpoints for the complete AI memory lifecycle, including data ingestion, knowledge graph construction, and semantic retrieval. Core endpoints cover adding raw text or documents, triggering the cognify pipeline that extracts entities and relationships via LLM, executing multi-mode search queries, managing datasets, and creating agent identities. The API uses X-Api-Key header authentication for cloud deployments and Bearer token auth for self-hosted instances.
+
+    '
+  version: 1.0.0
+  contact:
+    name: Cognee Support
+    url: https://docs.cognee.ai/api-reference/introduction
+  license:
+    name: Apache 2.0
+    url: https://github.com/topoteretes/cognee/blob/main/LICENSE
+servers:
+- url: https://api.cognee.ai
+  description: Cognee Cloud (managed)
+- url: http://localhost:8000
+  description: Self-hosted (Docker / local)
+security:
+- BearerAuth: []
+- ApiKeyAuth: []
+tags:
+- name: datasets
+  description: Dataset management and introspection
+paths:
+  /api/v1/datasets:
+    get:
+      operationId: getDatasets
+      summary: List all accessible datasets
+      description: 'Retrieves all datasets the authenticated user has read permission for, including metadata such as ID, name, creation time, and owner.
+
+        '
+      tags:
+      - datasets
+      security:
+      - BearerAuth: []
+      - ApiKeyAuth: []
+      responses:
+        '200':
+          description: List of datasets
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Dataset'
+        '418':
+          description: Error retrieving datasets
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      operationId: createDataset
+      summary: Create a new dataset
+      description: 'Creates a new dataset with the specified name. If a dataset with the same name already exists for the user, returns the existing dataset. The user is automatically granted all permissions on the created dataset.
+
+        '
+      tags:
+      - datasets
+      security:
+      - BearerAuth: []
+      - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - name
+              properties:
+                name:
+                  type: string
+                  description: Name for the new dataset
+                  example: my_documents
+      responses:
+        '200':
+          description: Created or existing dataset
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Dataset'
+        '418':
+          description: Error creating dataset
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      operationId: deleteAllDatasets
+      summary: Delete all user datasets
+      description: 'Permanently deletes all datasets and associated data owned by the authenticated user. If no datasets exist, this operation is a no-op.
+
+        '
+      tags:
+      - datasets
+      security:
+      - BearerAuth: []
+      - ApiKeyAuth: []
+      responses:
+        '200':
+          description: All datasets deleted
+  /api/v1/datasets/status:
+    get:
+      operationId: getDatasetStatus
+      summary: Get dataset processing status
+      description: 'Retrieves the current processing status for one or more datasets. If one pipeline is specified, returns a flat {dataset_id: status} map. If multiple pipelines are specified, returns a nested {dataset_id: {pipeline: status}} map.
+
+        '
+      tags:
+      - datasets
+      security:
+      - BearerAuth: []
+      - ApiKeyAuth: []
+      parameters:
+      - name: dataset
+        in: query
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: List of dataset UUIDs to check
+      - name: pipeline
+        in: query
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - add_pipeline
+            - cognify_pipeline
+        description: Pipeline names to check (default cognify_pipeline)
+      responses:
+        '200':
+          description: Status map for requested datasets
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  type: string
+                  enum:
+                  - pending
+                  - running
+                  - completed
+                  - failed
+        '500':
+          description: Error retrieving status
+  /api/v1/datasets/{dataset_id}:
+    delete:
+      operationId: deleteDataset
+      summary: Delete a dataset by ID
+      description: 'Permanently deletes a dataset and all its associated data. Requires delete permissions on the dataset.
+
+        '
+      tags:
+      - datasets
+      security:
+      - BearerAuth: []
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/DatasetId'
+      responses:
+        '200':
+          description: Dataset deleted
+        '404':
+          description: Dataset not found or access denied
+        '500':
+          description: Error during deletion
+  /api/v1/datasets/{dataset_id}/data:
+    get:
+      operationId: getDatasetData
+      summary: List all data items in a dataset
+      description: 'Returns metadata for all data items (documents, files, etc.) in the specified dataset. Each item includes name, type, MIME type, and storage location.
+
+        '
+      tags:
+      - datasets
+      security:
+      - BearerAuth: []
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/DatasetId'
+      responses:
+        '200':
+          description: List of data items
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DataItem'
+        '404':
+          description: Dataset not found
+        '500':
+          description: Internal error
+  /api/v1/datasets/{dataset_id}/data/{data_id}:
+    delete:
+      operationId: deleteDataItem
+      summary: Delete a specific data item from a dataset
+      description: 'Removes a specific data item from a dataset while keeping the dataset intact. Requires delete permissions on the dataset.
+
+        '
+      tags:
+      - datasets
+      security:
+      - BearerAuth: []
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/DatasetId'
+      - name: data_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Unique identifier of the data item
+      responses:
+        '200':
+          description: Data item deleted
+        '404':
+          description: Dataset or data item not found
+        '500':
+          description: Error during deletion
+  /api/v1/datasets/{dataset_id}/data/{data_id}/raw:
+    get:
+      operationId: downloadRawData
+      summary: Download the raw data file for a data item
+      description: 'Returns the original unprocessed data file for a specific data item. Supports local filesystem and S3 storage backends.
+
+        '
+      tags:
+      - datasets
+      security:
+      - BearerAuth: []
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/DatasetId'
+      - name: data_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Unique identifier of the data item
+      responses:
+        '200':
+          description: Raw file download
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        '404':
+          description: Dataset or data item not found
+        '501':
+          description: Storage scheme not supported
+  /api/v1/datasets/{dataset_id}/graph:
+    get:
+      operationId: getDatasetGraph
+      summary: Get knowledge graph for a dataset
+      description: 'Retrieves the knowledge graph visualization data for a specific dataset, including all nodes and edges representing entity relationships.
+
+        '
+      tags:
+      - datasets
+      security:
+      - BearerAuth: []
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/DatasetId'
+      responses:
+        '200':
+          description: Knowledge graph nodes and edges
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Graph'
+        '404':
+          description: Dataset not found
+        '500':
+          description: Error retrieving graph
+  /api/v1/datasets/{dataset_id}/schema:
+    get:
+      operationId: getDatasetSchema
+      summary: Get graph schema for a dataset
+      description: Returns the stored graph schema and custom prompt for a dataset.
+      tags:
+      - datasets
+      security:
+      - BearerAuth: []
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/DatasetId'
+      responses:
+        '200':
+          description: Dataset schema and custom prompt
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  graph_schema:
+                    type: object
+                    nullable: true
+                  custom_prompt:
+                    type: string
+                    nullable: true
+        '404':
+          description: Dataset not found
+    put:
+      operationId: updateDatasetSchema
+      summary: Update graph schema for a dataset
+      description: 'Store or update the graph schema and custom prompt for a dataset. Requires write permissions on the dataset.
+
+        '
+      tags:
+      - datasets
+      security:
+      - BearerAuth: []
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/DatasetId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                graph_schema:
+                  type: object
+                  nullable: true
+                  description: JSON schema for the knowledge graph structure
+                custom_prompt:
+                  type: string
+                  nullable: true
+                  description: Custom extraction prompt for this dataset
+      responses:
+        '200':
+          description: Schema updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+        '404':
+          description: Dataset not found
+components:
+  schemas:
+    GraphNode:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        label:
+          type: string
+        type:
+          type: string
+        properties:
+          type: object
+      required:
+      - id
+      - label
+      - type
+      - properties
+    GraphEdge:
+      type: object
+      properties:
+        source:
+          type: string
+          format: uuid
+        target:
+          type: string
+          format: uuid
+        label:
+          type: string
+      required:
+      - source
+      - target
+      - label
+    Dataset:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+          nullable: true
+        owner_id:
+          type: string
+          format: uuid
+      required:
+      - id
+      - name
+      - created_at
+      - owner_id
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Short error message
+        detail:
+          type: string
+          nullable: true
+          description: Detailed error description
+      required:
+      - error
+    DataItem:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+          nullable: true
+        extension:
+          type: string
+        mime_type:
+          type: string
+        raw_data_location:
+          type: string
+        dataset_id:
+          type: string
+          format: uuid
+      required:
+      - id
+      - name
+      - created_at
+      - extension
+      - mime_type
+      - raw_data_location
+      - dataset_id
+    Graph:
+      type: object
+      properties:
+        nodes:
+          type: array
+          items:
+            $ref: '#/components/schemas/GraphNode'
+        edges:
+          type: array
+          items:
+            $ref: '#/components/schemas/GraphEdge'
+      required:
+      - nodes
+      - edges
+  parameters:
+    DatasetId:
+      name: dataset_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Unique identifier of the dataset
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Bearer token authentication for self-hosted instances
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-Api-Key
+      description: API key authentication for Cognee Cloud deployments
+externalDocs:
+  description: Cognee API Reference
+  url: https://docs.cognee.ai/api-reference/introduction

@@ -1,0 +1,130 @@
+openapi: 3.0.3
+info:
+  title: Cognee REST agents data API
+  description: 'The Cognee REST API provides endpoints for the complete AI memory lifecycle, including data ingestion, knowledge graph construction, and semantic retrieval. Core endpoints cover adding raw text or documents, triggering the cognify pipeline that extracts entities and relationships via LLM, executing multi-mode search queries, managing datasets, and creating agent identities. The API uses X-Api-Key header authentication for cloud deployments and Bearer token auth for self-hosted instances.
+
+    '
+  version: 1.0.0
+  contact:
+    name: Cognee Support
+    url: https://docs.cognee.ai/api-reference/introduction
+  license:
+    name: Apache 2.0
+    url: https://github.com/topoteretes/cognee/blob/main/LICENSE
+servers:
+- url: https://api.cognee.ai
+  description: Cognee Cloud (managed)
+- url: http://localhost:8000
+  description: Self-hosted (Docker / local)
+security:
+- BearerAuth: []
+- ApiKeyAuth: []
+tags:
+- name: data
+  description: Data ingestion and deletion operations
+paths:
+  /api/v1/add:
+    post:
+      operationId: addData
+      summary: Add data to a dataset
+      description: 'Add data to a dataset for processing and knowledge graph construction. Accepts files, HTTP URLs (if ALLOW_HTTP_REQUESTS is enabled), or GitHub repository URLs. Either datasetName or datasetId must be provided.
+
+        '
+      tags:
+      - data
+      security:
+      - BearerAuth: []
+      - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                data:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+                  description: List of files or URLs to upload
+                datasetName:
+                  type: string
+                  description: Name of the target dataset
+                  example: research_papers
+                datasetId:
+                  type: string
+                  format: uuid
+                  description: UUID of an existing dataset
+                  example: ''
+                node_set:
+                  type: array
+                  items:
+                    type: string
+                  description: Node identifiers for graph organization and access control
+                  default:
+                  - ''
+                run_in_background:
+                  type: boolean
+                  description: Run add pipeline asynchronously
+                  default: false
+      responses:
+        '200':
+          description: Data added successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                description: Add operation result with status and metadata
+        '400':
+          description: Neither datasetId nor datasetName provided
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: User does not have permission to add to dataset
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error or pipeline failure
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+components:
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Short error message
+        detail:
+          type: string
+          nullable: true
+          description: Detailed error description
+      required:
+      - error
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Bearer token authentication for self-hosted instances
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-Api-Key
+      description: API key authentication for Cognee Cloud deployments
+externalDocs:
+  description: Cognee API Reference
+  url: https://docs.cognee.ai/api-reference/introduction

@@ -1,0 +1,117 @@
+openapi: 3.0.3
+info:
+  title: Cognee REST agents API
+  description: 'The Cognee REST API provides endpoints for the complete AI memory lifecycle, including data ingestion, knowledge graph construction, and semantic retrieval. Core endpoints cover adding raw text or documents, triggering the cognify pipeline that extracts entities and relationships via LLM, executing multi-mode search queries, managing datasets, and creating agent identities. The API uses X-Api-Key header authentication for cloud deployments and Bearer token auth for self-hosted instances.
+
+    '
+  version: 1.0.0
+  contact:
+    name: Cognee Support
+    url: https://docs.cognee.ai/api-reference/introduction
+  license:
+    name: Apache 2.0
+    url: https://github.com/topoteretes/cognee/blob/main/LICENSE
+servers:
+- url: https://api.cognee.ai
+  description: Cognee Cloud (managed)
+- url: http://localhost:8000
+  description: Self-hosted (Docker / local)
+security:
+- BearerAuth: []
+- ApiKeyAuth: []
+tags:
+- name: agents
+  description: AI agent identity management
+paths:
+  /api/v1/agents/list:
+    get:
+      operationId: listAgents
+      summary: List all agent identities for the authenticated user
+      description: Returns all AI agent identities created by the authenticated user.
+      tags:
+      - agents
+      security:
+      - BearerAuth: []
+      - ApiKeyAuth: []
+      responses:
+        '200':
+          description: List of agent identities
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Agent'
+  /api/v1/agents/create:
+    post:
+      operationId: createAgent
+      summary: Create a new agent identity
+      description: 'Creates a new AI agent identity with a unique name. Returns the agent''s ID, email, and API key for use in subsequent API calls.
+
+        '
+      tags:
+      - agents
+      security:
+      - BearerAuth: []
+      - ApiKeyAuth: []
+      parameters:
+      - name: name
+        in: query
+        required: true
+        schema:
+          type: string
+        description: Unique name for the agent
+        example: my-research-agent
+      responses:
+        '200':
+          description: Agent created with API key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentWithApiKey'
+        '409':
+          description: Agent with that name already exists
+components:
+  schemas:
+    Agent:
+      type: object
+      properties:
+        agent_id:
+          type: string
+          format: uuid
+        agent_email:
+          type: string
+        api_key_label:
+          type: string
+          nullable: true
+      required:
+      - agent_id
+      - agent_email
+    AgentWithApiKey:
+      type: object
+      properties:
+        agent_id:
+          type: string
+          format: uuid
+        agent_email:
+          type: string
+        agent_api_key:
+          type: string
+      required:
+      - agent_id
+      - agent_email
+      - agent_api_key
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Bearer token authentication for self-hosted instances
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-Api-Key
+      description: API key authentication for Cognee Cloud deployments
+externalDocs:
+  description: Cognee API Reference
+  url: https://docs.cognee.ai/api-reference/introduction

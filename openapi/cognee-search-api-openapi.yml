@@ -1,0 +1,245 @@
+openapi: 3.0.3
+info:
+  title: Cognee REST agents search API
+  description: 'The Cognee REST API provides endpoints for the complete AI memory lifecycle, including data ingestion, knowledge graph construction, and semantic retrieval. Core endpoints cover adding raw text or documents, triggering the cognify pipeline that extracts entities and relationships via LLM, executing multi-mode search queries, managing datasets, and creating agent identities. The API uses X-Api-Key header authentication for cloud deployments and Bearer token auth for self-hosted instances.
+
+    '
+  version: 1.0.0
+  contact:
+    name: Cognee Support
+    url: https://docs.cognee.ai/api-reference/introduction
+  license:
+    name: Apache 2.0
+    url: https://github.com/topoteretes/cognee/blob/main/LICENSE
+servers:
+- url: https://api.cognee.ai
+  description: Cognee Cloud (managed)
+- url: http://localhost:8000
+  description: Self-hosted (Docker / local)
+security:
+- BearerAuth: []
+- ApiKeyAuth: []
+tags:
+- name: search
+  description: Semantic and graph search queries
+paths:
+  /api/v1/search:
+    get:
+      operationId: getSearchHistory
+      summary: Get search history for the authenticated user
+      description: 'Retrieves the search history for the authenticated user, returning a list of previously executed searches with their timestamps.
+
+        '
+      tags:
+      - search
+      security:
+      - BearerAuth: []
+      - ApiKeyAuth: []
+      responses:
+        '200':
+          description: List of search history items
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SearchHistoryItem'
+        '403':
+          description: Permission denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      operationId: search
+      summary: Search the knowledge graph
+      description: 'Perform semantic search across the knowledge graph using one of 16 search types including GRAPH_COMPLETION, RAG_COMPLETION, SUMMARIES, CHUNKS, CYPHER, TEMPORAL, AGENTIC_COMPLETION and more. Supports dataset scoping and pagination.
+
+        '
+      tags:
+      - search
+      security:
+      - BearerAuth: []
+      - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SearchPayload'
+            example:
+              search_type: GRAPH_COMPLETION
+              query: What are the main topics in the research papers?
+              datasets:
+              - research_papers
+              top_k: 10
+              only_context: false
+      responses:
+        '200':
+          description: List of search results from the knowledge graph
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SearchResult'
+        '403':
+          description: Permission denied (returns empty list)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error or search prerequisites not met
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+components:
+  schemas:
+    SearchResult:
+      type: object
+      description: A single result node from the knowledge graph
+      additionalProperties: true
+    SearchType:
+      type: string
+      enum:
+      - SUMMARIES
+      - CHUNKS
+      - RAG_COMPLETION
+      - TRIPLET_COMPLETION
+      - GRAPH_COMPLETION
+      - GRAPH_COMPLETION_DECOMPOSITION
+      - GRAPH_SUMMARY_COMPLETION
+      - CYPHER
+      - NATURAL_LANGUAGE
+      - GRAPH_COMPLETION_COT
+      - GRAPH_COMPLETION_CONTEXT_EXTENSION
+      - FEELING_LUCKY
+      - TEMPORAL
+      - CODING_RULES
+      - CHUNKS_LEXICAL
+      - AGENTIC_COMPLETION
+      description: Type of search to perform against the knowledge graph
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Short error message
+        detail:
+          type: string
+          nullable: true
+          description: Detailed error description
+      required:
+      - error
+    SearchPayload:
+      type: object
+      required:
+      - query
+      properties:
+        search_type:
+          $ref: '#/components/schemas/SearchType'
+          default: GRAPH_COMPLETION
+        datasets:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: Dataset names to search (resolved to datasets owned by caller)
+        dataset_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          nullable: true
+          description: Dataset UUIDs to search (allows cross-user access if permitted)
+          example: []
+        query:
+          type: string
+          description: The search query string
+          default: What is in the document?
+        system_prompt:
+          type: string
+          nullable: true
+          description: System prompt for completion-type searches
+          default: Answer the question using the provided context. Be as brief as possible.
+        node_name:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: Filter results to specific node_sets from the add pipeline
+        top_k:
+          type: integer
+          nullable: true
+          description: Maximum number of results to return
+          default: 10
+        only_context:
+          type: boolean
+          description: Return only context without LLM completion call
+          default: false
+        verbose:
+          type: boolean
+          description: Return verbose results
+          default: false
+        skills:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: Skills to enable for agentic search
+        tools:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: Tools to enable for agentic search
+        max_iter:
+          type: integer
+          nullable: true
+          description: Maximum iterations for agentic search
+    SearchHistoryItem:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        text:
+          type: string
+        user:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+      required:
+      - id
+      - text
+      - user
+      - created_at
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Bearer token authentication for self-hosted instances
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-Api-Key
+      description: API key authentication for Cognee Cloud deployments
+externalDocs:
+  description: Cognee API Reference
+  url: https://docs.cognee.ai/api-reference/introduction

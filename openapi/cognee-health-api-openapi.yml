@@ -1,0 +1,100 @@
+openapi: 3.0.3
+info:
+  title: Cognee REST agents health API
+  description: 'The Cognee REST API provides endpoints for the complete AI memory lifecycle, including data ingestion, knowledge graph construction, and semantic retrieval. Core endpoints cover adding raw text or documents, triggering the cognify pipeline that extracts entities and relationships via LLM, executing multi-mode search queries, managing datasets, and creating agent identities. The API uses X-Api-Key header authentication for cloud deployments and Bearer token auth for self-hosted instances.
+
+    '
+  version: 1.0.0
+  contact:
+    name: Cognee Support
+    url: https://docs.cognee.ai/api-reference/introduction
+  license:
+    name: Apache 2.0
+    url: https://github.com/topoteretes/cognee/blob/main/LICENSE
+servers:
+- url: https://api.cognee.ai
+  description: Cognee Cloud (managed)
+- url: http://localhost:8000
+  description: Self-hosted (Docker / local)
+security:
+- BearerAuth: []
+- ApiKeyAuth: []
+tags:
+- name: health
+  description: Service health probes
+paths:
+  /api/v1/health:
+    get:
+      operationId: healthCheck
+      summary: Liveness/readiness health check
+      description: 'Basic health probe returning system readiness and version. Returns 503 when the service is unhealthy.
+
+        '
+      tags:
+      - health
+      responses:
+        '200':
+          description: Service is healthy and ready
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+        '503':
+          description: Service is not ready
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+  /api/v1/health/detailed:
+    get:
+      operationId: detailedHealthCheck
+      summary: Detailed health check with component status
+      description: 'Comprehensive health status including per-component details. Returns 503 when any component is unhealthy or degraded.
+
+        '
+      tags:
+      - health
+      responses:
+        '200':
+          description: Detailed health status
+          content:
+            application/json:
+              schema:
+                type: object
+        '503':
+          description: One or more components unhealthy
+components:
+  schemas:
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum:
+          - ready
+          - not ready
+        health:
+          type: string
+          enum:
+          - healthy
+          - unhealthy
+          - degraded
+        version:
+          type: string
+      required:
+      - status
+      - health
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Bearer token authentication for self-hosted instances
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-Api-Key
+      description: API key authentication for Cognee Cloud deployments
+externalDocs:
+  description: Cognee API Reference
+  url: https://docs.cognee.ai/api-reference/introduction

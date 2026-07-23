@@ -1,0 +1,142 @@
+openapi: 3.0.3
+info:
+  title: Cognee REST agents settings API
+  description: 'The Cognee REST API provides endpoints for the complete AI memory lifecycle, including data ingestion, knowledge graph construction, and semantic retrieval. Core endpoints cover adding raw text or documents, triggering the cognify pipeline that extracts entities and relationships via LLM, executing multi-mode search queries, managing datasets, and creating agent identities. The API uses X-Api-Key header authentication for cloud deployments and Bearer token auth for self-hosted instances.
+
+    '
+  version: 1.0.0
+  contact:
+    name: Cognee Support
+    url: https://docs.cognee.ai/api-reference/introduction
+  license:
+    name: Apache 2.0
+    url: https://github.com/topoteretes/cognee/blob/main/LICENSE
+servers:
+- url: https://api.cognee.ai
+  description: Cognee Cloud (managed)
+- url: http://localhost:8000
+  description: Self-hosted (Docker / local)
+security:
+- BearerAuth: []
+- ApiKeyAuth: []
+tags:
+- name: settings
+  description: System configuration (LLM and vector DB)
+paths:
+  /api/v1/settings:
+    get:
+      operationId: getSettings
+      summary: Get current system settings
+      description: 'Retrieves the current configuration for LLM provider and vector database. Supports openai, ollama, anthropic, gemini, mistral for LLM and lancedb, chromadb, pgvector for vector DB.
+
+        '
+      tags:
+      - settings
+      security:
+      - BearerAuth: []
+      - ApiKeyAuth: []
+      responses:
+        '200':
+          description: Current system settings
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Settings'
+    post:
+      operationId: saveSettings
+      summary: Save or update system settings
+      description: 'Updates LLM provider configuration and/or vector database configuration. Partial updates are supported — only the provided fields are changed.
+
+        '
+      tags:
+      - settings
+      security:
+      - BearerAuth: []
+      - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SettingsPayload'
+            example:
+              llm:
+                provider: openai
+                model: gpt-4o
+                api_key: sk-...
+              vector_db:
+                provider: lancedb
+                url: /var/lancedb
+                api_key: ''
+      responses:
+        '200':
+          description: Settings saved
+components:
+  schemas:
+    SettingsPayload:
+      type: object
+      properties:
+        llm:
+          $ref: '#/components/schemas/LLMConfig'
+        vector_db:
+          $ref: '#/components/schemas/VectorDBConfig'
+    VectorDBConfig:
+      type: object
+      properties:
+        provider:
+          type: string
+          enum:
+          - lancedb
+          - chromadb
+          - pgvector
+        url:
+          type: string
+        api_key:
+          type: string
+      required:
+      - provider
+      - url
+      - api_key
+    Settings:
+      type: object
+      properties:
+        llm:
+          $ref: '#/components/schemas/LLMConfig'
+        vector_db:
+          $ref: '#/components/schemas/VectorDBConfig'
+      required:
+      - llm
+      - vector_db
+    LLMConfig:
+      type: object
+      properties:
+        provider:
+          type: string
+          enum:
+          - openai
+          - ollama
+          - anthropic
+          - gemini
+          - mistral
+        model:
+          type: string
+        api_key:
+          type: string
+      required:
+      - provider
+      - model
+      - api_key
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Bearer token authentication for self-hosted instances
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-Api-Key
+      description: API key authentication for Cognee Cloud deployments
+externalDocs:
+  description: Cognee API Reference
+  url: https://docs.cognee.ai/api-reference/introduction
