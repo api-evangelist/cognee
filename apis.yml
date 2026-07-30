@@ -11,7 +11,20 @@ description: >
   cloud service on AWS, GCP, and Azure, or as a self-hosted deployment via Docker, Modal,
   Railway, Fly.io, and Render.
 type: Index
-image: https://kinlane-images.s3.amazonaws.com/shared/apis-json/apis-json-logo.jpg
+accessModel:
+  pricing: freemium
+  onboarding: self-serve
+  trial: false
+  try_now: true
+  public: false
+  label: Freemium · Self-serve signup
+  confidence: high
+  source:
+  - plans
+  - authentication
+  generated: '2026-07-22'
+  method: derived
+image: https://kinlane-images.s3.amazonaws.com/shared/apis-json/icons/cognee.png
 url: https://raw.githubusercontent.com/api-evangelist/cognee/refs/heads/main/apis.yml
 created: "2026-06-12"
 modified: "2026-06-12"
@@ -28,31 +41,104 @@ tags:
   - Open Source
 
 apis:
-  - name: Cognee REST API
-    description: >
-      The Cognee REST API provides endpoints for the complete AI memory lifecycle, including
-      data ingestion, knowledge graph construction, and semantic retrieval. Core endpoints
-      cover adding raw text or documents, triggering the cognify pipeline that extracts
-      entities and relationships via LLM, executing multi-mode search queries, managing
-      datasets, and creating agent identities. The API uses X-Api-Key header authentication
-      for cloud deployments and Bearer token auth for self-hosted instances.
-    image: https://kinlane-images.s3.amazonaws.com/shared/apis-json/apis-json-logo.jpg
-    humanURL: https://docs.cognee.ai/api-reference/introduction
-    baseURL: https://api.cognee.ai
-    tags:
-      - AI Memory
-      - Knowledge Graph
-      - REST API
-    properties:
-      - type: Documentation
-        url: https://docs.cognee.ai/api-reference/introduction
-      - type: OpenAPI
-        url: https://api.cognee.ai/docs
-      - type: SwaggerUI
-        url: https://api.cognee.ai/docs
-      - type: OpenAPI
-        url: openapi/cognee-rest-api-openapi.yml
-
+- aid: cognee:cognee-agents-api
+  name: Cognee agents API
+  description: AI agent identity management
+  humanURL: https://docs.cognee.ai/api-reference/introduction
+  baseURL: https://api.cognee.ai
+  tags:
+  - agents
+  properties:
+  - type: OpenAPI
+    url: openapi/cognee-agents-api-openapi.yml
+  - type: Documentation
+    url: https://docs.cognee.ai/api-reference/introduction
+  - type: SwaggerUI
+    url: https://api.cognee.ai/docs
+- aid: cognee:cognee-cognify-api
+  name: Cognee cognify API
+  description: Knowledge graph construction pipeline
+  humanURL: https://docs.cognee.ai/api-reference/introduction
+  baseURL: https://api.cognee.ai
+  tags:
+  - cognify
+  properties:
+  - type: OpenAPI
+    url: openapi/cognee-cognify-api-openapi.yml
+  - type: Documentation
+    url: https://docs.cognee.ai/api-reference/introduction
+  - type: SwaggerUI
+    url: https://api.cognee.ai/docs
+- aid: cognee:cognee-data-api
+  name: Cognee data API
+  description: Data ingestion and deletion operations
+  humanURL: https://docs.cognee.ai/api-reference/introduction
+  baseURL: https://api.cognee.ai
+  tags:
+  - data
+  properties:
+  - type: OpenAPI
+    url: openapi/cognee-data-api-openapi.yml
+  - type: Documentation
+    url: https://docs.cognee.ai/api-reference/introduction
+  - type: SwaggerUI
+    url: https://api.cognee.ai/docs
+- aid: cognee:cognee-datasets-api
+  name: Cognee datasets API
+  description: Dataset management and introspection
+  humanURL: https://docs.cognee.ai/api-reference/introduction
+  baseURL: https://api.cognee.ai
+  tags:
+  - datasets
+  properties:
+  - type: OpenAPI
+    url: openapi/cognee-datasets-api-openapi.yml
+  - type: Documentation
+    url: https://docs.cognee.ai/api-reference/introduction
+  - type: SwaggerUI
+    url: https://api.cognee.ai/docs
+- aid: cognee:cognee-health-api
+  name: Cognee health API
+  description: Service health probes
+  humanURL: https://docs.cognee.ai/api-reference/introduction
+  baseURL: https://api.cognee.ai
+  tags:
+  - health
+  properties:
+  - type: OpenAPI
+    url: openapi/cognee-health-api-openapi.yml
+  - type: Documentation
+    url: https://docs.cognee.ai/api-reference/introduction
+  - type: SwaggerUI
+    url: https://api.cognee.ai/docs
+- aid: cognee:cognee-search-api
+  name: Cognee search API
+  description: Semantic and graph search queries
+  humanURL: https://docs.cognee.ai/api-reference/introduction
+  baseURL: https://api.cognee.ai
+  tags:
+  - search
+  properties:
+  - type: OpenAPI
+    url: openapi/cognee-search-api-openapi.yml
+  - type: Documentation
+    url: https://docs.cognee.ai/api-reference/introduction
+  - type: SwaggerUI
+    url: https://api.cognee.ai/docs
+- aid: cognee:cognee-settings-api
+  name: Cognee settings API
+  description: System configuration (LLM and vector DB)
+  humanURL: https://docs.cognee.ai/api-reference/introduction
+  baseURL: https://api.cognee.ai
+  tags:
+  - settings
+  properties:
+  - type: OpenAPI
+    url: openapi/cognee-settings-api-openapi.yml
+  - type: Documentation
+    url: https://docs.cognee.ai/api-reference/introduction
+  - type: SwaggerUI
+    url: https://api.cognee.ai/docs
 common:
   - type: AgenticAccess
     url: agentic-access/cognee-agentic-access.yml
