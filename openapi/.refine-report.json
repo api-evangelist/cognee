@@ -1,0 +1,26 @@
+{
+  "provider": "cognee",
+  "sources": [
+    "cognee-agents-api-openapi.yml",
+    "cognee-cognify-api-openapi.yml",
+    "cognee-data-api-openapi.yml",
+    "cognee-datasets-api-openapi.yml",
+    "cognee-health-api-openapi.yml",
+    "cognee-search-api-openapi.yml",
+    "cognee-settings-api-openapi.yml"
+  ],
+  "outputs": [
+    "cognee-agents-api-openapi.yml",
+    "cognee-cognify-api-openapi.yml",
+    "cognee-data-api-openapi.yml",
+    "cognee-datasets-api-openapi.yml",
+    "cognee-health-api-openapi.yml",
+    "cognee-search-api-openapi.yml",
+    "cognee-settings-api-openapi.yml"
+  ],
+  "archived": [],
+  "errors": [],
+  "warnings": [],
+  "notes": [],
+  "skipped": []
+}
