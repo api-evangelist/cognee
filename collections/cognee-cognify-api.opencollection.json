@@ -1,0 +1,62 @@
+{
+  "opencollection": "1.0.0",
+  "info": {
+    "name": "Cognee REST agents cognify API",
+    "version": "1.0.0"
+  },
+  "request": {
+    "auth": {
+      "type": "bearer",
+      "token": "{{bearerToken}}"
+    }
+  },
+  "items": [
+    {
+      "info": {
+        "name": "cognify",
+        "type": "folder"
+      },
+      "items": [
+        {
+          "info": {
+            "name": "Transform datasets into knowledge graphs",
+            "type": "http"
+          },
+          "http": {
+            "method": "POST",
+            "url": "https://api.cognee.ai/api/v1/cognify",
+            "body": {
+              "type": "json",
+              "data": "{}"
+            },
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Core intelligence endpoint that converts raw data into semantic knowledge graphs. Performs document classification, text chunking, entity extraction via LLM, relationship detection, vector embedding generation, and content summarization.\n"
+        },
+        {
+          "info": {
+            "name": "Subscribe to cognify pipeline progress via WebSocket",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://api.cognee.ai/api/v1/cognify/subscribe/:pipeline_run_id",
+            "params": [
+              {
+                "name": "pipeline_run_id",
+                "value": "",
+                "type": "path",
+                "description": "UUID of the pipeline run to subscribe to"
+              }
+            ]
+          },
+          "docs": "WebSocket endpoint to receive real-time pipeline run events. Sends JSON messages with pipeline_run_id, status, and graph payload until the run completes or the client disconnects.\n"
+        }
+      ]
+    }
+  ],
+  "bundled": true
+}

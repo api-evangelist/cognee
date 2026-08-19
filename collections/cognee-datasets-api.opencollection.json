@@ -1,0 +1,279 @@
+{
+  "opencollection": "1.0.0",
+  "info": {
+    "name": "Cognee REST agents datasets API",
+    "version": "1.0.0"
+  },
+  "request": {
+    "auth": {
+      "type": "bearer",
+      "token": "{{bearerToken}}"
+    }
+  },
+  "items": [
+    {
+      "info": {
+        "name": "datasets",
+        "type": "folder"
+      },
+      "items": [
+        {
+          "info": {
+            "name": "List all accessible datasets",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://api.cognee.ai/api/v1/datasets",
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Retrieves all datasets the authenticated user has read permission for, including metadata such as ID, name, creation time, and owner.\n"
+        },
+        {
+          "info": {
+            "name": "Create a new dataset",
+            "type": "http"
+          },
+          "http": {
+            "method": "POST",
+            "url": "https://api.cognee.ai/api/v1/datasets",
+            "body": {
+              "type": "json",
+              "data": "{}"
+            },
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Creates a new dataset with the specified name. If a dataset with the same name already exists for the user, returns the existing dataset. The user is automatically granted all permissions on the created dataset.\n"
+        },
+        {
+          "info": {
+            "name": "Delete all user datasets",
+            "type": "http"
+          },
+          "http": {
+            "method": "DELETE",
+            "url": "https://api.cognee.ai/api/v1/datasets",
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Permanently deletes all datasets and associated data owned by the authenticated user. If no datasets exist, this operation is a no-op.\n"
+        },
+        {
+          "info": {
+            "name": "Get dataset processing status",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://api.cognee.ai/api/v1/datasets/status",
+            "params": [
+              {
+                "name": "dataset",
+                "value": "",
+                "type": "query",
+                "description": "List of dataset UUIDs to check"
+              },
+              {
+                "name": "pipeline",
+                "value": "",
+                "type": "query",
+                "description": "Pipeline names to check (default cognify_pipeline)"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Retrieves the current processing status for one or more datasets. If one pipeline is specified, returns a flat {dataset_id: status} map. If multiple pipelines are specified, returns a nested {dataset_id: {pipeline: status}} map.\n"
+        },
+        {
+          "info": {
+            "name": "Delete a dataset by ID",
+            "type": "http"
+          },
+          "http": {
+            "method": "DELETE",
+            "url": "https://api.cognee.ai/api/v1/datasets/:dataset_id",
+            "params": [
+              {
+                "name": "dataset_id",
+                "value": "",
+                "type": "path",
+                "description": "Unique identifier of the dataset"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Permanently deletes a dataset and all its associated data. Requires delete permissions on the dataset.\n"
+        },
+        {
+          "info": {
+            "name": "List all data items in a dataset",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://api.cognee.ai/api/v1/datasets/:dataset_id/data",
+            "params": [
+              {
+                "name": "dataset_id",
+                "value": "",
+                "type": "path",
+                "description": "Unique identifier of the dataset"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Returns metadata for all data items (documents, files, etc.) in the specified dataset. Each item includes name, type, MIME type, and storage location.\n"
+        },
+        {
+          "info": {
+            "name": "Delete a specific data item from a dataset",
+            "type": "http"
+          },
+          "http": {
+            "method": "DELETE",
+            "url": "https://api.cognee.ai/api/v1/datasets/:dataset_id/data/:data_id",
+            "params": [
+              {
+                "name": "dataset_id",
+                "value": "",
+                "type": "path",
+                "description": "Unique identifier of the dataset"
+              },
+              {
+                "name": "data_id",
+                "value": "",
+                "type": "path",
+                "description": "Unique identifier of the data item"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Removes a specific data item from a dataset while keeping the dataset intact. Requires delete permissions on the dataset.\n"
+        },
+        {
+          "info": {
+            "name": "Download the raw data file for a data item",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://api.cognee.ai/api/v1/datasets/:dataset_id/data/:data_id/raw",
+            "params": [
+              {
+                "name": "dataset_id",
+                "value": "",
+                "type": "path",
+                "description": "Unique identifier of the dataset"
+              },
+              {
+                "name": "data_id",
+                "value": "",
+                "type": "path",
+                "description": "Unique identifier of the data item"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Returns the original unprocessed data file for a specific data item. Supports local filesystem and S3 storage backends.\n"
+        },
+        {
+          "info": {
+            "name": "Get knowledge graph for a dataset",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://api.cognee.ai/api/v1/datasets/:dataset_id/graph",
+            "params": [
+              {
+                "name": "dataset_id",
+                "value": "",
+                "type": "path",
+                "description": "Unique identifier of the dataset"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Retrieves the knowledge graph visualization data for a specific dataset, including all nodes and edges representing entity relationships.\n"
+        },
+        {
+          "info": {
+            "name": "Get graph schema for a dataset",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://api.cognee.ai/api/v1/datasets/:dataset_id/schema",
+            "params": [
+              {
+                "name": "dataset_id",
+                "value": "",
+                "type": "path",
+                "description": "Unique identifier of the dataset"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Returns the stored graph schema and custom prompt for a dataset."
+        },
+        {
+          "info": {
+            "name": "Update graph schema for a dataset",
+            "type": "http"
+          },
+          "http": {
+            "method": "PUT",
+            "url": "https://api.cognee.ai/api/v1/datasets/:dataset_id/schema",
+            "params": [
+              {
+                "name": "dataset_id",
+                "value": "",
+                "type": "path",
+                "description": "Unique identifier of the dataset"
+              }
+            ],
+            "body": {
+              "type": "json",
+              "data": "{}"
+            },
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Store or update the graph schema and custom prompt for a dataset. Requires write permissions on the dataset.\n"
+        }
+      ]
+    }
+  ],
+  "bundled": true
+}

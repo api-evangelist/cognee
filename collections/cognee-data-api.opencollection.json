@@ -1,0 +1,69 @@
+{
+  "opencollection": "1.0.0",
+  "info": {
+    "name": "Cognee REST agents data API",
+    "version": "1.0.0"
+  },
+  "request": {
+    "auth": {
+      "type": "bearer",
+      "token": "{{bearerToken}}"
+    }
+  },
+  "items": [
+    {
+      "info": {
+        "name": "data",
+        "type": "folder"
+      },
+      "items": [
+        {
+          "info": {
+            "name": "Add data to a dataset",
+            "type": "http"
+          },
+          "http": {
+            "method": "POST",
+            "url": "https://api.cognee.ai/api/v1/add",
+            "body": {
+              "type": "multipart-form",
+              "data": [
+                {
+                  "name": "data",
+                  "type": "text",
+                  "value": ""
+                },
+                {
+                  "name": "datasetName",
+                  "type": "text",
+                  "value": ""
+                },
+                {
+                  "name": "datasetId",
+                  "type": "text",
+                  "value": ""
+                },
+                {
+                  "name": "node_set",
+                  "type": "text",
+                  "value": ""
+                },
+                {
+                  "name": "run_in_background",
+                  "type": "text",
+                  "value": ""
+                }
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Add data to a dataset for processing and knowledge graph construction. Accepts files, HTTP URLs (if ALLOW_HTTP_REQUESTS is enabled), or GitHub repository URLs. Either datasetName or datasetId must be provided.\n"
+        }
+      ]
+    }
+  ],
+  "bundled": true
+}

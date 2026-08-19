@@ -1,0 +1,46 @@
+{
+  "opencollection": "1.0.0",
+  "info": {
+    "name": "Cognee REST agents health API",
+    "version": "1.0.0"
+  },
+  "request": {
+    "auth": {
+      "type": "bearer",
+      "token": "{{bearerToken}}"
+    }
+  },
+  "items": [
+    {
+      "info": {
+        "name": "health",
+        "type": "folder"
+      },
+      "items": [
+        {
+          "info": {
+            "name": "Liveness/readiness health check",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://api.cognee.ai/api/v1/health"
+          },
+          "docs": "Basic health probe returning system readiness and version. Returns 503 when the service is unhealthy.\n"
+        },
+        {
+          "info": {
+            "name": "Detailed health check with component status",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://api.cognee.ai/api/v1/health/detailed"
+          },
+          "docs": "Comprehensive health status including per-component details. Returns 503 when any component is unhealthy or degraded.\n"
+        }
+      ]
+    }
+  ],
+  "bundled": true
+}

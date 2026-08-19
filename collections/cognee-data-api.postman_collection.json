@@ -1,0 +1,595 @@
+{
+  "item": [
+    {
+      "id": "1adc2161-598a-49e3-aa63-1d23b0114f27",
+      "name": "data",
+      "description": {
+        "content": "Data ingestion and deletion operations",
+        "type": "text/plain"
+      },
+      "item": [
+        {
+          "id": "2736b63d-50c5-4b6f-afac-9807f926307b",
+          "name": "Add data to a dataset",
+          "request": {
+            "name": "Add data to a dataset",
+            "description": {
+              "content": "Add data to a dataset for processing and knowledge graph construction. Accepts files, HTTP URLs (if ALLOW_HTTP_REQUESTS is enabled), or GitHub repository URLs. Either datasetName or datasetId must be provided.\n",
+              "type": "text/plain"
+            },
+            "url": {
+              "path": [
+                "api",
+                "v1",
+                "add"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "multipart/form-data"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{bearerToken}}"
+                }
+              ]
+            },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "data",
+                  "value": "[\"<binary>\",\"<binary>\"]",
+                  "type": "text",
+                  "description": "List of files or URLs to upload"
+                },
+                {
+                  "key": "datasetName",
+                  "value": "<string>",
+                  "type": "text",
+                  "description": "Name of the target dataset"
+                },
+                {
+                  "key": "datasetId",
+                  "value": "<uuid>",
+                  "type": "text",
+                  "description": "UUID of an existing dataset"
+                },
+                {
+                  "key": "node_set",
+                  "value": "[\"\"]",
+                  "type": "text",
+                  "description": "Node identifiers for graph organization and access control"
+                },
+                {
+                  "key": "run_in_background",
+                  "value": "false",
+                  "type": "text",
+                  "description": "Run add pipeline asynchronously"
+                }
+              ]
+            }
+          },
+          "response": [
+            {
+              "id": "1ae57e03-8c66-468c-980a-e4205946e252",
+              "name": "Data added successfully",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "v1",
+                    "add"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "formdata",
+                  "formdata": [
+                    {
+                      "description": {
+                        "content": "List of files or URLs to upload",
+                        "type": "text/plain"
+                      },
+                      "key": "data",
+                      "value": "[\"<binary>\",\"<binary>\"]",
+                      "type": "text"
+                    },
+                    {
+                      "description": {
+                        "content": "Name of the target dataset",
+                        "type": "text/plain"
+                      },
+                      "key": "datasetName",
+                      "value": "research_papers",
+                      "type": "text"
+                    },
+                    {
+                      "description": {
+                        "content": "UUID of an existing dataset",
+                        "type": "text/plain"
+                      },
+                      "key": "datasetId",
+                      "value": "<uuid>",
+                      "type": "text"
+                    },
+                    {
+                      "description": {
+                        "content": "Node identifiers for graph organization and access control",
+                        "type": "text/plain"
+                      },
+                      "key": "node_set",
+                      "value": "[\"\"]",
+                      "type": "text"
+                    },
+                    {
+                      "description": {
+                        "content": "Run add pipeline asynchronously",
+                        "type": "text/plain"
+                      },
+                      "key": "run_in_background",
+                      "value": "false",
+                      "type": "text"
+                    }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "9e3396ac-b80f-46e0-bbce-dd0ebc2c89c9",
+              "name": "Neither datasetId nor datasetName provided",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "v1",
+                    "add"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "formdata",
+                  "formdata": [
+                    {
+                      "description": {
+                        "content": "List of files or URLs to upload",
+                        "type": "text/plain"
+                      },
+                      "key": "data",
+                      "value": "[\"<binary>\",\"<binary>\"]",
+                      "type": "text"
+                    },
+                    {
+                      "description": {
+                        "content": "Name of the target dataset",
+                        "type": "text/plain"
+                      },
+                      "key": "datasetName",
+                      "value": "research_papers",
+                      "type": "text"
+                    },
+                    {
+                      "description": {
+                        "content": "UUID of an existing dataset",
+                        "type": "text/plain"
+                      },
+                      "key": "datasetId",
+                      "value": "<uuid>",
+                      "type": "text"
+                    },
+                    {
+                      "description": {
+                        "content": "Node identifiers for graph organization and access control",
+                        "type": "text/plain"
+                      },
+                      "key": "node_set",
+                      "value": "[\"\"]",
+                      "type": "text"
+                    },
+                    {
+                      "description": {
+                        "content": "Run add pipeline asynchronously",
+                        "type": "text/plain"
+                      },
+                      "key": "run_in_background",
+                      "value": "false",
+                      "type": "text"
+                    }
+                  ]
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"error\": \"string\",\n  \"detail\": \"string\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "1ba59cb9-74b9-4802-8013-60690a274992",
+              "name": "User does not have permission to add to dataset",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "v1",
+                    "add"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "formdata",
+                  "formdata": [
+                    {
+                      "description": {
+                        "content": "List of files or URLs to upload",
+                        "type": "text/plain"
+                      },
+                      "key": "data",
+                      "value": "[\"<binary>\",\"<binary>\"]",
+                      "type": "text"
+                    },
+                    {
+                      "description": {
+                        "content": "Name of the target dataset",
+                        "type": "text/plain"
+                      },
+                      "key": "datasetName",
+                      "value": "research_papers",
+                      "type": "text"
+                    },
+                    {
+                      "description": {
+                        "content": "UUID of an existing dataset",
+                        "type": "text/plain"
+                      },
+                      "key": "datasetId",
+                      "value": "<uuid>",
+                      "type": "text"
+                    },
+                    {
+                      "description": {
+                        "content": "Node identifiers for graph organization and access control",
+                        "type": "text/plain"
+                      },
+                      "key": "node_set",
+                      "value": "[\"\"]",
+                      "type": "text"
+                    },
+                    {
+                      "description": {
+                        "content": "Run add pipeline asynchronously",
+                        "type": "text/plain"
+                      },
+                      "key": "run_in_background",
+                      "value": "false",
+                      "type": "text"
+                    }
+                  ]
+                }
+              },
+              "status": "Forbidden",
+              "code": 403,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"error\": \"string\",\n  \"detail\": \"string\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "084e81f9-31cb-4bdd-9ed6-76be67067a53",
+              "name": "Validation error",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "v1",
+                    "add"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "formdata",
+                  "formdata": [
+                    {
+                      "description": {
+                        "content": "List of files or URLs to upload",
+                        "type": "text/plain"
+                      },
+                      "key": "data",
+                      "value": "[\"<binary>\",\"<binary>\"]",
+                      "type": "text"
+                    },
+                    {
+                      "description": {
+                        "content": "Name of the target dataset",
+                        "type": "text/plain"
+                      },
+                      "key": "datasetName",
+                      "value": "research_papers",
+                      "type": "text"
+                    },
+                    {
+                      "description": {
+                        "content": "UUID of an existing dataset",
+                        "type": "text/plain"
+                      },
+                      "key": "datasetId",
+                      "value": "<uuid>",
+                      "type": "text"
+                    },
+                    {
+                      "description": {
+                        "content": "Node identifiers for graph organization and access control",
+                        "type": "text/plain"
+                      },
+                      "key": "node_set",
+                      "value": "[\"\"]",
+                      "type": "text"
+                    },
+                    {
+                      "description": {
+                        "content": "Run add pipeline asynchronously",
+                        "type": "text/plain"
+                      },
+                      "key": "run_in_background",
+                      "value": "false",
+                      "type": "text"
+                    }
+                  ]
+                }
+              },
+              "status": "Unprocessable Entity (WebDAV) (RFC 4918)",
+              "code": 422,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"error\": \"string\",\n  \"detail\": \"string\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "f82c02f3-2403-44ec-b0ff-d6727c1dbe54",
+              "name": "Internal server error or pipeline failure",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "v1",
+                    "add"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "formdata",
+                  "formdata": [
+                    {
+                      "description": {
+                        "content": "List of files or URLs to upload",
+                        "type": "text/plain"
+                      },
+                      "key": "data",
+                      "value": "[\"<binary>\",\"<binary>\"]",
+                      "type": "text"
+                    },
+                    {
+                      "description": {
+                        "content": "Name of the target dataset",
+                        "type": "text/plain"
+                      },
+                      "key": "datasetName",
+                      "value": "research_papers",
+                      "type": "text"
+                    },
+                    {
+                      "description": {
+                        "content": "UUID of an existing dataset",
+                        "type": "text/plain"
+                      },
+                      "key": "datasetId",
+                      "value": "<uuid>",
+                      "type": "text"
+                    },
+                    {
+                      "description": {
+                        "content": "Node identifiers for graph organization and access control",
+                        "type": "text/plain"
+                      },
+                      "key": "node_set",
+                      "value": "[\"\"]",
+                      "type": "text"
+                    },
+                    {
+                      "description": {
+                        "content": "Run add pipeline asynchronously",
+                        "type": "text/plain"
+                      },
+                      "key": "run_in_background",
+                      "value": "false",
+                      "type": "text"
+                    }
+                  ]
+                }
+              },
+              "status": "Internal Server Error",
+              "code": 500,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"error\": \"string\",\n  \"detail\": \"string\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            }
+          ],
+          "event": [],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          }
+        }
+      ],
+      "event": []
+    }
+  ],
+  "event": [],
+  "variable": [
+    {
+      "type": "string",
+      "value": "https://api.cognee.ai",
+      "key": "baseUrl"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{bearerToken}}"
+      }
+    ]
+  },
+  "info": {
+    "_postman_id": "efb43706-802b-4df1-8357-35fe45c52f7d",
+    "name": "Cognee REST agents data API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": {
+      "content": "The Cognee REST API provides endpoints for the complete AI memory lifecycle, including data ingestion, knowledge graph construction, and semantic retrieval. Core endpoints cover adding raw text or documents, triggering the cognify pipeline that extracts entities and relationships via LLM, executing multi-mode search queries, managing datasets, and creating agent identities. The API uses X-Api-Key header authentication for cloud deployments and Bearer token auth for self-hosted instances.\n\n\nContact Support:\n Name: Cognee Support",
+      "type": "text/plain"
+    }
+  }
+}

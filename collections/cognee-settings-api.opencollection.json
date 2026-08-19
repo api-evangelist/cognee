@@ -1,0 +1,58 @@
+{
+  "opencollection": "1.0.0",
+  "info": {
+    "name": "Cognee REST agents settings API",
+    "version": "1.0.0"
+  },
+  "request": {
+    "auth": {
+      "type": "bearer",
+      "token": "{{bearerToken}}"
+    }
+  },
+  "items": [
+    {
+      "info": {
+        "name": "settings",
+        "type": "folder"
+      },
+      "items": [
+        {
+          "info": {
+            "name": "Get current system settings",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://api.cognee.ai/api/v1/settings",
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Retrieves the current configuration for LLM provider and vector database. Supports openai, ollama, anthropic, gemini, mistral for LLM and lancedb, chromadb, pgvector for vector DB.\n"
+        },
+        {
+          "info": {
+            "name": "Save or update system settings",
+            "type": "http"
+          },
+          "http": {
+            "method": "POST",
+            "url": "https://api.cognee.ai/api/v1/settings",
+            "body": {
+              "type": "json",
+              "data": "{}"
+            },
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Updates LLM provider configuration and/or vector database configuration. Partial updates are supported — only the provided fields are changed.\n"
+        }
+      ]
+    }
+  ],
+  "bundled": true
+}

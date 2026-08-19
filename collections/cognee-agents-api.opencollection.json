@@ -1,0 +1,62 @@
+{
+  "opencollection": "1.0.0",
+  "info": {
+    "name": "Cognee REST agents API",
+    "version": "1.0.0"
+  },
+  "request": {
+    "auth": {
+      "type": "bearer",
+      "token": "{{bearerToken}}"
+    }
+  },
+  "items": [
+    {
+      "info": {
+        "name": "agents",
+        "type": "folder"
+      },
+      "items": [
+        {
+          "info": {
+            "name": "List all agent identities for the authenticated user",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://api.cognee.ai/api/v1/agents/list",
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Returns all AI agent identities created by the authenticated user."
+        },
+        {
+          "info": {
+            "name": "Create a new agent identity",
+            "type": "http"
+          },
+          "http": {
+            "method": "POST",
+            "url": "https://api.cognee.ai/api/v1/agents/create",
+            "params": [
+              {
+                "name": "name",
+                "value": "my-research-agent",
+                "type": "query",
+                "description": "Unique name for the agent"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Creates a new AI agent identity with a unique name. Returns the agent's ID, email, and API key for use in subsequent API calls.\n"
+        }
+      ]
+    }
+  ],
+  "bundled": true
+}

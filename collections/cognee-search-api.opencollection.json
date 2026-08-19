@@ -1,0 +1,58 @@
+{
+  "opencollection": "1.0.0",
+  "info": {
+    "name": "Cognee REST agents search API",
+    "version": "1.0.0"
+  },
+  "request": {
+    "auth": {
+      "type": "bearer",
+      "token": "{{bearerToken}}"
+    }
+  },
+  "items": [
+    {
+      "info": {
+        "name": "search",
+        "type": "folder"
+      },
+      "items": [
+        {
+          "info": {
+            "name": "Get search history for the authenticated user",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://api.cognee.ai/api/v1/search",
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Retrieves the search history for the authenticated user, returning a list of previously executed searches with their timestamps.\n"
+        },
+        {
+          "info": {
+            "name": "Search the knowledge graph",
+            "type": "http"
+          },
+          "http": {
+            "method": "POST",
+            "url": "https://api.cognee.ai/api/v1/search",
+            "body": {
+              "type": "json",
+              "data": "{}"
+            },
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Perform semantic search across the knowledge graph using one of 16 search types including GRAPH_COMPLETION, RAG_COMPLETION, SUMMARIES, CHUNKS, CYPHER, TEMPORAL, AGENTIC_COMPLETION and more. Supports dataset scoping and pagination.\n"
+        }
+      ]
+    }
+  ],
+  "bundled": true
+}
