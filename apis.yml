@@ -30,6 +30,16 @@ created: "2026-06-12"
 modified: "2026-06-12"
 specificationVersion: '0.23'
 tags:
+  - Artificial Intelligence
+  - Memory
+  - Knowledge Graph
+  - RAG
+  - Agents
+  - Graph Database
+  - Vector Search
+  - LLM
+  - Open-Source
+tags_raw:
   - AI
   - Memory
   - Knowledge Graph
@@ -47,6 +57,8 @@ apis:
   humanURL: https://docs.cognee.ai/api-reference/introduction
   baseURL: https://api.cognee.ai
   tags:
+  - Agents
+  tags_raw:
   - agents
   properties:
   - type: OpenAPI
@@ -75,6 +87,8 @@ apis:
   humanURL: https://docs.cognee.ai/api-reference/introduction
   baseURL: https://api.cognee.ai
   tags:
+  - Data
+  tags_raw:
   - data
   properties:
   - type: OpenAPI
@@ -89,6 +103,8 @@ apis:
   humanURL: https://docs.cognee.ai/api-reference/introduction
   baseURL: https://api.cognee.ai
   tags:
+  - Datasets
+  tags_raw:
   - datasets
   properties:
   - type: OpenAPI
@@ -103,6 +119,8 @@ apis:
   humanURL: https://docs.cognee.ai/api-reference/introduction
   baseURL: https://api.cognee.ai
   tags:
+  - Health
+  tags_raw:
   - health
   properties:
   - type: OpenAPI
@@ -117,6 +135,8 @@ apis:
   humanURL: https://docs.cognee.ai/api-reference/introduction
   baseURL: https://api.cognee.ai
   tags:
+  - Search
+  tags_raw:
   - search
   properties:
   - type: OpenAPI
@@ -131,6 +151,8 @@ apis:
   humanURL: https://docs.cognee.ai/api-reference/introduction
   baseURL: https://api.cognee.ai
   tags:
+  - Settings
+  tags_raw:
   - settings
   properties:
   - type: OpenAPI
