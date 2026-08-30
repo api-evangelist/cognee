@@ -225,8 +225,6 @@ common:
     url: vocabulary/cognee-vocabulary.yml
   - type: JSONLDContext
     url: json-ld/cognee-context.jsonld
-  - type: Blog
-    url: blogs/blogs.json
 
 maintainers:
   - FN: Kin Lane
