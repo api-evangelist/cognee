@@ -2,20 +2,21 @@
   "repo": "cognee",
   "feeds": [
     {
+      "source": "https://www.linkedin.com/company/cognee-ai",
+      "feed_url": "https://www.linkedin.com/company/cognee-ai",
+      "title": "",
+      "saved": 0,
+      "method": "none"
+    },
+    {
       "source": "https://aimemory.substack.com/feed",
       "feed_url": "https://aimemory.substack.com/feed",
       "title": "",
       "saved": 0,
-      "method": "feed",
-      "nature": "undetermined",
-      "nature_basis": null
-    },
-    {
-      "source": "https://www.linkedin.com/company/cognee-ai",
-      "error": "HTTPError"
+      "method": "feed"
     }
   ],
-  "fetched": "2026-08-30T22:33:40Z",
+  "fetched": "2026-09-06T19:17:18Z",
   "post_count": 8,
   "feed_nature": "undetermined",
   "feed_nature_basis": null,
