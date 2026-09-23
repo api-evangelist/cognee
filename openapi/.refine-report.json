@@ -1,13 +1,7 @@
 {
   "provider": "cognee",
   "sources": [
-    "cognee-agents-api-openapi.yml",
-    "cognee-cognify-api-openapi.yml",
-    "cognee-data-api-openapi.yml",
-    "cognee-datasets-api-openapi.yml",
-    "cognee-health-api-openapi.yml",
-    "cognee-search-api-openapi.yml",
-    "cognee-settings-api-openapi.yml"
+    "_original/cognee-rest-api-openapi.yml"
   ],
   "outputs": [
     "cognee-agents-api-openapi.yml",
@@ -21,6 +15,18 @@
   "archived": [],
   "errors": [],
   "warnings": [],
-  "notes": [],
-  "skipped": []
+  "notes": [
+    "sourced from openapi/_original/ (1 archived document(s)); previously refined output at the top level was skipped rather than re-split",
+    "cognee-rest-api-openapi.yml: upgraded openapi 3.0.3 -> OpenAPI 3.2.0",
+    "apis.yml register: already-registered"
+  ],
+  "skipped": [
+    "cognee-agents-api-openapi.yml: previously refined output, superseded by openapi/_original/",
+    "cognee-cognify-api-openapi.yml: previously refined output, superseded by openapi/_original/",
+    "cognee-data-api-openapi.yml: previously refined output, superseded by openapi/_original/",
+    "cognee-datasets-api-openapi.yml: previously refined output, superseded by openapi/_original/",
+    "cognee-health-api-openapi.yml: previously refined output, superseded by openapi/_original/",
+    "cognee-search-api-openapi.yml: previously refined output, superseded by openapi/_original/",
+    "cognee-settings-api-openapi.yml: previously refined output, superseded by openapi/_original/"
+  ]
 }

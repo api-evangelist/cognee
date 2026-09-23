@@ -1,9 +1,7 @@
-openapi: 3.0.3
+openapi: 3.2.0
 info:
-  title: Cognee REST agents API
-  description: 'The Cognee REST API provides endpoints for the complete AI memory lifecycle, including data ingestion, knowledge graph construction, and semantic retrieval. Core endpoints cover adding raw text or documents, triggering the cognify pipeline that extracts entities and relationships via LLM, executing multi-mode search queries, managing datasets, and creating agent identities. The API uses X-Api-Key header authentication for cloud deployments and Bearer token auth for self-hosted instances.
-
-    '
+  title: Cognee REST Agents API
+  description: The Cognee REST API provides endpoints for the complete AI memory lifecycle, including data ingestion, knowledge graph construction, and semantic retrieval. Core endpoints cover adding raw text or documents, triggering the cognify pipeline that extracts entities and relationships via LLM, executing multi-mode search queries, managing datasets, and creating agent identities. The API uses X-Api-Key header authentication for cloud deployments and Bearer token auth for self-hosted instances.
   version: 1.0.0
   contact:
     name: Cognee Support
@@ -20,7 +18,7 @@ security:
 - BearerAuth: []
 - ApiKeyAuth: []
 tags:
-- name: agents
+- name: Agents
   description: AI agent identity management
 paths:
   /api/v1/agents/list:
@@ -29,7 +27,7 @@ paths:
       summary: List all agent identities for the authenticated user
       description: Returns all AI agent identities created by the authenticated user.
       tags:
-      - agents
+      - Agents
       security:
       - BearerAuth: []
       - ApiKeyAuth: []
@@ -46,11 +44,9 @@ paths:
     post:
       operationId: createAgent
       summary: Create a new agent identity
-      description: 'Creates a new AI agent identity with a unique name. Returns the agent''s ID, email, and API key for use in subsequent API calls.
-
-        '
+      description: Creates a new AI agent identity with a unique name. Returns the agent's ID, email, and API key for use in subsequent API calls.
       tags:
-      - agents
+      - Agents
       security:
       - BearerAuth: []
       - ApiKeyAuth: []
@@ -73,20 +69,6 @@ paths:
           description: Agent with that name already exists
 components:
   schemas:
-    Agent:
-      type: object
-      properties:
-        agent_id:
-          type: string
-          format: uuid
-        agent_email:
-          type: string
-        api_key_label:
-          type: string
-          nullable: true
-      required:
-      - agent_id
-      - agent_email
     AgentWithApiKey:
       type: object
       properties:
@@ -101,6 +83,21 @@ components:
       - agent_id
       - agent_email
       - agent_api_key
+    Agent:
+      type: object
+      properties:
+        agent_id:
+          type: string
+          format: uuid
+        agent_email:
+          type: string
+        api_key_label:
+          type:
+          - string
+          - 'null'
+      required:
+      - agent_id
+      - agent_email
   securitySchemes:
     BearerAuth:
       type: http

@@ -1,9 +1,7 @@
-openapi: 3.0.3
+openapi: 3.2.0
 info:
-  title: Cognee REST agents search API
-  description: 'The Cognee REST API provides endpoints for the complete AI memory lifecycle, including data ingestion, knowledge graph construction, and semantic retrieval. Core endpoints cover adding raw text or documents, triggering the cognify pipeline that extracts entities and relationships via LLM, executing multi-mode search queries, managing datasets, and creating agent identities. The API uses X-Api-Key header authentication for cloud deployments and Bearer token auth for self-hosted instances.
-
-    '
+  title: Cognee REST Search API
+  description: The Cognee REST API provides endpoints for the complete AI memory lifecycle, including data ingestion, knowledge graph construction, and semantic retrieval. Core endpoints cover adding raw text or documents, triggering the cognify pipeline that extracts entities and relationships via LLM, executing multi-mode search queries, managing datasets, and creating agent identities. The API uses X-Api-Key header authentication for cloud deployments and Bearer token auth for self-hosted instances.
   version: 1.0.0
   contact:
     name: Cognee Support
@@ -20,18 +18,16 @@ security:
 - BearerAuth: []
 - ApiKeyAuth: []
 tags:
-- name: search
+- name: Search
   description: Semantic and graph search queries
 paths:
   /api/v1/search:
     get:
       operationId: getSearchHistory
       summary: Get search history for the authenticated user
-      description: 'Retrieves the search history for the authenticated user, returning a list of previously executed searches with their timestamps.
-
-        '
+      description: Retrieves the search history for the authenticated user, returning a list of previously executed searches with their timestamps.
       tags:
-      - search
+      - Search
       security:
       - BearerAuth: []
       - ApiKeyAuth: []
@@ -59,11 +55,9 @@ paths:
     post:
       operationId: search
       summary: Search the knowledge graph
-      description: 'Perform semantic search across the knowledge graph using one of 16 search types including GRAPH_COMPLETION, RAG_COMPLETION, SUMMARIES, CHUNKS, CYPHER, TEMPORAL, AGENTIC_COMPLETION and more. Supports dataset scoping and pagination.
-
-        '
+      description: Perform semantic search across the knowledge graph using one of 16 search types including GRAPH_COMPLETION, RAG_COMPLETION, SUMMARIES, CHUNKS, CYPHER, TEMPORAL, AGENTIC_COMPLETION and more. Supports dataset scoping and pagination.
       tags:
-      - search
+      - Search
       security:
       - BearerAuth: []
       - ApiKeyAuth: []
@@ -109,10 +103,6 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
 components:
   schemas:
-    SearchResult:
-      type: object
-      description: A single result node from the knowledge graph
-      additionalProperties: true
     SearchType:
       type: string
       enum:
@@ -140,8 +130,9 @@ components:
           type: string
           description: Short error message
         detail:
-          type: string
-          nullable: true
+          type:
+          - string
+          - 'null'
           description: Detailed error description
       required:
       - error
@@ -154,17 +145,19 @@ components:
           $ref: '#/components/schemas/SearchType'
           default: GRAPH_COMPLETION
         datasets:
-          type: array
+          type:
+          - array
+          - 'null'
           items:
             type: string
-          nullable: true
           description: Dataset names to search (resolved to datasets owned by caller)
         dataset_ids:
-          type: array
+          type:
+          - array
+          - 'null'
           items:
             type: string
             format: uuid
-          nullable: true
           description: Dataset UUIDs to search (allows cross-user access if permitted)
           example: []
         query:
@@ -172,19 +165,22 @@ components:
           description: The search query string
           default: What is in the document?
         system_prompt:
-          type: string
-          nullable: true
+          type:
+          - string
+          - 'null'
           description: System prompt for completion-type searches
           default: Answer the question using the provided context. Be as brief as possible.
         node_name:
-          type: array
+          type:
+          - array
+          - 'null'
           items:
             type: string
-          nullable: true
           description: Filter results to specific node_sets from the add pipeline
         top_k:
-          type: integer
-          nullable: true
+          type:
+          - integer
+          - 'null'
           description: Maximum number of results to return
           default: 10
         only_context:
@@ -196,21 +192,28 @@ components:
           description: Return verbose results
           default: false
         skills:
-          type: array
+          type:
+          - array
+          - 'null'
           items:
             type: string
-          nullable: true
           description: Skills to enable for agentic search
         tools:
-          type: array
+          type:
+          - array
+          - 'null'
           items:
             type: string
-          nullable: true
           description: Tools to enable for agentic search
         max_iter:
-          type: integer
-          nullable: true
+          type:
+          - integer
+          - 'null'
           description: Maximum iterations for agentic search
+    SearchResult:
+      type: object
+      description: A single result node from the knowledge graph
+      additionalProperties: true
     SearchHistoryItem:
       type: object
       properties:

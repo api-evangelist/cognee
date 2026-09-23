@@ -1,9 +1,7 @@
-openapi: 3.0.3
+openapi: 3.2.0
 info:
-  title: Cognee REST agents data API
-  description: 'The Cognee REST API provides endpoints for the complete AI memory lifecycle, including data ingestion, knowledge graph construction, and semantic retrieval. Core endpoints cover adding raw text or documents, triggering the cognify pipeline that extracts entities and relationships via LLM, executing multi-mode search queries, managing datasets, and creating agent identities. The API uses X-Api-Key header authentication for cloud deployments and Bearer token auth for self-hosted instances.
-
-    '
+  title: Cognee REST Data API
+  description: The Cognee REST API provides endpoints for the complete AI memory lifecycle, including data ingestion, knowledge graph construction, and semantic retrieval. Core endpoints cover adding raw text or documents, triggering the cognify pipeline that extracts entities and relationships via LLM, executing multi-mode search queries, managing datasets, and creating agent identities. The API uses X-Api-Key header authentication for cloud deployments and Bearer token auth for self-hosted instances.
   version: 1.0.0
   contact:
     name: Cognee Support
@@ -20,18 +18,16 @@ security:
 - BearerAuth: []
 - ApiKeyAuth: []
 tags:
-- name: data
+- name: Data
   description: Data ingestion and deletion operations
 paths:
   /api/v1/add:
     post:
       operationId: addData
       summary: Add data to a dataset
-      description: 'Add data to a dataset for processing and knowledge graph construction. Accepts files, HTTP URLs (if ALLOW_HTTP_REQUESTS is enabled), or GitHub repository URLs. Either datasetName or datasetId must be provided.
-
-        '
+      description: Add data to a dataset for processing and knowledge graph construction. Accepts files, HTTP URLs (if ALLOW_HTTP_REQUESTS is enabled), or GitHub repository URLs. Either datasetName or datasetId must be provided.
       tags:
-      - data
+      - Data
       security:
       - BearerAuth: []
       - ApiKeyAuth: []
@@ -109,8 +105,9 @@ components:
           type: string
           description: Short error message
         detail:
-          type: string
-          nullable: true
+          type:
+          - string
+          - 'null'
           description: Detailed error description
       required:
       - error

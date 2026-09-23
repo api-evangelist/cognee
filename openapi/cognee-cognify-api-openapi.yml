@@ -1,9 +1,7 @@
-openapi: 3.0.3
+openapi: 3.2.0
 info:
-  title: Cognee REST agents cognify API
-  description: 'The Cognee REST API provides endpoints for the complete AI memory lifecycle, including data ingestion, knowledge graph construction, and semantic retrieval. Core endpoints cover adding raw text or documents, triggering the cognify pipeline that extracts entities and relationships via LLM, executing multi-mode search queries, managing datasets, and creating agent identities. The API uses X-Api-Key header authentication for cloud deployments and Bearer token auth for self-hosted instances.
-
-    '
+  title: Cognee REST Cognify API
+  description: The Cognee REST API provides endpoints for the complete AI memory lifecycle, including data ingestion, knowledge graph construction, and semantic retrieval. Core endpoints cover adding raw text or documents, triggering the cognify pipeline that extracts entities and relationships via LLM, executing multi-mode search queries, managing datasets, and creating agent identities. The API uses X-Api-Key header authentication for cloud deployments and Bearer token auth for self-hosted instances.
   version: 1.0.0
   contact:
     name: Cognee Support
@@ -27,9 +25,7 @@ paths:
     post:
       operationId: cognifyDatasets
       summary: Transform datasets into knowledge graphs
-      description: 'Core intelligence endpoint that converts raw data into semantic knowledge graphs. Performs document classification, text chunking, entity extraction via LLM, relationship detection, vector embedding generation, and content summarization.
-
-        '
+      description: Core intelligence endpoint that converts raw data into semantic knowledge graphs. Performs document classification, text chunking, entity extraction via LLM, relationship detection, vector embedding generation, and content summarization.
       tags:
       - cognify
       security:
@@ -87,9 +83,7 @@ paths:
     get:
       operationId: subscribeToCognifyProgress
       summary: Subscribe to cognify pipeline progress via WebSocket
-      description: 'WebSocket endpoint to receive real-time pipeline run events. Sends JSON messages with pipeline_run_id, status, and graph payload until the run completes or the client disconnects.
-
-        '
+      description: WebSocket endpoint to receive real-time pipeline run events. Sends JSON messages with pipeline_run_id, status, and graph payload until the run completes or the client disconnects.
       tags:
       - cognify
       parameters:
@@ -107,33 +101,23 @@ paths:
           description: Authentication required (cookie-based JWT)
 components:
   schemas:
-    ErrorResponse:
-      type: object
-      properties:
-        error:
-          type: string
-          description: Short error message
-        detail:
-          type: string
-          nullable: true
-          description: Detailed error description
-      required:
-      - error
     CognifyPayload:
       type: object
       properties:
         datasets:
-          type: array
+          type:
+          - array
+          - 'null'
           items:
             type: string
-          nullable: true
           description: Dataset names to process (resolved to datasets owned by caller)
         dataset_ids:
-          type: array
+          type:
+          - array
+          - 'null'
           items:
             type: string
             format: uuid
-          nullable: true
           description: Dataset UUIDs to process
           example: []
         run_in_background:
@@ -141,38 +125,57 @@ components:
           description: Execute pipeline asynchronously
           default: false
         graph_model:
-          type: object
-          nullable: true
+          type:
+          - object
+          - 'null'
           description: Custom graph model schema for entity extraction
           example: {}
         custom_prompt:
-          type: string
-          nullable: true
+          type:
+          - string
+          - 'null'
           description: Custom prompt for entity extraction and graph generation
           default: ''
         chunk_size:
-          type: integer
-          nullable: true
+          type:
+          - integer
+          - 'null'
           description: Maximum tokens per chunk (auto-sized if omitted)
           example: 4096
         ontology_key:
-          type: array
+          type:
+          - array
+          - 'null'
           items:
             type: string
-          nullable: true
           description: Keys of previously uploaded ontology files to use
           example: []
         chunks_per_batch:
-          type: integer
-          nullable: true
+          type:
+          - integer
+          - 'null'
           description: Number of chunks to process per task batch
           example: 36
         data_per_batch:
-          type: integer
-          nullable: true
+          type:
+          - integer
+          - 'null'
           description: Maximum data items to process concurrently within a dataset
           default: 20
           example: 20
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Short error message
+        detail:
+          type:
+          - string
+          - 'null'
+          description: Detailed error description
+      required:
+      - error
   securitySchemes:
     BearerAuth:
       type: http

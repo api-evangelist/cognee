@@ -1,9 +1,7 @@
-openapi: 3.0.3
+openapi: 3.2.0
 info:
-  title: Cognee REST agents health API
-  description: 'The Cognee REST API provides endpoints for the complete AI memory lifecycle, including data ingestion, knowledge graph construction, and semantic retrieval. Core endpoints cover adding raw text or documents, triggering the cognify pipeline that extracts entities and relationships via LLM, executing multi-mode search queries, managing datasets, and creating agent identities. The API uses X-Api-Key header authentication for cloud deployments and Bearer token auth for self-hosted instances.
-
-    '
+  title: Cognee REST Health API
+  description: The Cognee REST API provides endpoints for the complete AI memory lifecycle, including data ingestion, knowledge graph construction, and semantic retrieval. Core endpoints cover adding raw text or documents, triggering the cognify pipeline that extracts entities and relationships via LLM, executing multi-mode search queries, managing datasets, and creating agent identities. The API uses X-Api-Key header authentication for cloud deployments and Bearer token auth for self-hosted instances.
   version: 1.0.0
   contact:
     name: Cognee Support
@@ -20,18 +18,16 @@ security:
 - BearerAuth: []
 - ApiKeyAuth: []
 tags:
-- name: health
+- name: Health
   description: Service health probes
 paths:
   /api/v1/health:
     get:
       operationId: healthCheck
       summary: Liveness/readiness health check
-      description: 'Basic health probe returning system readiness and version. Returns 503 when the service is unhealthy.
-
-        '
+      description: Basic health probe returning system readiness and version. Returns 503 when the service is unhealthy.
       tags:
-      - health
+      - Health
       responses:
         '200':
           description: Service is healthy and ready
@@ -49,11 +45,9 @@ paths:
     get:
       operationId: detailedHealthCheck
       summary: Detailed health check with component status
-      description: 'Comprehensive health status including per-component details. Returns 503 when any component is unhealthy or degraded.
-
-        '
+      description: Comprehensive health status including per-component details. Returns 503 when any component is unhealthy or degraded.
       tags:
-      - health
+      - Health
       responses:
         '200':
           description: Detailed health status

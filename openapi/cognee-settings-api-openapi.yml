@@ -1,9 +1,7 @@
-openapi: 3.0.3
+openapi: 3.2.0
 info:
-  title: Cognee REST agents settings API
-  description: 'The Cognee REST API provides endpoints for the complete AI memory lifecycle, including data ingestion, knowledge graph construction, and semantic retrieval. Core endpoints cover adding raw text or documents, triggering the cognify pipeline that extracts entities and relationships via LLM, executing multi-mode search queries, managing datasets, and creating agent identities. The API uses X-Api-Key header authentication for cloud deployments and Bearer token auth for self-hosted instances.
-
-    '
+  title: Cognee REST Settings API
+  description: The Cognee REST API provides endpoints for the complete AI memory lifecycle, including data ingestion, knowledge graph construction, and semantic retrieval. Core endpoints cover adding raw text or documents, triggering the cognify pipeline that extracts entities and relationships via LLM, executing multi-mode search queries, managing datasets, and creating agent identities. The API uses X-Api-Key header authentication for cloud deployments and Bearer token auth for self-hosted instances.
   version: 1.0.0
   contact:
     name: Cognee Support
@@ -20,18 +18,16 @@ security:
 - BearerAuth: []
 - ApiKeyAuth: []
 tags:
-- name: settings
+- name: Settings
   description: System configuration (LLM and vector DB)
 paths:
   /api/v1/settings:
     get:
       operationId: getSettings
       summary: Get current system settings
-      description: 'Retrieves the current configuration for LLM provider and vector database. Supports openai, ollama, anthropic, gemini, mistral for LLM and lancedb, chromadb, pgvector for vector DB.
-
-        '
+      description: Retrieves the current configuration for LLM provider and vector database. Supports openai, ollama, anthropic, gemini, mistral for LLM and lancedb, chromadb, pgvector for vector DB.
       tags:
-      - settings
+      - Settings
       security:
       - BearerAuth: []
       - ApiKeyAuth: []
@@ -45,11 +41,9 @@ paths:
     post:
       operationId: saveSettings
       summary: Save or update system settings
-      description: 'Updates LLM provider configuration and/or vector database configuration. Partial updates are supported — only the provided fields are changed.
-
-        '
+      description: Updates LLM provider configuration and/or vector database configuration. Partial updates are supported — only the provided fields are changed.
       tags:
-      - settings
+      - Settings
       security:
       - BearerAuth: []
       - ApiKeyAuth: []
@@ -73,13 +67,6 @@ paths:
           description: Settings saved
 components:
   schemas:
-    SettingsPayload:
-      type: object
-      properties:
-        llm:
-          $ref: '#/components/schemas/LLMConfig'
-        vector_db:
-          $ref: '#/components/schemas/VectorDBConfig'
     VectorDBConfig:
       type: object
       properties:
@@ -97,16 +84,13 @@ components:
       - provider
       - url
       - api_key
-    Settings:
+    SettingsPayload:
       type: object
       properties:
         llm:
           $ref: '#/components/schemas/LLMConfig'
         vector_db:
           $ref: '#/components/schemas/VectorDBConfig'
-      required:
-      - llm
-      - vector_db
     LLMConfig:
       type: object
       properties:
@@ -126,6 +110,16 @@ components:
       - provider
       - model
       - api_key
+    Settings:
+      type: object
+      properties:
+        llm:
+          $ref: '#/components/schemas/LLMConfig'
+        vector_db:
+          $ref: '#/components/schemas/VectorDBConfig'
+      required:
+      - llm
+      - vector_db
   securitySchemes:
     BearerAuth:
       type: http

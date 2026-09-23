@@ -1,9 +1,7 @@
-openapi: 3.0.3
+openapi: 3.2.0
 info:
-  title: Cognee REST agents datasets API
-  description: 'The Cognee REST API provides endpoints for the complete AI memory lifecycle, including data ingestion, knowledge graph construction, and semantic retrieval. Core endpoints cover adding raw text or documents, triggering the cognify pipeline that extracts entities and relationships via LLM, executing multi-mode search queries, managing datasets, and creating agent identities. The API uses X-Api-Key header authentication for cloud deployments and Bearer token auth for self-hosted instances.
-
-    '
+  title: Cognee REST Datasets API
+  description: The Cognee REST API provides endpoints for the complete AI memory lifecycle, including data ingestion, knowledge graph construction, and semantic retrieval. Core endpoints cover adding raw text or documents, triggering the cognify pipeline that extracts entities and relationships via LLM, executing multi-mode search queries, managing datasets, and creating agent identities. The API uses X-Api-Key header authentication for cloud deployments and Bearer token auth for self-hosted instances.
   version: 1.0.0
   contact:
     name: Cognee Support
@@ -20,18 +18,16 @@ security:
 - BearerAuth: []
 - ApiKeyAuth: []
 tags:
-- name: datasets
+- name: Datasets
   description: Dataset management and introspection
 paths:
   /api/v1/datasets:
     get:
       operationId: getDatasets
       summary: List all accessible datasets
-      description: 'Retrieves all datasets the authenticated user has read permission for, including metadata such as ID, name, creation time, and owner.
-
-        '
+      description: Retrieves all datasets the authenticated user has read permission for, including metadata such as ID, name, creation time, and owner.
       tags:
-      - datasets
+      - Datasets
       security:
       - BearerAuth: []
       - ApiKeyAuth: []
@@ -53,11 +49,9 @@ paths:
     post:
       operationId: createDataset
       summary: Create a new dataset
-      description: 'Creates a new dataset with the specified name. If a dataset with the same name already exists for the user, returns the existing dataset. The user is automatically granted all permissions on the created dataset.
-
-        '
+      description: Creates a new dataset with the specified name. If a dataset with the same name already exists for the user, returns the existing dataset. The user is automatically granted all permissions on the created dataset.
       tags:
-      - datasets
+      - Datasets
       security:
       - BearerAuth: []
       - ApiKeyAuth: []
@@ -90,11 +84,9 @@ paths:
     delete:
       operationId: deleteAllDatasets
       summary: Delete all user datasets
-      description: 'Permanently deletes all datasets and associated data owned by the authenticated user. If no datasets exist, this operation is a no-op.
-
-        '
+      description: Permanently deletes all datasets and associated data owned by the authenticated user. If no datasets exist, this operation is a no-op.
       tags:
-      - datasets
+      - Datasets
       security:
       - BearerAuth: []
       - ApiKeyAuth: []
@@ -105,11 +97,9 @@ paths:
     get:
       operationId: getDatasetStatus
       summary: Get dataset processing status
-      description: 'Retrieves the current processing status for one or more datasets. If one pipeline is specified, returns a flat {dataset_id: status} map. If multiple pipelines are specified, returns a nested {dataset_id: {pipeline: status}} map.
-
-        '
+      description: 'Retrieves the current processing status for one or more datasets. If one pipeline is specified, returns a flat {dataset_id: status} map. If multiple pipelines are specified, returns a nested {dataset_id: {pipeline: status}} map.'
       tags:
-      - datasets
+      - Datasets
       security:
       - BearerAuth: []
       - ApiKeyAuth: []
@@ -156,11 +146,9 @@ paths:
     delete:
       operationId: deleteDataset
       summary: Delete a dataset by ID
-      description: 'Permanently deletes a dataset and all its associated data. Requires delete permissions on the dataset.
-
-        '
+      description: Permanently deletes a dataset and all its associated data. Requires delete permissions on the dataset.
       tags:
-      - datasets
+      - Datasets
       security:
       - BearerAuth: []
       - ApiKeyAuth: []
@@ -177,11 +165,9 @@ paths:
     get:
       operationId: getDatasetData
       summary: List all data items in a dataset
-      description: 'Returns metadata for all data items (documents, files, etc.) in the specified dataset. Each item includes name, type, MIME type, and storage location.
-
-        '
+      description: Returns metadata for all data items (documents, files, etc.) in the specified dataset. Each item includes name, type, MIME type, and storage location.
       tags:
-      - datasets
+      - Datasets
       security:
       - BearerAuth: []
       - ApiKeyAuth: []
@@ -204,11 +190,9 @@ paths:
     delete:
       operationId: deleteDataItem
       summary: Delete a specific data item from a dataset
-      description: 'Removes a specific data item from a dataset while keeping the dataset intact. Requires delete permissions on the dataset.
-
-        '
+      description: Removes a specific data item from a dataset while keeping the dataset intact. Requires delete permissions on the dataset.
       tags:
-      - datasets
+      - Datasets
       security:
       - BearerAuth: []
       - ApiKeyAuth: []
@@ -232,11 +216,9 @@ paths:
     get:
       operationId: downloadRawData
       summary: Download the raw data file for a data item
-      description: 'Returns the original unprocessed data file for a specific data item. Supports local filesystem and S3 storage backends.
-
-        '
+      description: Returns the original unprocessed data file for a specific data item. Supports local filesystem and S3 storage backends.
       tags:
-      - datasets
+      - Datasets
       security:
       - BearerAuth: []
       - ApiKeyAuth: []
@@ -265,11 +247,9 @@ paths:
     get:
       operationId: getDatasetGraph
       summary: Get knowledge graph for a dataset
-      description: 'Retrieves the knowledge graph visualization data for a specific dataset, including all nodes and edges representing entity relationships.
-
-        '
+      description: Retrieves the knowledge graph visualization data for a specific dataset, including all nodes and edges representing entity relationships.
       tags:
-      - datasets
+      - Datasets
       security:
       - BearerAuth: []
       - ApiKeyAuth: []
@@ -292,7 +272,7 @@ paths:
       summary: Get graph schema for a dataset
       description: Returns the stored graph schema and custom prompt for a dataset.
       tags:
-      - datasets
+      - Datasets
       security:
       - BearerAuth: []
       - ApiKeyAuth: []
@@ -307,21 +287,21 @@ paths:
                 type: object
                 properties:
                   graph_schema:
-                    type: object
-                    nullable: true
+                    type:
+                    - object
+                    - 'null'
                   custom_prompt:
-                    type: string
-                    nullable: true
+                    type:
+                    - string
+                    - 'null'
         '404':
           description: Dataset not found
     put:
       operationId: updateDatasetSchema
       summary: Update graph schema for a dataset
-      description: 'Store or update the graph schema and custom prompt for a dataset. Requires write permissions on the dataset.
-
-        '
+      description: Store or update the graph schema and custom prompt for a dataset. Requires write permissions on the dataset.
       tags:
-      - datasets
+      - Datasets
       security:
       - BearerAuth: []
       - ApiKeyAuth: []
@@ -335,12 +315,14 @@ paths:
               type: object
               properties:
                 graph_schema:
-                  type: object
-                  nullable: true
+                  type:
+                  - object
+                  - 'null'
                   description: JSON schema for the knowledge graph structure
                 custom_prompt:
-                  type: string
-                  nullable: true
+                  type:
+                  - string
+                  - 'null'
                   description: Custom extraction prompt for this dataset
       responses:
         '200':
@@ -357,23 +339,30 @@ paths:
           description: Dataset not found
 components:
   schemas:
-    GraphNode:
+    Dataset:
       type: object
       properties:
         id:
           type: string
           format: uuid
-        label:
+        name:
           type: string
-        type:
+        created_at:
           type: string
-        properties:
-          type: object
+          format: date-time
+        updated_at:
+          type:
+          - string
+          - 'null'
+          format: date-time
+        owner_id:
+          type: string
+          format: uuid
       required:
       - id
-      - label
-      - type
-      - properties
+      - name
+      - created_at
+      - owner_id
     GraphEdge:
       type: object
       properties:
@@ -389,29 +378,6 @@ components:
       - source
       - target
       - label
-    Dataset:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-        name:
-          type: string
-        created_at:
-          type: string
-          format: date-time
-        updated_at:
-          type: string
-          format: date-time
-          nullable: true
-        owner_id:
-          type: string
-          format: uuid
-      required:
-      - id
-      - name
-      - created_at
-      - owner_id
     ErrorResponse:
       type: object
       properties:
@@ -419,11 +385,26 @@ components:
           type: string
           description: Short error message
         detail:
-          type: string
-          nullable: true
+          type:
+          - string
+          - 'null'
           description: Detailed error description
       required:
       - error
+    Graph:
+      type: object
+      properties:
+        nodes:
+          type: array
+          items:
+            $ref: '#/components/schemas/GraphNode'
+        edges:
+          type: array
+          items:
+            $ref: '#/components/schemas/GraphEdge'
+      required:
+      - nodes
+      - edges
     DataItem:
       type: object
       properties:
@@ -436,9 +417,10 @@ components:
           type: string
           format: date-time
         updated_at:
-          type: string
+          type:
+          - string
+          - 'null'
           format: date-time
-          nullable: true
         extension:
           type: string
         mime_type:
@@ -456,20 +438,23 @@ components:
       - mime_type
       - raw_data_location
       - dataset_id
-    Graph:
+    GraphNode:
       type: object
       properties:
-        nodes:
-          type: array
-          items:
-            $ref: '#/components/schemas/GraphNode'
-        edges:
-          type: array
-          items:
-            $ref: '#/components/schemas/GraphEdge'
+        id:
+          type: string
+          format: uuid
+        label:
+          type: string
+        type:
+          type: string
+        properties:
+          type: object
       required:
-      - nodes
-      - edges
+      - id
+      - label
+      - type
+      - properties
   parameters:
     DatasetId:
       name: dataset_id
