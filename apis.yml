@@ -44,6 +44,10 @@ url: https://raw.githubusercontent.com/api-evangelist/cognee/refs/heads/main/api
 created: "2026-06-12"
 modified: "2026-06-12"
 specificationVersion: '0.23'
+x-docs-platform: mintlify
+x-docs-platform-confidence: medium
+x-docs-platform-checked: 2026-09-24
+x-docs-hosting: vercel
 tags:
   - Artificial Intelligence
   - Memory
@@ -53,7 +57,7 @@ tags:
   - Graph Database
   - Vector Search
   - LLM
-  - Open-Source
+  - Open Source
 tags_raw:
   - AI
   - Memory
@@ -64,10 +68,11 @@ tags_raw:
   - Vector Search
   - LLM
   - Open Source
+  - Open-Source
 
 apis:
 - aid: cognee:cognee-agents-api
-  name: Cognee agents API
+  name: Cognee Agents API
   description: AI agent identity management
   humanURL: https://docs.cognee.ai/api-reference/introduction
   baseURL: https://api.cognee.ai
@@ -83,7 +88,7 @@ apis:
   - type: SwaggerUI
     url: https://api.cognee.ai/docs
 - aid: cognee:cognee-cognify-api
-  name: Cognee cognify API
+  name: Cognee Cognify API
   description: Knowledge graph construction pipeline
   humanURL: https://docs.cognee.ai/api-reference/introduction
   baseURL: https://api.cognee.ai
@@ -97,7 +102,7 @@ apis:
   - type: SwaggerUI
     url: https://api.cognee.ai/docs
 - aid: cognee:cognee-data-api
-  name: Cognee data API
+  name: Cognee Data API
   description: Data ingestion and deletion operations
   humanURL: https://docs.cognee.ai/api-reference/introduction
   baseURL: https://api.cognee.ai
@@ -113,7 +118,7 @@ apis:
   - type: SwaggerUI
     url: https://api.cognee.ai/docs
 - aid: cognee:cognee-datasets-api
-  name: Cognee datasets API
+  name: Cognee Datasets API
   description: Dataset management and introspection
   humanURL: https://docs.cognee.ai/api-reference/introduction
   baseURL: https://api.cognee.ai
@@ -129,7 +134,7 @@ apis:
   - type: SwaggerUI
     url: https://api.cognee.ai/docs
 - aid: cognee:cognee-health-api
-  name: Cognee health API
+  name: Cognee Health API
   description: Service health probes
   humanURL: https://docs.cognee.ai/api-reference/introduction
   baseURL: https://api.cognee.ai
@@ -145,7 +150,7 @@ apis:
   - type: SwaggerUI
     url: https://api.cognee.ai/docs
 - aid: cognee:cognee-search-api
-  name: Cognee search API
+  name: Cognee Search API
   description: Semantic and graph search queries
   humanURL: https://docs.cognee.ai/api-reference/introduction
   baseURL: https://api.cognee.ai
@@ -161,7 +166,7 @@ apis:
   - type: SwaggerUI
     url: https://api.cognee.ai/docs
 - aid: cognee:cognee-settings-api
-  name: Cognee settings API
+  name: Cognee Settings API
   description: System configuration (LLM and vector DB)
   humanURL: https://docs.cognee.ai/api-reference/introduction
   baseURL: https://api.cognee.ai

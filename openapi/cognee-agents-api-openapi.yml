@@ -69,20 +69,6 @@ paths:
           description: Agent with that name already exists
 components:
   schemas:
-    AgentWithApiKey:
-      type: object
-      properties:
-        agent_id:
-          type: string
-          format: uuid
-        agent_email:
-          type: string
-        agent_api_key:
-          type: string
-      required:
-      - agent_id
-      - agent_email
-      - agent_api_key
     Agent:
       type: object
       properties:
@@ -98,6 +84,20 @@ components:
       required:
       - agent_id
       - agent_email
+    AgentWithApiKey:
+      type: object
+      properties:
+        agent_id:
+          type: string
+          format: uuid
+        agent_email:
+          type: string
+        agent_api_key:
+          type: string
+      required:
+      - agent_id
+      - agent_email
+      - agent_api_key
   securitySchemes:
     BearerAuth:
       type: http

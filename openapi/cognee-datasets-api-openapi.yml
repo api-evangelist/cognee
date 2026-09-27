@@ -339,72 +339,23 @@ paths:
           description: Dataset not found
 components:
   schemas:
-    Dataset:
+    GraphNode:
       type: object
       properties:
         id:
           type: string
           format: uuid
-        name:
-          type: string
-        created_at:
-          type: string
-          format: date-time
-        updated_at:
-          type:
-          - string
-          - 'null'
-          format: date-time
-        owner_id:
-          type: string
-          format: uuid
-      required:
-      - id
-      - name
-      - created_at
-      - owner_id
-    GraphEdge:
-      type: object
-      properties:
-        source:
-          type: string
-          format: uuid
-        target:
-          type: string
-          format: uuid
         label:
           type: string
-      required:
-      - source
-      - target
-      - label
-    ErrorResponse:
-      type: object
-      properties:
-        error:
+        type:
           type: string
-          description: Short error message
-        detail:
-          type:
-          - string
-          - 'null'
-          description: Detailed error description
+        properties:
+          type: object
       required:
-      - error
-    Graph:
-      type: object
-      properties:
-        nodes:
-          type: array
-          items:
-            $ref: '#/components/schemas/GraphNode'
-        edges:
-          type: array
-          items:
-            $ref: '#/components/schemas/GraphEdge'
-      required:
-      - nodes
-      - edges
+      - id
+      - label
+      - type
+      - properties
     DataItem:
       type: object
       properties:
@@ -438,23 +389,72 @@ components:
       - mime_type
       - raw_data_location
       - dataset_id
-    GraphNode:
+    Graph:
+      type: object
+      properties:
+        nodes:
+          type: array
+          items:
+            $ref: '#/components/schemas/GraphNode'
+        edges:
+          type: array
+          items:
+            $ref: '#/components/schemas/GraphEdge'
+      required:
+      - nodes
+      - edges
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Short error message
+        detail:
+          type:
+          - string
+          - 'null'
+          description: Detailed error description
+      required:
+      - error
+    GraphEdge:
+      type: object
+      properties:
+        source:
+          type: string
+          format: uuid
+        target:
+          type: string
+          format: uuid
+        label:
+          type: string
+      required:
+      - source
+      - target
+      - label
+    Dataset:
       type: object
       properties:
         id:
           type: string
           format: uuid
-        label:
+        name:
           type: string
-        type:
+        created_at:
           type: string
-        properties:
-          type: object
+          format: date-time
+        updated_at:
+          type:
+          - string
+          - 'null'
+          format: date-time
+        owner_id:
+          type: string
+          format: uuid
       required:
       - id
-      - label
-      - type
-      - properties
+      - name
+      - created_at
+      - owner_id
   parameters:
     DatasetId:
       name: dataset_id

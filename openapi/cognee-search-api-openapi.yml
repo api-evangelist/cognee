@@ -103,6 +103,19 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
 components:
   schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Short error message
+        detail:
+          type:
+          - string
+          - 'null'
+          description: Detailed error description
+      required:
+      - error
     SearchType:
       type: string
       enum:
@@ -123,19 +136,6 @@ components:
       - CHUNKS_LEXICAL
       - AGENTIC_COMPLETION
       description: Type of search to perform against the knowledge graph
-    ErrorResponse:
-      type: object
-      properties:
-        error:
-          type: string
-          description: Short error message
-        detail:
-          type:
-          - string
-          - 'null'
-          description: Detailed error description
-      required:
-      - error
     SearchPayload:
       type: object
       required:
