@@ -103,39 +103,6 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
 components:
   schemas:
-    ErrorResponse:
-      type: object
-      properties:
-        error:
-          type: string
-          description: Short error message
-        detail:
-          type:
-          - string
-          - 'null'
-          description: Detailed error description
-      required:
-      - error
-    SearchType:
-      type: string
-      enum:
-      - SUMMARIES
-      - CHUNKS
-      - RAG_COMPLETION
-      - TRIPLET_COMPLETION
-      - GRAPH_COMPLETION
-      - GRAPH_COMPLETION_DECOMPOSITION
-      - GRAPH_SUMMARY_COMPLETION
-      - CYPHER
-      - NATURAL_LANGUAGE
-      - GRAPH_COMPLETION_COT
-      - GRAPH_COMPLETION_CONTEXT_EXTENSION
-      - FEELING_LUCKY
-      - TEMPORAL
-      - CODING_RULES
-      - CHUNKS_LEXICAL
-      - AGENTIC_COMPLETION
-      description: Type of search to perform against the knowledge graph
     SearchPayload:
       type: object
       required:
@@ -210,10 +177,6 @@ components:
           - integer
           - 'null'
           description: Maximum iterations for agentic search
-    SearchResult:
-      type: object
-      description: A single result node from the knowledge graph
-      additionalProperties: true
     SearchHistoryItem:
       type: object
       properties:
@@ -232,6 +195,43 @@ components:
       - text
       - user
       - created_at
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Short error message
+        detail:
+          type:
+          - string
+          - 'null'
+          description: Detailed error description
+      required:
+      - error
+    SearchType:
+      type: string
+      enum:
+      - SUMMARIES
+      - CHUNKS
+      - RAG_COMPLETION
+      - TRIPLET_COMPLETION
+      - GRAPH_COMPLETION
+      - GRAPH_COMPLETION_DECOMPOSITION
+      - GRAPH_SUMMARY_COMPLETION
+      - CYPHER
+      - NATURAL_LANGUAGE
+      - GRAPH_COMPLETION_COT
+      - GRAPH_COMPLETION_CONTEXT_EXTENSION
+      - FEELING_LUCKY
+      - TEMPORAL
+      - CODING_RULES
+      - CHUNKS_LEXICAL
+      - AGENTIC_COMPLETION
+      description: Type of search to perform against the knowledge graph
+    SearchResult:
+      type: object
+      description: A single result node from the knowledge graph
+      additionalProperties: true
   securitySchemes:
     BearerAuth:
       type: http

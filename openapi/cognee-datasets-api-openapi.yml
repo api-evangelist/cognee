@@ -389,33 +389,6 @@ components:
       - mime_type
       - raw_data_location
       - dataset_id
-    Graph:
-      type: object
-      properties:
-        nodes:
-          type: array
-          items:
-            $ref: '#/components/schemas/GraphNode'
-        edges:
-          type: array
-          items:
-            $ref: '#/components/schemas/GraphEdge'
-      required:
-      - nodes
-      - edges
-    ErrorResponse:
-      type: object
-      properties:
-        error:
-          type: string
-          description: Short error message
-        detail:
-          type:
-          - string
-          - 'null'
-          description: Detailed error description
-      required:
-      - error
     GraphEdge:
       type: object
       properties:
@@ -431,6 +404,19 @@ components:
       - source
       - target
       - label
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Short error message
+        detail:
+          type:
+          - string
+          - 'null'
+          description: Detailed error description
+      required:
+      - error
     Dataset:
       type: object
       properties:
@@ -455,6 +441,20 @@ components:
       - name
       - created_at
       - owner_id
+    Graph:
+      type: object
+      properties:
+        nodes:
+          type: array
+          items:
+            $ref: '#/components/schemas/GraphNode'
+        edges:
+          type: array
+          items:
+            $ref: '#/components/schemas/GraphEdge'
+      required:
+      - nodes
+      - edges
   parameters:
     DatasetId:
       name: dataset_id
