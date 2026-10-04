@@ -339,6 +339,21 @@ paths:
           description: Dataset not found
 components:
   schemas:
+    GraphEdge:
+      type: object
+      properties:
+        source:
+          type: string
+          format: uuid
+        target:
+          type: string
+          format: uuid
+        label:
+          type: string
+      required:
+      - source
+      - target
+      - label
     GraphNode:
       type: object
       properties:
@@ -356,54 +371,6 @@ components:
       - label
       - type
       - properties
-    DataItem:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-        name:
-          type: string
-        created_at:
-          type: string
-          format: date-time
-        updated_at:
-          type:
-          - string
-          - 'null'
-          format: date-time
-        extension:
-          type: string
-        mime_type:
-          type: string
-        raw_data_location:
-          type: string
-        dataset_id:
-          type: string
-          format: uuid
-      required:
-      - id
-      - name
-      - created_at
-      - extension
-      - mime_type
-      - raw_data_location
-      - dataset_id
-    GraphEdge:
-      type: object
-      properties:
-        source:
-          type: string
-          format: uuid
-        target:
-          type: string
-          format: uuid
-        label:
-          type: string
-      required:
-      - source
-      - target
-      - label
     ErrorResponse:
       type: object
       properties:
@@ -455,6 +422,39 @@ components:
       required:
       - nodes
       - edges
+    DataItem:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type:
+          - string
+          - 'null'
+          format: date-time
+        extension:
+          type: string
+        mime_type:
+          type: string
+        raw_data_location:
+          type: string
+        dataset_id:
+          type: string
+          format: uuid
+      required:
+      - id
+      - name
+      - created_at
+      - extension
+      - mime_type
+      - raw_data_location
+      - dataset_id
   parameters:
     DatasetId:
       name: dataset_id

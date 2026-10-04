@@ -103,6 +103,19 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
 components:
   schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Short error message
+        detail:
+          type:
+          - string
+          - 'null'
+          description: Detailed error description
+      required:
+      - error
     SearchPayload:
       type: object
       required:
@@ -195,19 +208,6 @@ components:
       - text
       - user
       - created_at
-    ErrorResponse:
-      type: object
-      properties:
-        error:
-          type: string
-          description: Short error message
-        detail:
-          type:
-          - string
-          - 'null'
-          description: Detailed error description
-      required:
-      - error
     SearchType:
       type: string
       enum:
