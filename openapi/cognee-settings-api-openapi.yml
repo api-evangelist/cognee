@@ -67,6 +67,23 @@ paths:
           description: Settings saved
 components:
   schemas:
+    VectorDBConfig:
+      type: object
+      properties:
+        provider:
+          type: string
+          enum:
+          - lancedb
+          - chromadb
+          - pgvector
+        url:
+          type: string
+        api_key:
+          type: string
+      required:
+      - provider
+      - url
+      - api_key
     SettingsPayload:
       type: object
       properties:
@@ -74,6 +91,16 @@ components:
           $ref: '#/components/schemas/LLMConfig'
         vector_db:
           $ref: '#/components/schemas/VectorDBConfig'
+    Settings:
+      type: object
+      properties:
+        llm:
+          $ref: '#/components/schemas/LLMConfig'
+        vector_db:
+          $ref: '#/components/schemas/VectorDBConfig'
+      required:
+      - llm
+      - vector_db
     LLMConfig:
       type: object
       properties:
@@ -93,33 +120,6 @@ components:
       - provider
       - model
       - api_key
-    VectorDBConfig:
-      type: object
-      properties:
-        provider:
-          type: string
-          enum:
-          - lancedb
-          - chromadb
-          - pgvector
-        url:
-          type: string
-        api_key:
-          type: string
-      required:
-      - provider
-      - url
-      - api_key
-    Settings:
-      type: object
-      properties:
-        llm:
-          $ref: '#/components/schemas/LLMConfig'
-        vector_db:
-          $ref: '#/components/schemas/VectorDBConfig'
-      required:
-      - llm
-      - vector_db
   securitySchemes:
     BearerAuth:
       type: http
