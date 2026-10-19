@@ -1,0 +1,225 @@
+openapi: 3.2.0
+info:
+  title: Cognee Ontologies API
+  description: Cognee API with Bearer token and Cookie auth
+  version: 1.0.0
+servers:
+- url: https://{tenant}.aws.cognee.ai
+  description: 'Cognee Cloud: your tenant pod, named in the platform.cognee.ai dashboard'
+  variables:
+    tenant:
+      default: your-tenant
+      description: Your tenant name, shown in the Cognee Cloud dashboard
+- url: http://localhost:8000
+  description: 'Self-hosted: a locally running cognee server'
+security:
+- BearerAuth: []
+- ApiKeyAuth: []
+tags:
+- name: ontologies
+  description: Endpoints for uploading, listing, and deleting ontology files used during cognify.
+paths:
+  /api/v1/ontologies:
+    get:
+      tags:
+      - ontologies
+      summary: List Ontologies
+      description: 'List all uploaded ontologies for the authenticated user.
+
+
+        ## Response
+
+        Returns a dictionary mapping ontology keys to their metadata including filename, size, and upload timestamp.
+
+
+        ## Error Codes
+
+        - **500 Internal Server Error**: File system or processing errors'
+      operationId: list_ontologies_api_v1_ontologies_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                additionalProperties: true
+                type: object
+                title: Response List Ontologies Api V1 Ontologies Get
+      security:
+      - BearerAuth: []
+      - ApiKeyAuth: []
+    post:
+      tags:
+      - ontologies
+      summary: Upload Ontology
+      description: 'Upload a single ontology file for later use in cognify operations.
+
+
+        ## Request Parameters
+
+        - **ontology_key** (str): Unique, user-defined identifier for the ontology (plain string — values starting with ''['' or ''\{'' are rejected; duplicate keys return 400). Use this key later as the `ontology_key` parameter in /api/v1/cognify or /api/v1/remember.
+
+        - **ontology_file** (UploadFile): Single ontology file in OWL (RDF/XML) format; the filename must end with .owl.
+
+        - **description** (Optional[str]): Optional description for the ontology (plain string; values starting with ''['' or ''\{'' are rejected).
+
+
+        ## Response
+
+        Returns metadata about the uploaded ontology including key, filename, size, and upload timestamp.
+
+
+        ## Error Codes
+
+        - **400 Bad Request**: Invalid file format, duplicate key, multiple files uploaded
+
+        - **500 Internal Server Error**: File system or processing errors'
+      operationId: upload_ontology_api_v1_ontologies_post
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Body_upload_ontology_api_v1_ontologies_post'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                additionalProperties: true
+                type: object
+                title: Response Upload Ontology Api V1 Ontologies Post
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+      - BearerAuth: []
+      - ApiKeyAuth: []
+  /api/v1/ontologies/{ontology_key}:
+    delete:
+      tags:
+      - ontologies
+      summary: Delete Ontology
+      description: 'Delete an uploaded ontology by key.
+
+
+        ## Path Parameters
+
+        - **ontology_key** (str): The key of the ontology to delete.
+
+
+        ## Error Codes
+
+        - **400 Bad Request**: Ontology key not found
+
+        - **500 Internal Server Error**: File system errors'
+      operationId: delete_ontology_api_v1_ontologies__ontology_key__delete
+      security:
+      - BearerAuth: []
+      - ApiKeyAuth: []
+      parameters:
+      - name: ontology_key
+        in: path
+        required: true
+        schema:
+          type: string
+          description: Key of the ontology to delete, exactly as provided at upload time (see GET /api/v1/ontologies for available keys).
+          examples:
+          - medical_ontology
+          title: Ontology Key
+        description: Key of the ontology to delete, exactly as provided at upload time (see GET /api/v1/ontologies for available keys).
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+                title: Response Delete Ontology Api V1 Ontologies  Ontology Key  Delete
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+components:
+  schemas:
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+        input:
+          title: Input
+        ctx:
+          type: object
+          title: Context
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError
+    Body_upload_ontology_api_v1_ontologies_post:
+      properties:
+        ontology_key:
+          type: string
+          title: Ontology Key
+          description: Unique, user-defined identifier for this ontology. Reference it later via the ontology_key parameter of the cognify/remember endpoints.
+          examples:
+          - medical_ontology
+        ontology_file:
+          type: string
+          contentMediaType: application/octet-stream
+          title: Ontology File
+          description: Single ontology file in OWL (RDF/XML) format. The filename must end with .owl — other extensions are rejected with 400. Exactly one file per request.
+        description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Description
+          description: Optional human-readable description (plain string; values starting with '[' or '\{' are rejected).
+          examples:
+          - OWL ontology of medical conditions and treatments
+      type: object
+      required:
+      - ontology_key
+      - ontology_file
+      title: Body_upload_ontology_api_v1_ontologies_post
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-Api-Key
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    CookieAuth:
+      type: apiKey
+      in: cookie
+      name: auth_token

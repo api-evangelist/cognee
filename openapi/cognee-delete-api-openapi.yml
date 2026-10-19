@@ -1,0 +1,141 @@
+openapi: 3.2.0
+info:
+  title: Cognee Delete API
+  description: Cognee API with Bearer token and Cookie auth
+  version: 1.0.0
+servers:
+- url: https://{tenant}.aws.cognee.ai
+  description: 'Cognee Cloud: your tenant pod, named in the platform.cognee.ai dashboard'
+  variables:
+    tenant:
+      default: your-tenant
+      description: Your tenant name, shown in the Cognee Cloud dashboard
+- url: http://localhost:8000
+  description: 'Self-hosted: a locally running cognee server'
+security:
+- BearerAuth: []
+- ApiKeyAuth: []
+tags:
+- name: Delete
+  description: Data deletion endpoints (deprecated — use datasets endpoints instead).
+paths:
+  /api/v1/delete:
+    delete:
+      tags:
+      - Delete
+      summary: Delete
+      description: 'Delete data by its ID from the specified dataset.
+
+
+        Args:
+
+        data_id: The UUID of the data to delete
+
+        dataset_id: The UUID of the dataset containing the data
+
+        mode: "soft" (default) or "hard" - hard mode also deletes degree-one entity nodes
+
+        user: Authenticated user
+
+        delete_dataset_if_empty: If True, deletes the dataset if it is left empty after data deletion
+
+
+        Returns:
+
+        JSON response indicating success or failure'
+      operationId: delete_api_v1_delete_delete
+      deprecated: true
+      security:
+      - BearerAuth: []
+      - ApiKeyAuth: []
+      parameters:
+      - name: data_id
+        in: query
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Data Id
+      - name: dataset_id
+        in: query
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Dataset Id
+      - name: mode
+        in: query
+        required: false
+        schema:
+          type: string
+          default: soft
+          title: Mode
+      - name: delete_dataset_if_empty
+        in: query
+        required: false
+        schema:
+          type: boolean
+          default: false
+          title: Delete Dataset If Empty
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+components:
+  schemas:
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+        input:
+          title: Input
+        ctx:
+          type: object
+          title: Context
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-Api-Key
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    CookieAuth:
+      type: apiKey
+      in: cookie
+      name: auth_token

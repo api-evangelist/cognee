@@ -1,150 +1,400 @@
 openapi: 3.2.0
 info:
-  title: Cognee REST Search API
-  description: The Cognee REST API provides endpoints for the complete AI memory lifecycle, including data ingestion, knowledge graph construction, and semantic retrieval. Core endpoints cover adding raw text or documents, triggering the cognify pipeline that extracts entities and relationships via LLM, executing multi-mode search queries, managing datasets, and creating agent identities. The API uses X-Api-Key header authentication for cloud deployments and Bearer token auth for self-hosted instances.
+  title: Cognee Search API
+  description: Cognee API with Bearer token and Cookie auth
   version: 1.0.0
-  contact:
-    name: Cognee Support
-    url: https://docs.cognee.ai/api-reference/introduction
-  license:
-    name: Apache 2.0
-    url: https://github.com/topoteretes/cognee/blob/main/LICENSE
 servers:
-- url: https://api.cognee.ai
-  description: Cognee Cloud (managed)
+- url: https://{tenant}.aws.cognee.ai
+  description: 'Cognee Cloud: your tenant pod, named in the platform.cognee.ai dashboard'
+  variables:
+    tenant:
+      default: your-tenant
+      description: Your tenant name, shown in the Cognee Cloud dashboard
 - url: http://localhost:8000
-  description: Self-hosted (Docker / local)
+  description: 'Self-hosted: a locally running cognee server'
 security:
 - BearerAuth: []
 - ApiKeyAuth: []
 tags:
 - name: Search
-  description: Semantic and graph search queries
+  description: Search endpoints for querying the knowledge graph.
 paths:
   /api/v1/search:
     get:
-      operationId: getSearchHistory
-      summary: Get search history for the authenticated user
-      description: Retrieves the search history for the authenticated user, returning a list of previously executed searches with their timestamps.
       tags:
       - Search
-      security:
-      - BearerAuth: []
-      - ApiKeyAuth: []
+      summary: List the caller's recent search history
+      description: 'Get search history for the authenticated user.
+
+
+        This endpoint retrieves the search history for the authenticated user,
+
+        returning a list of previously executed searches with their timestamps.
+
+
+        ## Response
+
+        Returns a list of search history items containing:
+
+        - **id**: Unique identifier for the search
+
+        - **text**: The search query text
+
+        - **user**: User who performed the search
+
+        - **created_at**: When the search was performed
+
+
+        ## Error Codes
+
+        - **500 Internal Server Error**: Error retrieving search history'
+      operationId: get_search_history_api_v1_search_get
       responses:
         '200':
-          description: List of search history items
+          description: Successful Response
           content:
             application/json:
               schema:
-                type: array
                 items:
                   $ref: '#/components/schemas/SearchHistoryItem'
+                type: array
+                title: Response Get Search History Api V1 Search Get
         '403':
-          description: Permission denied
+          description: Forbidden
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/cognee__api__DTO__ErrorResponse'
+        '422':
+          description: Unprocessable Content
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/cognee__api__DTO__ErrorResponse'
         '500':
-          description: Internal server error
+          description: Internal Server Error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
-    post:
-      operationId: search
-      summary: Search the knowledge graph
-      description: Perform semantic search across the knowledge graph using one of 16 search types including GRAPH_COMPLETION, RAG_COMPLETION, SUMMARIES, CHUNKS, CYPHER, TEMPORAL, AGENTIC_COMPLETION and more. Supports dataset scoping and pagination.
-      tags:
-      - Search
+                $ref: '#/components/schemas/cognee__api__DTO__ErrorResponse'
       security:
       - BearerAuth: []
       - ApiKeyAuth: []
+    post:
+      tags:
+      - Search
+      summary: 'Search (low level): run one SearchType over the caller''s datasets'
+      description: 'Search for nodes in the graph database.
+
+
+        This endpoint performs semantic search across the knowledge graph to find
+
+        relevant nodes based on the provided query. It supports different search
+
+        types and can be scoped to specific datasets.
+
+
+        ## Request Parameters
+
+        - **search_type** (SearchType): Type of search to perform (default: HYBRID_COMPLETION). Use AGENTIC_COMPLETION to enable skills, tools and max_iter.
+
+        - **datasets** (Optional[List[str]]): List of dataset names to search within
+
+        - **dataset_ids** (Optional[List[UUID]]): List of dataset UUIDs to search within
+
+        - **query** (str): The search query string
+
+        - **system_prompt** Optional[str]: System prompt to be used for Completion type searches in Cognee
+
+        - **node_name** Optional[list[str]]: Filter results to specific node_sets defined in the add pipeline (for targeted search).
+
+        - **top_k** (Optional[int]): Maximum number of results to return (default: 15)
+
+        - **only_context** bool: Return what the LLM would have received instead of its answer. For completion type searches the result is the user prompt (conversation history, then question plus retrieval context through the retriever''s template, then the session guidance block); the system prompt (the retriever''s task template) is `system_prompt_result` with verbose=true. Retrieval-only types return their context. No LLM call is made.
+
+        - **session_id** (Optional[str]): Session whose history and guidance feed the completion or the only_context prompt; the default session when omitted.
+
+        - **verbose** (bool): Return detailed result information including the graph representation when available (default: false)
+
+        - **skills** (Optional[List[str]]): Skill names to load into the agentic retriever (AGENTIC_COMPLETION only)
+
+        - **tools** (Optional[List[str]]): Tool whitelist for AGENTIC_COMPLETION searches
+
+        - **max_iter** (Optional[int]): Max agentic iterations, must be >= 1 (AGENTIC_COMPLETION only)
+
+        - **include_references** (bool): Attach source references to completion-type results (default: true)
+
+        - **code_query** (Optional[dict]): Structured operation arguments for CODE search
+
+
+        ## Response
+
+        Returns a list of search results containing relevant nodes from the graph.
+
+
+        ## Error Codes
+
+        - **402/403/404/409/422**: Cognee errors (payment required, permission
+
+        denied, missing user, session-dataset conflict, prerequisites not met)
+
+        return their own status code and message via the global error handler
+
+        - **500 Internal Server Error**: Unexpected error during search
+
+
+        ## Notes
+
+        - Datasets sent by name will only map to datasets owned by the request sender
+
+        - To search datasets not owned by the request sender, dataset UUID is needed
+
+        - If dataset_ids is provided, the datasets name list is ignored'
+      operationId: search_api_v1_search_post
       requestBody:
-        required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/SearchPayload'
+              $ref: '#/components/schemas/SearchPayloadDTO'
             example:
               search_type: GRAPH_COMPLETION
-              query: What are the main topics in the research papers?
-              datasets:
-              - research_papers
+              query: What is Cognee?
               top_k: 10
-              only_context: false
+        required: true
       responses:
         '200':
-          description: List of search results from the knowledge graph
+          description: Successful Response
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/SearchResult'
+                anyOf:
+                - items:
+                    $ref: '#/components/schemas/SearchResult'
+                  type: array
+                - items: {}
+                  type: array
+                title: Response Search Api V1 Search Post
         '403':
-          description: Permission denied (returns empty list)
+          description: Forbidden
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/cognee__api__DTO__ErrorResponse'
         '422':
-          description: Validation error or search prerequisites not met
+          description: Unprocessable Content
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/cognee__api__DTO__ErrorResponse'
         '500':
-          description: Internal server error
+          description: Internal Server Error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/cognee__api__DTO__ErrorResponse'
+      security:
+      - BearerAuth: []
+      - ApiKeyAuth: []
 components:
   schemas:
-    SearchHistoryItem:
+    cognee__api__DTO__ErrorResponse:
+      properties:
+        error:
+          type: string
+          title: Error
+        detail:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Detail
       type: object
+      required:
+      - error
+      title: ErrorResponse
+      description: 'Error body returned by routers that answer 4xx/5xx themselves.
+
+
+        ``error`` is the human-readable message. Errors raised as ``CogneeApiError`` are
+
+        rendered instead by the app-level handler in ``cognee/api/client.py`` as
+
+        ``{"detail": "<message> [<ErrorName>]"}`` plus ``"remediation"`` when a fix is known,
+
+        and ``"code"``/``"param"`` when the error carries a stable reason (SearchType.CODE).'
+    SearchHistoryItem:
       properties:
         id:
           type: string
           format: uuid
+          title: Id
         text:
           type: string
+          title: Text
         user:
           type: string
-        created_at:
+          title: User
+        createdAt:
           type: string
           format: date-time
+          title: Createdat
+        datasetId:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Datasetid
+      type: object
       required:
       - id
       - text
       - user
-      - created_at
-    SearchResult:
-      type: object
-      description: A single result node from the knowledge graph
-      additionalProperties: true
-    ErrorResponse:
-      type: object
+      - createdAt
+      title: SearchHistoryItem
+    SearchPayloadDTO:
       properties:
-        error:
+        searchType:
+          $ref: '#/components/schemas/SearchType'
+          description: 'Retrieval strategy. Common values: HYBRID_COMPLETION (default, passages + entities + LLM answer), GRAPH_COMPLETION (graph context + LLM answer), CODE (deterministic code graph), RAG_COMPLETION, CHUNKS, SUMMARIES, TEMPORAL, FEELING_LUCKY (auto-select), AGENTIC_COMPLETION (enables skills/tools/max_iter).'
+          default: HYBRID_COMPLETION
+        datasets:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: 'null'
+          title: Datasets
+          description: Dataset names to search. Names only resolve to datasets owned by the caller; use dataset_ids for datasets shared with you.
+          examples:
+          - - default_dataset
+        datasetIds:
+          anyOf:
+          - items:
+              type: string
+              format: uuid
+            type: array
+          - type: 'null'
+          title: Datasetids
+          description: Dataset UUIDs to search (required for datasets shared with you). When provided, the datasets name list is ignored.
+          examples:
+          - null
+        query:
           type: string
-          description: Short error message
-        detail:
-          type:
-          - string
-          - 'null'
-          description: Detailed error description
+          title: Query
+          description: The question to answer. Required; there is no default query.
+          examples:
+          - What is in the document?
+        systemPrompt:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Systemprompt
+          default: Answer the question using the provided context. Be as brief as possible.
+        nodeName:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: 'null'
+          title: Nodename
+          description: Restrict results to nodes in these node_sets (the node_set values used during add/remember).
+          examples:
+          - null
+        topK:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Topk
+          default: 15
+        onlyContext:
+          type: boolean
+          title: Onlycontext
+          description: Return what the LLM would have received instead of its answer. For completion search types the result is the user prompt (conversation history, then question plus retrieval context through the retriever's template, then the session guidance block); the system prompt (the retriever's task template) is system_prompt_result with verbose=true. The session layer comes from session_id (the default session when omitted). Retrieval-only types return their context. No LLM call is made and nothing is written to the session.
+          default: false
+        sessionId:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Sessionid
+          description: Session whose history and guidance feed the completion (or the only_context prompt). Omit to use the default session.
+          examples:
+          - null
+        verbose:
+          type: boolean
+          title: Verbose
+          description: Return detailed result information including the graph representation when available.
+          default: false
+        skills:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: 'null'
+          title: Skills
+          description: Skill names to load into the agentic retriever. Requires search_type=AGENTIC_COMPLETION; leave null otherwise.
+          examples:
+          - null
+        tools:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: 'null'
+          title: Tools
+          description: Whitelist of tool names available to the agentic retriever. Requires search_type=AGENTIC_COMPLETION.
+          examples:
+          - null
+        maxIter:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Maxiter
+          description: Maximum agentic tool-call iterations before forcing a final answer (positive integer; AGENTIC_COMPLETION only).
+          examples:
+          - null
+        includeReferences:
+          type: boolean
+          title: Includereferences
+          description: Attach source references to completion-type results.
+          default: false
+        codeQuery:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          title: Codequery
+          description: Structured arguments for search_type=CODE. Set operation to query_facts, explore, traverse, find_path, impact_analysis, insights, architecture, delta, capabilities, search, neighbors, subgraph, flows, hubs, or ask (ask answers a natural-language question with seeds, flows, a one-hop neighbourhood and file:line citations). Add diagram='mermaid' (or 'dot', or true) to receive the result rendered as diagram source under search_result[0].diagram; architecture includes a Mermaid diagram unless diagram=false. A rejected request answers 422 with a stable 'code' (unknown_operation, invalid_argument, not_found, ambiguous, no_code_graph, feature_unavailable) and, when one argument is at fault, its 'param'.
+      type: object
       required:
-      - error
+      - query
+      title: SearchPayloadDTO
+    SearchResult:
+      properties:
+        search_result:
+          title: Search Result
+        dataset_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Dataset Id
+        dataset_name:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Dataset Name
+      type: object
+      required:
+      - search_result
+      - dataset_id
+      - dataset_name
+      title: SearchResult
     SearchType:
       type: string
       enum:
       - SUMMARIES
       - CHUNKS
       - RAG_COMPLETION
-      - TRIPLET_COMPLETION
+      - HYBRID_COMPLETION
       - GRAPH_COMPLETION
       - GRAPH_COMPLETION_DECOMPOSITION
       - GRAPH_SUMMARY_COMPLETION
@@ -157,92 +407,22 @@ components:
       - CODING_RULES
       - CHUNKS_LEXICAL
       - AGENTIC_COMPLETION
-      description: Type of search to perform against the knowledge graph
-    SearchPayload:
-      type: object
-      required:
-      - query
-      properties:
-        search_type:
-          $ref: '#/components/schemas/SearchType'
-          default: GRAPH_COMPLETION
-        datasets:
-          type:
-          - array
-          - 'null'
-          items:
-            type: string
-          description: Dataset names to search (resolved to datasets owned by caller)
-        dataset_ids:
-          type:
-          - array
-          - 'null'
-          items:
-            type: string
-            format: uuid
-          description: Dataset UUIDs to search (allows cross-user access if permitted)
-          example: []
-        query:
-          type: string
-          description: The search query string
-          default: What is in the document?
-        system_prompt:
-          type:
-          - string
-          - 'null'
-          description: System prompt for completion-type searches
-          default: Answer the question using the provided context. Be as brief as possible.
-        node_name:
-          type:
-          - array
-          - 'null'
-          items:
-            type: string
-          description: Filter results to specific node_sets from the add pipeline
-        top_k:
-          type:
-          - integer
-          - 'null'
-          description: Maximum number of results to return
-          default: 10
-        only_context:
-          type: boolean
-          description: Return only context without LLM completion call
-          default: false
-        verbose:
-          type: boolean
-          description: Return verbose results
-          default: false
-        skills:
-          type:
-          - array
-          - 'null'
-          items:
-            type: string
-          description: Skills to enable for agentic search
-        tools:
-          type:
-          - array
-          - 'null'
-          items:
-            type: string
-          description: Tools to enable for agentic search
-        max_iter:
-          type:
-          - integer
-          - 'null'
-          description: Maximum iterations for agentic search
+      - CODE
+      - GRAPH_REPORT
+      - BROAD
+      - SKILLS
+      - TRIPLET_COMPLETION
+      title: SearchType
   securitySchemes:
-    BearerAuth:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
-      description: Bearer token authentication for self-hosted instances
     ApiKeyAuth:
       type: apiKey
       in: header
       name: X-Api-Key
-      description: API key authentication for Cognee Cloud deployments
-externalDocs:
-  description: Cognee API Reference
-  url: https://docs.cognee.ai/api-reference/introduction
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    CookieAuth:
+      type: apiKey
+      in: cookie
+      name: auth_token

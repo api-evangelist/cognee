@@ -1,0 +1,854 @@
+openapi: 3.2.0
+info:
+  title: Cognee Integrations API
+  description: Cognee API with Bearer token and Cookie auth
+  version: 1.0.0
+servers:
+- url: https://{tenant}.aws.cognee.ai
+  description: 'Cognee Cloud: your tenant pod, named in the platform.cognee.ai dashboard'
+  variables:
+    tenant:
+      default: your-tenant
+      description: Your tenant name, shown in the Cognee Cloud dashboard
+- url: http://localhost:8000
+  description: 'Self-hosted: a locally running cognee server'
+security:
+- BearerAuth: []
+- ApiKeyAuth: []
+tags:
+- name: Integrations
+  description: Endpoints for connecting, provisioning, and disconnecting OAuth providers and plugins.
+paths:
+  /api/v1/integrations/status:
+    get:
+      tags:
+      - Integrations
+      summary: Integrations Status
+      description: 'Aggregate connection status: every OAuth provider + every known plugin.
+
+
+        One call powers the whole integrations page. Every registered
+
+        provider and every known plugin appears, connected or not, with
+
+        display fields only — never token material. Each status source
+
+        (credentials, identity plugins, legacy prefixes, agent registry) is
+
+        fetched independently and degrades to its empty default on failure:
+
+        a broken source logs server-side and blanks its section rather than
+
+        500ing the page (same posture as the sessions list).'
+      operationId: integrations_status_api_v1_integrations_status_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IntegrationsStatusDTO'
+      security:
+      - BearerAuth: []
+      - ApiKeyAuth: []
+  /api/v1/integrations/plugins/{plugin_key}/provision:
+    post:
+      tags:
+      - Integrations
+      summary: Provision Plugin
+      description: 'Provision (or re-key) a dedicated agent identity for a plugin.
+
+
+        Idempotent get-or-create: the first call creates an agent sub-user
+
+        for ``(user, plugin_key)`` with a labeled API key; every later call
+
+        returns the same agent but rotates the key (old keys are revoked —
+
+        re-provision *is* the rotation flow). The returned key is shown once
+
+        and never retrievable again.
+
+
+        ## Path Parameters
+
+        - **plugin_key** (str): Key of a known plugin (see GET /api/v1/integrations/status).'
+      operationId: provision_plugin_api_v1_integrations_plugins__plugin_key__provision_post
+      security:
+      - BearerAuth: []
+      - ApiKeyAuth: []
+      parameters:
+      - name: plugin_key
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Plugin Key
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PluginProvisionDTO'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/integrations/plugins/{plugin_key}:
+    delete:
+      tags:
+      - Integrations
+      summary: Disconnect Plugin
+      description: 'Disconnect a plugin: revoke its API keys, keep its data.
+
+
+        The agent user and everything it wrote stay — deleting data on
+
+        disconnect would be surprising; full removal stays on
+
+        ``DELETE /api/v1/agents/{agent_id}``. Re-provisioning later revives
+
+        the same identity with a fresh key.
+
+
+        ## Path Parameters
+
+        - **plugin_key** (str): Key of a known plugin (see GET /api/v1/integrations/status).'
+      operationId: disconnect_plugin_api_v1_integrations_plugins__plugin_key__delete
+      security:
+      - BearerAuth: []
+      - ApiKeyAuth: []
+      parameters:
+      - name: plugin_key
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Plugin Key
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DisconnectResultDTO'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/integrations/{provider}/authorize:
+    post:
+      tags:
+      - Integrations
+      summary: Authorize
+      description: 'Mint the provider''s authorize URL for the requesting user.
+
+
+        Also sets the nonce cookie the callback checks. The state alone says
+
+        which user *started* an install; the cookie is what says the browser
+
+        finishing it is the same one. See :func:`_set_install_nonce`.
+
+
+        ## Path Parameters
+
+        - **provider** (str): Key of a registered OAuth provider (see GET
+
+        /api/v1/integrations/status).'
+      operationId: authorize_api_v1_integrations__provider__authorize_post
+      security:
+      - BearerAuth: []
+      - ApiKeyAuth: []
+      parameters:
+      - name: provider
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Provider
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthorizeUrlDTO'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/integrations/{provider}/connection:
+    get:
+      tags:
+      - Integrations
+      summary: Connection Status
+      description: 'Connection state for the Integrations page.
+
+
+        ## Path Parameters
+
+        - **provider** (str): Key of a registered OAuth provider (see GET
+
+        /api/v1/integrations/status).'
+      operationId: connection_status_api_v1_integrations__provider__connection_get
+      security:
+      - BearerAuth: []
+      - ApiKeyAuth: []
+      parameters:
+      - name: provider
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Provider
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConnectionStatusDTO'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    delete:
+      tags:
+      - Integrations
+      summary: Disconnect
+      description: 'Disconnect the account connected by the requesting user.
+
+
+        Marks the stored installation revoked, and best-effort asks the
+
+        provider to kill the token on its own side via
+
+        ``integration.revoke_remote``. That call is wrapped here too, on top
+
+        of each adapter''s own best-effort handling — a third-party
+
+        integration that doesn''t honor the "never raise" contract on
+
+        ``revoke_remote`` still must not block the local disconnect.
+
+
+        ## Path Parameters
+
+        - **provider** (str): Key of a registered OAuth provider (see GET
+
+        /api/v1/integrations/status).'
+      operationId: disconnect_api_v1_integrations__provider__connection_delete
+      security:
+      - BearerAuth: []
+      - ApiKeyAuth: []
+      parameters:
+      - name: provider
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Provider
+      - name: delete_data
+        in: query
+        required: false
+        schema:
+          type: boolean
+          default: false
+          title: Delete Data
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DisconnectResultDTO'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/integrations/{provider}/labels:
+    get:
+      tags:
+      - Integrations
+      summary: Integration Resources
+      description: 'List selectable resources for a connected integration.
+
+
+        ``/folders`` and ``/labels`` are readable aliases for SDK callers that
+
+        want provider vocabulary; ``/resources`` is the stable generic path.
+
+        The returned selection is three-state: ``null`` means all resources,
+
+        an empty list means none, and a non-empty list is an allowlist.'
+      operationId: integration_resources_api_v1_integrations__provider__labels_get
+      security:
+      - BearerAuth: []
+      - ApiKeyAuth: []
+      parameters:
+      - name: provider
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Provider
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IntegrationResourceListDTO'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    put:
+      tags:
+      - Integrations
+      summary: Set Integration Resources
+      description: Persist a full resource selection for a connected integration.
+      operationId: set_integration_resources_api_v1_integrations__provider__labels_put
+      security:
+      - BearerAuth: []
+      - ApiKeyAuth: []
+      parameters:
+      - name: provider
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Provider
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IntegrationResourceSelectionPayload'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IntegrationResourceSelectionResultDTO'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/integrations/{provider}/folders:
+    get:
+      tags:
+      - Integrations
+      summary: Integration Resources
+      description: 'List selectable resources for a connected integration.
+
+
+        ``/folders`` and ``/labels`` are readable aliases for SDK callers that
+
+        want provider vocabulary; ``/resources`` is the stable generic path.
+
+        The returned selection is three-state: ``null`` means all resources,
+
+        an empty list means none, and a non-empty list is an allowlist.'
+      operationId: integration_resources_api_v1_integrations__provider__folders_get
+      security:
+      - BearerAuth: []
+      - ApiKeyAuth: []
+      parameters:
+      - name: provider
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Provider
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IntegrationResourceListDTO'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    put:
+      tags:
+      - Integrations
+      summary: Set Integration Resources
+      description: Persist a full resource selection for a connected integration.
+      operationId: set_integration_resources_api_v1_integrations__provider__folders_put
+      security:
+      - BearerAuth: []
+      - ApiKeyAuth: []
+      parameters:
+      - name: provider
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Provider
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IntegrationResourceSelectionPayload'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IntegrationResourceSelectionResultDTO'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/integrations/{provider}/resources:
+    get:
+      tags:
+      - Integrations
+      summary: Integration Resources
+      description: 'List selectable resources for a connected integration.
+
+
+        ``/folders`` and ``/labels`` are readable aliases for SDK callers that
+
+        want provider vocabulary; ``/resources`` is the stable generic path.
+
+        The returned selection is three-state: ``null`` means all resources,
+
+        an empty list means none, and a non-empty list is an allowlist.'
+      operationId: integration_resources_api_v1_integrations__provider__resources_get
+      security:
+      - BearerAuth: []
+      - ApiKeyAuth: []
+      parameters:
+      - name: provider
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Provider
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IntegrationResourceListDTO'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    put:
+      tags:
+      - Integrations
+      summary: Set Integration Resources
+      description: Persist a full resource selection for a connected integration.
+      operationId: set_integration_resources_api_v1_integrations__provider__resources_put
+      security:
+      - BearerAuth: []
+      - ApiKeyAuth: []
+      parameters:
+      - name: provider
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Provider
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IntegrationResourceSelectionPayload'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IntegrationResourceSelectionResultDTO'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/integrations/{provider}/sync:
+    post:
+      tags:
+      - Integrations
+      summary: Sync Integration
+      description: Start a provider sync without changing its stored selection.
+      operationId: sync_integration_api_v1_integrations__provider__sync_post
+      security:
+      - BearerAuth: []
+      - ApiKeyAuth: []
+      parameters:
+      - name: provider
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Provider
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IntegrationSyncResultDTO'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+components:
+  schemas:
+    IntegrationResourceSelectionResultDTO:
+      properties:
+        selected:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: 'null'
+          title: Selected
+      type: object
+      title: IntegrationResourceSelectionResultDTO
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    PluginProvisionDTO:
+      properties:
+        pluginKey:
+          type: string
+          title: Pluginkey
+        agentId:
+          type: string
+          format: uuid
+          title: Agentid
+        apiKey:
+          type: string
+          title: Apikey
+        created:
+          type: boolean
+          title: Created
+      type: object
+      required:
+      - pluginKey
+      - agentId
+      - apiKey
+      - created
+      title: PluginProvisionDTO
+    IntegrationResourceDTO:
+      properties:
+        id:
+          type: string
+          title: Id
+        name:
+          type: string
+          title: Name
+        description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Description
+        attributes:
+          additionalProperties: true
+          type: object
+          title: Attributes
+        selected:
+          type: boolean
+          title: Selected
+          default: false
+      type: object
+      required:
+      - id
+      - name
+      title: IntegrationResourceDTO
+    DisconnectResultDTO:
+      properties:
+        disconnected:
+          type: boolean
+          title: Disconnected
+      type: object
+      required:
+      - disconnected
+      title: DisconnectResultDTO
+    IntegrationSyncResultDTO:
+      properties:
+        accepted:
+          type: boolean
+          title: Accepted
+      type: object
+      required:
+      - accepted
+      title: IntegrationSyncResultDTO
+    IntegrationResourceListDTO:
+      properties:
+        resources:
+          items:
+            $ref: '#/components/schemas/IntegrationResourceDTO'
+          type: array
+          title: Resources
+        selected:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: 'null'
+          title: Selected
+      type: object
+      required:
+      - resources
+      title: IntegrationResourceListDTO
+    IntegrationResourceSelectionPayload:
+      properties:
+        resourceIds:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: 'null'
+          title: Resourceids
+      type: object
+      title: IntegrationResourceSelectionPayload
+    AuthorizeUrlDTO:
+      properties:
+        authorizeUrl:
+          type: string
+          title: Authorizeurl
+      type: object
+      required:
+      - authorizeUrl
+      title: AuthorizeUrlDTO
+    ConnectionStatusDTO:
+      properties:
+        connected:
+          type: boolean
+          title: Connected
+        datasetId:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Datasetid
+        storedItems:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Storeditems
+        accountLabel:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Accountlabel
+        providerAccountId:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Provideraccountid
+        connectedAt:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Connectedat
+        syncStatus:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Syncstatus
+        lastSyncedAt:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Lastsyncedat
+        syncCounts:
+          anyOf:
+          - additionalProperties:
+              type: integer
+            type: object
+          - type: 'null'
+          title: Synccounts
+      type: object
+      required:
+      - connected
+      title: ConnectionStatusDTO
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+        input:
+          title: Input
+        ctx:
+          type: object
+          title: Context
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError
+    IntegrationStatusItemDTO:
+      properties:
+        provider:
+          type: string
+          title: Provider
+        connected:
+          type: boolean
+          title: Connected
+        accountLabel:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Accountlabel
+        providerAccountId:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Provideraccountid
+        connectedAt:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Connectedat
+        syncStatus:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Syncstatus
+        lastSyncedAt:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Lastsyncedat
+        syncCounts:
+          anyOf:
+          - additionalProperties:
+              type: integer
+            type: object
+          - type: 'null'
+          title: Synccounts
+      type: object
+      required:
+      - provider
+      - connected
+      title: IntegrationStatusItemDTO
+    IntegrationsStatusDTO:
+      properties:
+        integrations:
+          items:
+            $ref: '#/components/schemas/IntegrationStatusItemDTO'
+          type: array
+          title: Integrations
+        plugins:
+          items:
+            $ref: '#/components/schemas/PluginStatusItemDTO'
+          type: array
+          title: Plugins
+      type: object
+      required:
+      - integrations
+      - plugins
+      title: IntegrationsStatusDTO
+    PluginStatusItemDTO:
+      properties:
+        key:
+          type: string
+          title: Key
+        connected:
+          type: boolean
+          title: Connected
+        agentId:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Agentid
+        provisionedAt:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Provisionedat
+        lastActiveAt:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Lastactiveat
+        sessionCount:
+          type: integer
+          title: Sessioncount
+          default: 0
+        source:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Source
+      type: object
+      required:
+      - key
+      - connected
+      title: PluginStatusItemDTO
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-Api-Key
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    CookieAuth:
+      type: apiKey
+      in: cookie
+      name: auth_token

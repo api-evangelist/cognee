@@ -1,108 +1,188 @@
 openapi: 3.2.0
 info:
-  title: Cognee REST Settings API
-  description: The Cognee REST API provides endpoints for the complete AI memory lifecycle, including data ingestion, knowledge graph construction, and semantic retrieval. Core endpoints cover adding raw text or documents, triggering the cognify pipeline that extracts entities and relationships via LLM, executing multi-mode search queries, managing datasets, and creating agent identities. The API uses X-Api-Key header authentication for cloud deployments and Bearer token auth for self-hosted instances.
+  title: Cognee Settings API
+  description: Cognee API with Bearer token and Cookie auth
   version: 1.0.0
-  contact:
-    name: Cognee Support
-    url: https://docs.cognee.ai/api-reference/introduction
-  license:
-    name: Apache 2.0
-    url: https://github.com/topoteretes/cognee/blob/main/LICENSE
 servers:
-- url: https://api.cognee.ai
-  description: Cognee Cloud (managed)
+- url: https://{tenant}.aws.cognee.ai
+  description: 'Cognee Cloud: your tenant pod, named in the platform.cognee.ai dashboard'
+  variables:
+    tenant:
+      default: your-tenant
+      description: Your tenant name, shown in the Cognee Cloud dashboard
 - url: http://localhost:8000
-  description: Self-hosted (Docker / local)
+  description: 'Self-hosted: a locally running cognee server'
 security:
 - BearerAuth: []
 - ApiKeyAuth: []
 tags:
 - name: Settings
-  description: System configuration (LLM and vector DB)
+  description: Configuration endpoints for managing Cognee settings.
 paths:
   /api/v1/settings:
     get:
-      operationId: getSettings
-      summary: Get current system settings
-      description: Retrieves the current configuration for LLM provider and vector database. Supports openai, ollama, anthropic, gemini, mistral for LLM and lancedb, chromadb, pgvector for vector DB.
       tags:
       - Settings
-      security:
-      - BearerAuth: []
-      - ApiKeyAuth: []
+      summary: Get Settings
+      description: 'Get the current system settings.
+
+
+        This endpoint retrieves the current configuration settings for the system,
+
+        including LLM (Large Language Model) configuration and vector database
+
+        configuration. These settings determine how the system processes and stores data.
+
+
+        ## Response
+
+        Returns the current system settings containing:
+
+        - **llm**: LLM configuration (provider, model, API key)
+
+        - **vector_db**: Vector database configuration (provider, URL, API key)
+
+
+        ## Error Codes
+
+        - **500 Internal Server Error**: Error retrieving settings'
+      operationId: get_settings_api_v1_settings_get
       responses:
         '200':
-          description: Current system settings
+          description: Successful Response
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Settings'
-    post:
-      operationId: saveSettings
-      summary: Save or update system settings
-      description: Updates LLM provider configuration and/or vector database configuration. Partial updates are supported — only the provided fields are changed.
-      tags:
-      - Settings
+                $ref: '#/components/schemas/SettingsDTO'
       security:
       - BearerAuth: []
       - ApiKeyAuth: []
+    post:
+      tags:
+      - Settings
+      summary: Save Settings
+      description: 'Save or update system settings.
+
+
+        This endpoint allows updating the system configuration settings. You can
+
+        update either the LLM configuration, vector database configuration, or both.
+
+        Only provided settings will be updated; others remain unchanged.
+
+
+        ## Request Parameters
+
+        - **llm** (Optional[LLMConfigInputDTO]): LLM configuration (provider, model, API key)
+
+        - **vector_db** (Optional[VectorDBConfigInputDTO]): Vector database configuration (provider, URL, API key)
+
+
+        ## Response
+
+        No content returned on successful save.
+
+
+        ## Error Codes
+
+        - **403 Forbidden**: Caller is not a superuser
+
+        - **400 Bad Request**: Invalid settings provided
+
+        - **500 Internal Server Error**: Error saving settings'
+      operationId: save_settings_api_v1_settings_post
       requestBody:
-        required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/SettingsPayload'
-            example:
-              llm:
-                provider: openai
-                model: gpt-4o
-                api_key: sk-...
-              vector_db:
-                provider: lancedb
-                url: /var/lancedb
-                api_key: ''
+              $ref: '#/components/schemas/SettingsPayloadDTO'
+        required: true
       responses:
         '200':
-          description: Settings saved
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+      - BearerAuth: []
+      - ApiKeyAuth: []
 components:
   schemas:
-    VectorDBConfig:
-      type: object
+    ConfigChoice:
       properties:
-        provider:
+        value:
           type: string
-          enum:
-          - lancedb
-          - chromadb
-          - pgvector
-        url:
+          title: Value
+        label:
           type: string
-        api_key:
-          type: string
+          title: Label
+      type: object
       required:
-      - provider
-      - url
-      - api_key
-    SettingsPayload:
+      - value
+      - label
+      title: ConfigChoice
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
       type: object
+      title: HTTPValidationError
+    SettingsDTO:
       properties:
         llm:
-          $ref: '#/components/schemas/LLMConfig'
-        vector_db:
-          $ref: '#/components/schemas/VectorDBConfig'
-    Settings:
+          $ref: '#/components/schemas/LLMConfigOutputDTO'
+        vectorDb:
+          $ref: '#/components/schemas/VectorDBConfigOutputDTO'
       type: object
-      properties:
-        llm:
-          $ref: '#/components/schemas/LLMConfig'
-        vector_db:
-          $ref: '#/components/schemas/VectorDBConfig'
       required:
       - llm
-      - vector_db
-    LLMConfig:
+      - vectorDb
+      title: SettingsDTO
+    SettingsPayloadDTO:
+      properties:
+        llm:
+          anyOf:
+          - $ref: '#/components/schemas/LLMConfigInputDTO'
+          - type: 'null'
+        vectorDb:
+          anyOf:
+          - $ref: '#/components/schemas/VectorDBConfigInputDTO'
+          - type: 'null'
       type: object
+      title: SettingsPayloadDTO
+    VectorDBConfigOutputDTO:
+      properties:
+        apiKey:
+          type: string
+          title: Apikey
+        url:
+          type: string
+          title: Url
+        provider:
+          type: string
+          title: Provider
+        providers:
+          items:
+            $ref: '#/components/schemas/ConfigChoice'
+          type: array
+          title: Providers
+      type: object
+      required:
+      - apiKey
+      - url
+      - provider
+      - providers
+      title: VectorDBConfigOutputDTO
+    LLMConfigInputDTO:
       properties:
         provider:
           type: string
@@ -112,25 +192,120 @@ components:
           - anthropic
           - gemini
           - mistral
+          title: Provider
         model:
           type: string
-        api_key:
+          title: Model
+        apiKey:
           type: string
+          title: Apikey
+      type: object
       required:
       - provider
       - model
-      - api_key
+      - apiKey
+      title: LLMConfigInputDTO
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+        input:
+          title: Input
+        ctx:
+          type: object
+          title: Context
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError
+    VectorDBConfigInputDTO:
+      properties:
+        provider:
+          type: string
+          enum:
+          - lancedb
+          - pgvector
+          title: Provider
+        url:
+          type: string
+          title: Url
+        apiKey:
+          type: string
+          title: Apikey
+      type: object
+      required:
+      - provider
+      - url
+      - apiKey
+      title: VectorDBConfigInputDTO
+    LLMConfigOutputDTO:
+      properties:
+        apiKey:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Apikey
+        model:
+          type: string
+          title: Model
+        provider:
+          type: string
+          title: Provider
+        endpoint:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Endpoint
+        apiVersion:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Apiversion
+        models:
+          additionalProperties:
+            items:
+              $ref: '#/components/schemas/ConfigChoice'
+            type: array
+          type: object
+          title: Models
+        providers:
+          items:
+            $ref: '#/components/schemas/ConfigChoice'
+          type: array
+          title: Providers
+      type: object
+      required:
+      - apiKey
+      - model
+      - provider
+      - endpoint
+      - apiVersion
+      - models
+      - providers
+      title: LLMConfigOutputDTO
   securitySchemes:
-    BearerAuth:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
-      description: Bearer token authentication for self-hosted instances
     ApiKeyAuth:
       type: apiKey
       in: header
       name: X-Api-Key
-      description: API key authentication for Cognee Cloud deployments
-externalDocs:
-  description: Cognee API Reference
-  url: https://docs.cognee.ai/api-reference/introduction
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    CookieAuth:
+      type: apiKey
+      in: cookie
+      name: auth_token

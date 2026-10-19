@@ -1,0 +1,206 @@
+openapi: 3.2.0
+info:
+  title: Cognee Forget API
+  description: Cognee API with Bearer token and Cookie auth
+  version: 1.0.0
+servers:
+- url: https://{tenant}.aws.cognee.ai
+  description: 'Cognee Cloud: your tenant pod, named in the platform.cognee.ai dashboard'
+  variables:
+    tenant:
+      default: your-tenant
+      description: Your tenant name, shown in the Cognee Cloud dashboard
+- url: http://localhost:8000
+  description: 'Self-hosted: a locally running cognee server'
+security:
+- BearerAuth: []
+- ApiKeyAuth: []
+tags:
+- name: forget
+  description: Endpoint for removing data from the knowledge graph.
+paths:
+  /api/v1/forget:
+    post:
+      tags:
+      - forget
+      summary: 'Forget data: one item, a dataset, its memory only, or everything'
+      description: 'Remove data from the knowledge graph.
+
+
+        - Set `everything: true` to delete all user data.
+
+        - Set `dataset` or `datasetId` alone to delete an entire dataset.
+
+        - Set `dataset`/`datasetId` + `dataId` to delete a single item.
+
+        - Set `dataset`/`datasetId` + `memoryOnly: true` to clear memory
+
+        (graph + vector), preserving raw files so the dataset can be re-cognified.
+
+        - Set `dataset`/`datasetId` + `dataId` + `memoryOnly: true` to clear memory
+
+        for a single file only.
+
+
+        ## Request Parameters
+
+        - **dataId** (Optional[UUID]): UUID of a single data item to remove. Requires
+
+        `dataset` or `datasetId` to also be set.
+
+        - **dataset** (Optional[str]): Name of the dataset to delete or clear.
+
+        - **datasetId** (Optional[UUID]): UUID of the dataset, alternative to `dataset`.
+
+        - **everything** (bool): When true, permanently deletes ALL datasets and data the
+
+        user owns (default: false).
+
+        - **memoryOnly** (bool): When true, delete only memory (graph + vector embeddings),
+
+        preserving raw files and data records (default: false).
+
+
+        Provide either `dataset` or `datasetId`, not both. Field names are shown camelCased
+
+        in the schema; snake_case aliases (`data_id`, `dataset_id`, `memory_only`) are also
+
+        accepted.
+
+
+        ## Error Codes
+
+        - **404 Not Found**: Dataset name does not exist or is not accessible
+
+        - **403 Forbidden**: Caller lacks delete permission on the dataset
+
+        - **422 Unprocessable Entity**: Invalid parameter combination (e.g. both `dataset`
+
+        and `datasetId`, `dataId` without a dataset, or `memoryOnly` without a dataset)
+
+        - **500 Internal Server Error**: Error during deletion'
+      operationId: forget_endpoint_api_v1_forget_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ForgetPayloadDTO'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                additionalProperties: true
+                type: object
+                title: Response Forget Endpoint Api V1 Forget Post
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/cognee__api__DTO__ErrorResponse'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/cognee__api__DTO__ErrorResponse'
+        '422':
+          description: Unprocessable Content
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/cognee__api__DTO__ErrorResponse'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/cognee__api__DTO__ErrorResponse'
+      security:
+      - BearerAuth: []
+      - ApiKeyAuth: []
+components:
+  schemas:
+    cognee__api__DTO__ErrorResponse:
+      properties:
+        error:
+          type: string
+          title: Error
+        detail:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Detail
+      type: object
+      required:
+      - error
+      title: ErrorResponse
+      description: 'Error body returned by routers that answer 4xx/5xx themselves.
+
+
+        ``error`` is the human-readable message. Errors raised as ``CogneeApiError`` are
+
+        rendered instead by the app-level handler in ``cognee/api/client.py`` as
+
+        ``{"detail": "<message> [<ErrorName>]"}`` plus ``"remediation"`` when a fix is known,
+
+        and ``"code"``/``"param"`` when the error carries a stable reason (SearchType.CODE).'
+    ForgetPayloadDTO:
+      properties:
+        dataId:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Dataid
+          description: UUID of a single data item to remove. Requires `dataset` or `datasetId` to also be set.
+          examples:
+          - ''
+        dataset:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Dataset
+          description: Dataset name to delete (or clear with memoryOnly). Provide either `dataset` or `datasetId`, not both.
+          examples:
+          - default_dataset
+        datasetId:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Datasetid
+          description: Dataset UUID, alternative to `dataset`. Provide either `dataset` or `datasetId`, not both.
+          examples:
+          - ''
+        everything:
+          type: boolean
+          title: Everything
+          description: 'DANGER: when true, permanently deletes ALL datasets and data the user owns (relational records, graph, vector embeddings, session cache). Ignores dataId/dataset/datasetId.'
+          default: false
+        memoryOnly:
+          type: boolean
+          title: Memoryonly
+          description: When True with a dataset, delete only memory (graph nodes/edges and vector embeddings) and reset pipeline status — raw files and data records are preserved. This allows re-cognifying the dataset from scratch.
+          default: false
+      type: object
+      title: ForgetPayloadDTO
+      examples:
+      - dataset: main_dataset
+        memoryOnly: true
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-Api-Key
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    CookieAuth:
+      type: apiKey
+      in: cookie
+      name: auth_token

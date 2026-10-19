@@ -1,0 +1,207 @@
+openapi: 3.2.0
+info:
+  title: Cognee Llm API
+  description: Cognee API with Bearer token and Cookie auth
+  version: 1.0.0
+servers:
+- url: https://{tenant}.aws.cognee.ai
+  description: 'Cognee Cloud: your tenant pod, named in the platform.cognee.ai dashboard'
+  variables:
+    tenant:
+      default: your-tenant
+      description: Your tenant name, shown in the Cognee Cloud dashboard
+- url: http://localhost:8000
+  description: 'Self-hosted: a locally running cognee server'
+security:
+- BearerAuth: []
+- ApiKeyAuth: []
+tags:
+- name: LLM
+  description: LLM-backed endpoints for inferring graph schemas and generating custom extraction prompts.
+paths:
+  /api/v1/llm/custom-prompt:
+    post:
+      tags:
+      - LLM
+      summary: Generate Custom Prompt
+      description: 'Generate a custom extraction prompt from a provided graph model schema JSON.
+
+
+        ## Request Parameters
+
+        - **graphModel** (Dict[str, Any]): Graph model schema as JSON object.
+
+        - **parameters** (Dict[str, Any]): Additional kwargs forwarded to LLMGateway.'
+      operationId: generate_custom_prompt_api_v1_llm_custom_prompt_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CustomPromptGenerationPayloadDTO'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomPromptGenerationResponseDTO'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+      - BearerAuth: []
+      - ApiKeyAuth: []
+  /api/v1/llm/infer-schema:
+    post:
+      tags:
+      - LLM
+      summary: Infer Schema
+      description: 'Analyze sample text and/or uploaded files, and propose a JSON Schema describing the entity types
+
+        and relationships present. The returned schema can be passed directly to
+
+        ``/v1/llm/custom-prompt`` or ``/v1/cognify``.
+
+
+        ## Request Parameters
+
+        - **data** (List[UploadFile]): Files to load and sample as input for schema
+
+        inference; at least one file or text is required.
+
+        - **parameters** (str): JSON string of additional kwargs forwarded to LLMGateway. Defaults
+
+        to ''\{\}''.
+
+        - **text** (str): Sample text to analyze for schema inference; at least one file or
+
+        text is required.'
+      operationId: infer_schema_api_v1_llm_infer_schema_post
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Body_infer_schema_api_v1_llm_infer_schema_post'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InferSchemaResponseDTO'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+      - BearerAuth: []
+      - ApiKeyAuth: []
+components:
+  schemas:
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    CustomPromptGenerationPayloadDTO:
+      properties:
+        graphModel:
+          additionalProperties: true
+          type: object
+          title: Graphmodel
+          description: Graph model schema as JSON object.
+        parameters:
+          additionalProperties: true
+          type: object
+          title: Parameters
+          description: Additional kwargs forwarded to LLMGateway.
+      type: object
+      required:
+      - graphModel
+      title: CustomPromptGenerationPayloadDTO
+    Body_infer_schema_api_v1_llm_infer_schema_post:
+      properties:
+        data:
+          items:
+            type: string
+            format: binary
+          type: array
+          title: Data
+        text:
+          type: string
+          title: Text
+        parameters:
+          type: string
+          title: Parameters
+          description: JSON string of additional kwargs forwarded to LLMGateway.
+          default: '{}'
+      type: object
+      title: Body_infer_schema_api_v1_llm_infer_schema_post
+    CustomPromptGenerationResponseDTO:
+      properties:
+        customPrompt:
+          type: string
+          title: Customprompt
+      type: object
+      required:
+      - customPrompt
+      title: CustomPromptGenerationResponseDTO
+    InferSchemaResponseDTO:
+      properties:
+        graphSchema:
+          additionalProperties: true
+          type: object
+          title: Graphschema
+      type: object
+      required:
+      - graphSchema
+      title: InferSchemaResponseDTO
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+        input:
+          title: Input
+        ctx:
+          type: object
+          title: Context
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-Api-Key
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    CookieAuth:
+      type: apiKey
+      in: cookie
+      name: auth_token

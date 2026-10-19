@@ -71,22 +71,6 @@ tags_raw:
   - Open-Source
 
 apis:
-- aid: cognee:cognee-agents-api
-  name: Cognee Agents API
-  description: AI agent identity management
-  humanURL: https://docs.cognee.ai/api-reference/introduction
-  baseURL: https://api.cognee.ai
-  tags:
-  - Agents
-  tags_raw:
-  - agents
-  properties:
-  - type: OpenAPI
-    url: openapi/cognee-agents-api-openapi.yml
-  - type: Documentation
-    url: https://docs.cognee.ai/api-reference/introduction
-  - type: SwaggerUI
-    url: https://api.cognee.ai/docs
 - aid: cognee:cognee-cognify-api
   name: Cognee Cognify API
   description: Knowledge graph construction pipeline
@@ -97,22 +81,6 @@ apis:
   properties:
   - type: OpenAPI
     url: openapi/cognee-cognify-api-openapi.yml
-  - type: Documentation
-    url: https://docs.cognee.ai/api-reference/introduction
-  - type: SwaggerUI
-    url: https://api.cognee.ai/docs
-- aid: cognee:cognee-data-api
-  name: Cognee Data API
-  description: Data ingestion and deletion operations
-  humanURL: https://docs.cognee.ai/api-reference/introduction
-  baseURL: https://api.cognee.ai
-  tags:
-  - Data
-  tags_raw:
-  - data
-  properties:
-  - type: OpenAPI
-    url: openapi/cognee-data-api-openapi.yml
   - type: Documentation
     url: https://docs.cognee.ai/api-reference/introduction
   - type: SwaggerUI
@@ -177,6 +145,395 @@ apis:
   properties:
   - type: OpenAPI
     url: openapi/cognee-settings-api-openapi.yml
+  - type: Documentation
+    url: https://docs.cognee.ai/api-reference/introduction
+  - type: SwaggerUI
+    url: https://api.cognee.ai/docs
+- aid: cognee:cognee-activity-api
+  name: Cognee Activity API
+  description: >-
+    Activity endpoints for inspecting pipeline runs, traced spans, tenant users, agents, and dataset exports.
+  humanURL: https://docs.cognee.ai/api-reference/introduction
+  baseURL: https://api.cognee.ai
+  tags:
+  - activity
+  properties:
+  - type: OpenAPI
+    url: openapi/cognee-activity-api-openapi.yml
+  - type: Documentation
+    url: https://docs.cognee.ai/api-reference/introduction
+  - type: SwaggerUI
+    url: https://api.cognee.ai/docs
+- aid: cognee:cognee-add-api
+  name: Cognee Add API
+  description: Data ingestion endpoints for adding text, files, and structured data.
+  humanURL: https://docs.cognee.ai/api-reference/introduction
+  baseURL: https://api.cognee.ai
+  tags:
+  - add
+  properties:
+  - type: OpenAPI
+    url: openapi/cognee-add-api-openapi.yml
+  - type: Documentation
+    url: https://docs.cognee.ai/api-reference/introduction
+  - type: SwaggerUI
+    url: https://api.cognee.ai/docs
+- aid: cognee:cognee-agent-connections-api
+  name: Cognee agent connections API
+  description: >-
+    Endpoints for registering, unregistering, and inspecting agent connections to the instance.
+  humanURL: https://docs.cognee.ai/api-reference/introduction
+  baseURL: https://api.cognee.ai
+  tags:
+  - agent connections
+  properties:
+  - type: OpenAPI
+    url: openapi/cognee-agent-connections-api-openapi.yml
+  - type: Documentation
+    url: https://docs.cognee.ai/api-reference/introduction
+  - type: SwaggerUI
+    url: https://api.cognee.ai/docs
+- aid: cognee:cognee-agent-management-api
+  name: Cognee agent management API
+  description: Endpoints for creating, listing, retrieving, and deleting agents.
+  humanURL: https://docs.cognee.ai/api-reference/introduction
+  baseURL: https://api.cognee.ai
+  tags:
+  - agent management
+  properties:
+  - type: OpenAPI
+    url: openapi/cognee-agent-management-api-openapi.yml
+  - type: Documentation
+    url: https://docs.cognee.ai/api-reference/introduction
+  - type: SwaggerUI
+    url: https://api.cognee.ai/docs
+- aid: cognee:cognee-auth-api
+  name: Cognee Auth API
+  description: Authentication endpoints for user registration, login, and token management.
+  humanURL: https://docs.cognee.ai/api-reference/introduction
+  baseURL: https://api.cognee.ai
+  tags:
+  - auth
+  properties:
+  - type: OpenAPI
+    url: openapi/cognee-auth-api-openapi.yml
+  - type: Documentation
+    url: https://docs.cognee.ai/api-reference/introduction
+  - type: SwaggerUI
+    url: https://api.cognee.ai/docs
+- aid: cognee:cognee-checks-api
+  name: Cognee Checks API
+  description: >-
+    Diagnostic endpoint for validating a Cognee Cloud API key supplied in the X-Api-Key header.
+  humanURL: https://docs.cognee.ai/api-reference/introduction
+  baseURL: https://api.cognee.ai
+  tags:
+  - checks
+  properties:
+  - type: OpenAPI
+    url: openapi/cognee-checks-api-openapi.yml
+  - type: Documentation
+    url: https://docs.cognee.ai/api-reference/introduction
+  - type: SwaggerUI
+    url: https://api.cognee.ai/docs
+- aid: cognee:cognee-configuration-api
+  name: Cognee Configuration API
+  description: Endpoints for storing, retrieving, and listing a user's saved configurations.
+  humanURL: https://docs.cognee.ai/api-reference/introduction
+  baseURL: https://api.cognee.ai
+  tags:
+  - configuration
+  properties:
+  - type: OpenAPI
+    url: openapi/cognee-configuration-api-openapi.yml
+  - type: Documentation
+    url: https://docs.cognee.ai/api-reference/introduction
+  - type: SwaggerUI
+    url: https://api.cognee.ai/docs
+- aid: cognee:cognee-delete-api
+  name: Cognee Delete API
+  description: Data deletion endpoints (deprecated — use datasets endpoints instead).
+  humanURL: https://docs.cognee.ai/api-reference/introduction
+  baseURL: https://api.cognee.ai
+  tags:
+  - delete
+  properties:
+  - type: OpenAPI
+    url: openapi/cognee-delete-api-openapi.yml
+  - type: Documentation
+    url: https://docs.cognee.ai/api-reference/introduction
+  - type: SwaggerUI
+    url: https://api.cognee.ai/docs
+- aid: cognee:cognee-forget-api
+  name: Cognee Forget API
+  description: Endpoint for removing data from the knowledge graph.
+  humanURL: https://docs.cognee.ai/api-reference/introduction
+  baseURL: https://api.cognee.ai
+  tags:
+  - forget
+  properties:
+  - type: OpenAPI
+    url: openapi/cognee-forget-api-openapi.yml
+  - type: Documentation
+    url: https://docs.cognee.ai/api-reference/introduction
+  - type: SwaggerUI
+    url: https://api.cognee.ai/docs
+- aid: cognee:cognee-improve-api
+  name: Cognee Improve API
+  description: Endpoint for enriching and improving an existing knowledge graph.
+  humanURL: https://docs.cognee.ai/api-reference/introduction
+  baseURL: https://api.cognee.ai
+  tags:
+  - improve
+  properties:
+  - type: OpenAPI
+    url: openapi/cognee-improve-api-openapi.yml
+  - type: Documentation
+    url: https://docs.cognee.ai/api-reference/introduction
+  - type: SwaggerUI
+    url: https://api.cognee.ai/docs
+- aid: cognee:cognee-integrations-api
+  name: Cognee Integrations API
+  description: Endpoints for connecting, provisioning, and disconnecting OAuth providers and plugins.
+  humanURL: https://docs.cognee.ai/api-reference/introduction
+  baseURL: https://api.cognee.ai
+  tags:
+  - integrations
+  properties:
+  - type: OpenAPI
+    url: openapi/cognee-integrations-api-openapi.yml
+  - type: Documentation
+    url: https://docs.cognee.ai/api-reference/introduction
+  - type: SwaggerUI
+    url: https://api.cognee.ai/docs
+- aid: cognee:cognee-llm-api
+  name: Cognee Llm API
+  description: >-
+    LLM-backed endpoints for inferring graph schemas and generating custom extraction prompts.
+  humanURL: https://docs.cognee.ai/api-reference/introduction
+  baseURL: https://api.cognee.ai
+  tags:
+  - llm
+  properties:
+  - type: OpenAPI
+    url: openapi/cognee-llm-api-openapi.yml
+  - type: Documentation
+    url: https://docs.cognee.ai/api-reference/introduction
+  - type: SwaggerUI
+    url: https://api.cognee.ai/docs
+- aid: cognee:cognee-memify-api
+  name: Cognee Memify API
+  description: Endpoint for running enrichment pipelines over existing graphs or supplied data.
+  humanURL: https://docs.cognee.ai/api-reference/introduction
+  baseURL: https://api.cognee.ai
+  tags:
+  - memify
+  properties:
+  - type: OpenAPI
+    url: openapi/cognee-memify-api-openapi.yml
+  - type: Documentation
+    url: https://docs.cognee.ai/api-reference/introduction
+  - type: SwaggerUI
+    url: https://api.cognee.ai/docs
+- aid: cognee:cognee-ontologies-api
+  name: Cognee Ontologies API
+  description: Endpoints for uploading, listing, and deleting ontology files used during cognify.
+  humanURL: https://docs.cognee.ai/api-reference/introduction
+  baseURL: https://api.cognee.ai
+  tags:
+  - ontologies
+  properties:
+  - type: OpenAPI
+    url: openapi/cognee-ontologies-api-openapi.yml
+  - type: Documentation
+    url: https://docs.cognee.ai/api-reference/introduction
+  - type: SwaggerUI
+    url: https://api.cognee.ai/docs
+- aid: cognee:cognee-permissions-api
+  name: Cognee Permissions API
+  description: Permission management for multi-user access control.
+  humanURL: https://docs.cognee.ai/api-reference/introduction
+  baseURL: https://api.cognee.ai
+  tags:
+  - permissions
+  properties:
+  - type: OpenAPI
+    url: openapi/cognee-permissions-api-openapi.yml
+  - type: Documentation
+    url: https://docs.cognee.ai/api-reference/introduction
+  - type: SwaggerUI
+    url: https://api.cognee.ai/docs
+- aid: cognee:cognee-recall-api
+  name: Cognee Recall API
+  description: Endpoints for querying the knowledge graph and reviewing past recall history.
+  humanURL: https://docs.cognee.ai/api-reference/introduction
+  baseURL: https://api.cognee.ai
+  tags:
+  - recall
+  properties:
+  - type: OpenAPI
+    url: openapi/cognee-recall-api-openapi.yml
+  - type: Documentation
+    url: https://docs.cognee.ai/api-reference/introduction
+  - type: SwaggerUI
+    url: https://api.cognee.ai/docs
+- aid: cognee:cognee-remember-api
+  name: Cognee Remember API
+  description: >-
+    Endpoints for ingesting data into the knowledge graph and storing session memory entries.
+  humanURL: https://docs.cognee.ai/api-reference/introduction
+  baseURL: https://api.cognee.ai
+  tags:
+  - remember
+  properties:
+  - type: OpenAPI
+    url: openapi/cognee-remember-api-openapi.yml
+  - type: Documentation
+    url: https://docs.cognee.ai/api-reference/introduction
+  - type: SwaggerUI
+    url: https://api.cognee.ai/docs
+- aid: cognee:cognee-responses-api
+  name: Cognee Responses API
+  description: Response generation endpoints using the knowledge graph.
+  humanURL: https://docs.cognee.ai/api-reference/introduction
+  baseURL: https://api.cognee.ai
+  tags:
+  - responses
+  properties:
+  - type: OpenAPI
+    url: openapi/cognee-responses-api-openapi.yml
+  - type: Documentation
+    url: https://docs.cognee.ai/api-reference/introduction
+  - type: SwaggerUI
+    url: https://api.cognee.ai/docs
+- aid: cognee:cognee-schema-api
+  name: Cognee Schema API
+  description: >-
+    Schema inspection endpoints for a dataset's derived schema inventory and the caller-wide memory provenance
+    graph.
+  humanURL: https://docs.cognee.ai/api-reference/introduction
+  baseURL: https://api.cognee.ai
+  tags:
+  - schema
+  properties:
+  - type: OpenAPI
+    url: openapi/cognee-schema-api-openapi.yml
+  - type: Documentation
+    url: https://docs.cognee.ai/api-reference/introduction
+  - type: SwaggerUI
+    url: https://api.cognee.ai/docs
+- aid: cognee:cognee-sessions-api
+  name: Cognee Sessions API
+  description: Endpoints for listing sessions and reporting usage, cost, and token statistics.
+  humanURL: https://docs.cognee.ai/api-reference/introduction
+  baseURL: https://api.cognee.ai
+  tags:
+  - sessions
+  properties:
+  - type: OpenAPI
+    url: openapi/cognee-sessions-api-openapi.yml
+  - type: Documentation
+    url: https://docs.cognee.ai/api-reference/introduction
+  - type: SwaggerUI
+    url: https://api.cognee.ai/docs
+- aid: cognee:cognee-skills-api
+  name: Cognee Skills API
+  description: >-
+    Skill management endpoints for ingesting, listing, retrieving, and deleting dataset skills, plus read-only
+    retrieval of improvement proposals.
+  humanURL: https://docs.cognee.ai/api-reference/introduction
+  baseURL: https://api.cognee.ai
+  tags:
+  - skills
+  properties:
+  - type: OpenAPI
+    url: openapi/cognee-skills-api-openapi.yml
+  - type: Documentation
+    url: https://docs.cognee.ai/api-reference/introduction
+  - type: SwaggerUI
+    url: https://api.cognee.ai/docs
+- aid: cognee:cognee-slack-api
+  name: Cognee Slack API
+  description: >-
+    Endpoints for listing workspace channels, setting channel allowlists, and linking Slack accounts.
+  humanURL: https://docs.cognee.ai/api-reference/introduction
+  baseURL: https://api.cognee.ai
+  tags:
+  - slack
+  properties:
+  - type: OpenAPI
+    url: openapi/cognee-slack-api-openapi.yml
+  - type: Documentation
+    url: https://docs.cognee.ai/api-reference/introduction
+  - type: SwaggerUI
+    url: https://api.cognee.ai/docs
+- aid: cognee:cognee-sync-api
+  name: Cognee Sync API
+  description: Endpoints for syncing local data to Cognee Cloud and checking sync status.
+  humanURL: https://docs.cognee.ai/api-reference/introduction
+  baseURL: https://api.cognee.ai
+  tags:
+  - sync
+  properties:
+  - type: OpenAPI
+    url: openapi/cognee-sync-api-openapi.yml
+  - type: Documentation
+    url: https://docs.cognee.ai/api-reference/introduction
+  - type: SwaggerUI
+    url: https://api.cognee.ai/docs
+- aid: cognee:cognee-update-api
+  name: Cognee Update API
+  description: Endpoint for updating existing data in a dataset.
+  humanURL: https://docs.cognee.ai/api-reference/introduction
+  baseURL: https://api.cognee.ai
+  tags:
+  - update
+  properties:
+  - type: OpenAPI
+    url: openapi/cognee-update-api-openapi.yml
+  - type: Documentation
+    url: https://docs.cognee.ai/api-reference/introduction
+  - type: SwaggerUI
+    url: https://api.cognee.ai/docs
+- aid: cognee:cognee-users-api
+  name: Cognee Users API
+  description: User management endpoints.
+  humanURL: https://docs.cognee.ai/api-reference/introduction
+  baseURL: https://api.cognee.ai
+  tags:
+  - users
+  properties:
+  - type: OpenAPI
+    url: openapi/cognee-users-api-openapi.yml
+  - type: Documentation
+    url: https://docs.cognee.ai/api-reference/introduction
+  - type: SwaggerUI
+    url: https://api.cognee.ai/docs
+- aid: cognee:cognee-validate-api
+  name: Cognee Validate API
+  description: >-
+    Diagnostic endpoint for checking consistency between a dataset's graph and vector stores.
+  humanURL: https://docs.cognee.ai/api-reference/introduction
+  baseURL: https://api.cognee.ai
+  tags:
+  - validate
+  properties:
+  - type: OpenAPI
+    url: openapi/cognee-validate-api-openapi.yml
+  - type: Documentation
+    url: https://docs.cognee.ai/api-reference/introduction
+  - type: SwaggerUI
+    url: https://api.cognee.ai/docs
+- aid: cognee:cognee-visualize-api
+  name: Cognee Visualize API
+  description: Graph visualization endpoints.
+  humanURL: https://docs.cognee.ai/api-reference/introduction
+  baseURL: https://api.cognee.ai
+  tags:
+  - visualize
+  properties:
+  - type: OpenAPI
+    url: openapi/cognee-visualize-api-openapi.yml
   - type: Documentation
     url: https://docs.cognee.ai/api-reference/introduction
   - type: SwaggerUI

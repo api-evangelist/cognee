@@ -1,0 +1,305 @@
+openapi: 3.2.0
+info:
+  title: Cognee Add API
+  description: Cognee API with Bearer token and Cookie auth
+  version: 1.0.0
+servers:
+- url: https://{tenant}.aws.cognee.ai
+  description: 'Cognee Cloud: your tenant pod, named in the platform.cognee.ai dashboard'
+  variables:
+    tenant:
+      default: your-tenant
+      description: Your tenant name, shown in the Cognee Cloud dashboard
+- url: http://localhost:8000
+  description: 'Self-hosted: a locally running cognee server'
+security:
+- BearerAuth: []
+- ApiKeyAuth: []
+tags:
+- name: add
+  description: Data ingestion endpoints for adding text, files, and structured data.
+paths:
+  /api/v1/add:
+    post:
+      tags:
+      - add
+      summary: 'Add (low level): ingest files, text or URLs into a dataset without building the…'
+      description: 'Add data to a dataset for processing and knowledge graph construction.
+
+
+        This endpoint accepts file uploads and string inputs (text, server-side file
+
+        paths, web URLs, GitHub/GitLab repository URLs) and adds them to a specified
+
+        dataset for processing. The data is ingested, analyzed, and integrated into
+
+        the knowledge graph.
+
+
+        ## Request Parameters
+
+        - **data** (List[UploadFile]): Files to upload.
+
+        - **raw_data** (Optional[List[str]]): String inputs, one entry each:
+
+        - Raw text to ingest
+
+        - A local file or directory path on the server (requires ACCEPT_LOCAL_FILE_PATH)
+
+        - A web URL, fetched as a page (requires ALLOW_HTTP_REQUESTS)
+
+        - A GitHub/GitLab repository URL, shallow-cloned and indexed as a code graph
+
+        At least one of data or raw_data is required. Uploads come first, then
+
+        raw_data entries; labels and external_metadata pair with that combined order.
+
+        - **labels** (Optional[str]): JSON array of per-item labels, e.g.
+
+        ["finance", "people", ""], paired positionally with the data items
+
+        (one entry per item; an empty entry skips that item). Stored on each
+
+        item''s data record.
+
+        - **external_metadata** (Optional[str]): JSON array of per-item metadata objects,
+
+        e.g. [\{"source": "crm"\}, null], paired positionally with the data items
+
+        (one entry per item; null or \{\} skips that item). Merged into each
+
+        item''s stored external_metadata.
+
+        - **datasetName** (Optional[str]): Name of the dataset to add data to
+
+        - **datasetId** (Optional[UUID]): UUID of an already existing dataset
+
+        - **node_set** Optional[list[str]]: List of node identifiers used to organize and filter
+
+        data points in the knowledge graph. Not an access-control mechanism.
+
+        - **run_in_background** (Optional[bool]): Run add pipeline asynchronously (default: False).
+
+
+        Either datasetName or datasetId must be provided.
+
+
+        ## Response
+
+        Returns information about the add operation containing:
+
+        - Status of the operation
+
+        - Details about the processed data
+
+        - Any relevant metadata from the ingestion process
+
+
+        ## Error Codes
+
+        - **400 Bad Request**: Neither datasetId nor datasetName provided, or neither
+
+        data nor raw_data provided
+
+        - **409 Conflict**: A file in the request already exists in the dataset with
+
+        different content. This endpoint never updates a document; send the new
+
+        version to `PATCH /api/v1/update?data_id=...&dataset_id=...` so the document
+
+        keeps its id. Re-adding identical content is a no-op, not an error.
+
+        - **403 Forbidden**: User doesn''t have permission to add to dataset
+
+
+        ## Notes
+
+        - To add data to datasets not owned by the user, use dataset_id (when ENABLE_BACKEND_ACCESS_CONTROL is set to True)
+
+        - datasetId value can only be the UUID of an already existing dataset'
+      operationId: add_api_v1_add_post
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Body_add_api_v1_add_post'
+            example:
+              data: Cognee is a knowledge graph platform for AI applications.
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PipelineRunInfo'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/cognee__api__DTO__ErrorResponse'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/cognee__api__DTO__ErrorResponse'
+        '422':
+          description: Unprocessable Content
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/cognee__api__DTO__ErrorResponse'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/cognee__api__DTO__ErrorResponse'
+      security:
+      - BearerAuth: []
+      - ApiKeyAuth: []
+components:
+  schemas:
+    cognee__api__DTO__ErrorResponse:
+      properties:
+        error:
+          type: string
+          title: Error
+        detail:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Detail
+      type: object
+      required:
+      - error
+      title: ErrorResponse
+      description: 'Error body returned by routers that answer 4xx/5xx themselves.
+
+
+        ``error`` is the human-readable message. Errors raised as ``CogneeApiError`` are
+
+        rendered instead by the app-level handler in ``cognee/api/client.py`` as
+
+        ``{"detail": "<message> [<ErrorName>]"}`` plus ``"remediation"`` when a fix is known,
+
+        and ``"code"``/``"param"`` when the error carries a stable reason (SearchType.CODE).'
+    PipelineRunInfo:
+      properties:
+        status:
+          type: string
+          title: Status
+        pipeline_run_id:
+          type: string
+          format: uuid
+          title: Pipeline Run Id
+        dataset_id:
+          type: string
+          format: uuid
+          title: Dataset Id
+        dataset_name:
+          type: string
+          title: Dataset Name
+        payload:
+          anyOf:
+          - {}
+          - type: 'null'
+          title: Payload
+        data_ingestion_info:
+          anyOf:
+          - items: {}
+            type: array
+          - type: 'null'
+          title: Data Ingestion Info
+      type: object
+      required:
+      - status
+      - pipeline_run_id
+      - dataset_id
+      - dataset_name
+      title: PipelineRunInfo
+    Body_add_api_v1_add_post:
+      properties:
+        data:
+          items:
+            type: string
+            format: binary
+          type: array
+          title: Data
+        raw_data:
+          anyOf:
+          - items:
+              type: string
+              example: ''
+            type: array
+          - type: 'null'
+          title: Raw Data
+          description: 'Data given as strings instead of uploads, one entry each: raw text to ingest, a local file or directory path on the server''s filesystem (requires ACCEPT_LOCAL_FILE_PATH), a web URL to fetch (requires ALLOW_HTTP_REQUESTS), or a GitHub/GitLab repository URL, which is shallow-cloned and indexed as a code graph by cognify. Combined with ''data'': uploads come first, then these entries; labels and external_metadata pair with that combined order. Empty entries are ignored.'
+          examples:
+          - []
+        labels:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Labels
+          description: Per-item labels, e.g. ["finance", "people", ""] — the Nth label applies to the Nth data item (uploads first, then raw_data entries), one entry per item, an empty entry skips that item. The comma-separated form "finance,people," is accepted equivalently (it is what Swagger UI sends when you type a JSON array here), so labels cannot contain commas unless the client sends real JSON. Stored on each item's data record and returned when listing dataset data.
+          examples:
+          - ''
+        external_metadata:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: External Metadata
+          description: 'JSON array of per-file metadata objects, e.g. [\{"source": "crm", "ticket": 42\}, null]. Paired positionally like labels: the Nth entry applies to the Nth uploaded file (null or \{\} skips that file), and one entry per file is required when any is given. Merged into the file''s stored external_metadata (your keys win over loader-derived ones; ''node_set'' is reserved) and returned when listing dataset data.'
+          examples:
+          - ''
+        datasetName:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Datasetname
+          description: Name of the target dataset (created if it does not exist). Required unless datasetId is provided.
+          examples:
+          - default_dataset
+        datasetId:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: string
+            const: ''
+          - type: 'null'
+          title: Datasetid
+          description: Providing dataset ID is mandatory for sharing a dataset between users. Datasets provided by name will only be resolvable by dataset owner.
+          examples:
+          - ''
+        node_set:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: 'null'
+          title: Node Set
+          default:
+          - ''
+        run_in_background:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Run In Background
+          default: false
+      type: object
+      title: Body_add_api_v1_add_post
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-Api-Key
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    CookieAuth:
+      type: apiKey
+      in: cookie
+      name: auth_token

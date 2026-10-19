@@ -1,0 +1,338 @@
+openapi: 3.2.0
+info:
+  title: Cognee Activity API
+  description: Cognee API with Bearer token and Cookie auth
+  version: 1.0.0
+servers:
+- url: https://{tenant}.aws.cognee.ai
+  description: 'Cognee Cloud: your tenant pod, named in the platform.cognee.ai dashboard'
+  variables:
+    tenant:
+      default: your-tenant
+      description: Your tenant name, shown in the Cognee Cloud dashboard
+- url: http://localhost:8000
+  description: 'Self-hosted: a locally running cognee server'
+security:
+- BearerAuth: []
+- ApiKeyAuth: []
+tags:
+- name: Activity
+  description: Activity endpoints for inspecting pipeline runs, traced spans, tenant users, agents, and dataset exports.
+paths:
+  /api/v1/activity/pipeline-runs:
+    get:
+      tags:
+      - Activity
+      summary: Get Pipeline Runs
+      description: 'Recent `pipeline_runs` rows, newest first, with dataset owner info.
+
+
+        The table records both pipeline runs and — since SDK-399 — one row per
+
+        non-pipeline operation (`search`, `recall`, `remember`, `forget`,
+
+        `delete`, `prune`). Use the **kind** field to tell them apart:
+
+
+        - `"pipeline"` — a pipeline run (`pipeline_name` is set).
+
+        - `"operation"` — a single-row operation record (`pipeline_name` and
+
+        `status` are NULL, so these are invisible to status-based readers).
+
+
+        ## Request Parameters
+
+        - **dataset_id** (Optional[UUID]): Restrict to one dataset (403 if not readable).
+
+        - **pipeline_name** (Optional[str]): Exact-match filter; also excludes
+
+        operation records, which have no `pipeline_name`.
+
+        - **limit** (int): Page size, 1-500 (default: 50).
+
+        - **offset** (int): Rows to skip for pagination (default: 0).
+
+
+        Results are a bare JSON array, not a paged envelope. This endpoint has
+
+        always returned a top-level array, so wrapping it in a `{"runs": [...],
+
+        "total": N}` envelope would break every existing caller — hence no
+
+        `total`. `len(results) == limit` means another page may exist.
+
+
+        ## Visibility
+
+        Without `dataset_id`: rows owned by the caller (and their child agents),
+
+        plus rows on any dataset shared with them. Operation records for
+
+        `recall`, `prune`, and multi-dataset `search` carry no `dataset_id`, so a
+
+        dataset-only filter would omit them entirely.
+
+
+        ## Response
+
+        A JSON array. Alongside the original `id`, `pipeline_name`, `status`,
+
+        `dataset_id`, `dataset_name`, `owner_id`, `owner_email`, `created_at`
+
+        and `pipeline_run_id` keys, each row carries the SDK-399 operation
+
+        columns. **Every one of them is nullable**: rows written before SDK-399
+
+        were not backfilled, and each writer sets only the subset it knows.
+
+
+        - **kind** (str): `"pipeline"` or `"operation"` (never null).
+
+        - **operation_name** (str|null): Operation name; for pipeline rows this
+
+        mirrors `pipeline_name`, so it does *not* distinguish the two kinds.
+
+        - **origin** (str|null): Initiating surface — `sdk`/`api`/`cli`/`mcp`/`background`.
+
+        - **outcome** (str|null): `"succeeded"` / `"failed"` / `"noop"` (the call ran
+
+        nothing — e.g. an improve that lost its lock claim). NULL on non-terminal rows.
+
+        **Read together with `background`**: when `background` is true, a
+
+        `"succeeded"` outcome means the work was *accepted and started*, not that
+
+        it finished. Treating those rows as completions inflates any success-rate
+
+        or cost figure computed from this feed.
+
+        - **background** (bool|null): True when the call launched background work.
+
+        NULL means not applicable / not recorded.
+
+        - **error_class** (str|null): Exception class name when `outcome="failed"`.
+
+        - **tokens_in** / **tokens_out** (int|null): Provider-billed LLM token counts.
+
+        NULL means *not measured*; `0` means *measured zero* — do not conflate.
+
+        - **embedding_tokens** (int|null): Embedding token count, same NULL/0 convention.
+
+        - **started_at** / **ended_at** (str|null): ISO-8601 timestamps.
+
+        - **user_id** (str|null): Triggering user.
+
+        - **session_id** (str|null): Session-cache id; joins `session_model_usage`.
+
+        - **parent_operation_id** (str|null): Parent''s `pipeline_run_id`.
+
+
+        ## Aggregation caveats (append-only table)
+
+        Rows are append-only, so totals must not be summed naively:
+
+
+        1. A pipeline run emits several rows sharing one `pipeline_run_id`
+
+        (initiated → started → terminal). Only the terminal row carries
+
+        `outcome` and `tokens_*`. Deduplicate by `pipeline_run_id` before
+
+        summing, or you will multiply-count.
+
+        2. `parent_operation_id` forms a tree whose token counts already chain
+
+        into the parent. Summing across levels double-counts; sum one level.'
+      operationId: get_pipeline_runs_api_v1_activity_pipeline_runs_get
+      security:
+      - BearerAuth: []
+      - ApiKeyAuth: []
+      parameters:
+      - name: dataset_id
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          description: Restrict the feed to a single dataset. When given, a missing read permission on that dataset is a 403 rather than an empty list.
+          title: Dataset Id
+        description: Restrict the feed to a single dataset. When given, a missing read permission on that dataset is a 403 rather than an empty list.
+      - name: pipeline_name
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Return only rows whose pipeline_name matches exactly. Operation records carry no pipeline_name, so this excludes them too — use it to stop a specific pipeline's history being crowded off the page by unrelated operation records.
+          title: Pipeline Name
+        description: Return only rows whose pipeline_name matches exactly. Operation records carry no pipeline_name, so this excludes them too — use it to stop a specific pipeline's history being crowded off the page by unrelated operation records.
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 500
+          minimum: 1
+          description: Page size (max 500).
+          default: 50
+          title: Limit
+        description: Page size (max 500).
+      - name: offset
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 0
+          description: Rows to skip for pagination.
+          default: 0
+          title: Offset
+        description: Rows to skip for pagination.
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/activity/spans:
+    get:
+      tags:
+      - Activity
+      summary: Get Spans
+      description: Return in-memory OTEL spans from the CogneeSpanExporter buffer.
+      operationId: get_spans_api_v1_activity_spans_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+      security:
+      - BearerAuth: []
+      - ApiKeyAuth: []
+  /api/v1/activity/users:
+    get:
+      tags:
+      - Activity
+      summary: Get Tenant Users
+      description: Return users in the current tenant (includes agents as API key users).
+      operationId: get_tenant_users_api_v1_activity_users_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+      security:
+      - BearerAuth: []
+      - ApiKeyAuth: []
+  /api/v1/activity/agents:
+    get:
+      tags:
+      - Activity
+      summary: Get Agents
+      description: Return registered agents (users with @cognee.agent emails).
+      operationId: get_agents_api_v1_activity_agents_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+      security:
+      - BearerAuth: []
+      - ApiKeyAuth: []
+  /api/v1/activity/export/{dataset_id}:
+    get:
+      tags:
+      - Activity
+      summary: Export Dataset Markdown
+      description: 'Export a dataset''s knowledge graph as a Markdown memory report.
+
+
+        ## Path Parameters
+
+        - **dataset_id** (UUID): UUID of the dataset (from GET /api/v1/datasets).'
+      operationId: export_dataset_markdown_api_v1_activity_export__dataset_id__get
+      security:
+      - BearerAuth: []
+      - ApiKeyAuth: []
+      parameters:
+      - name: dataset_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Dataset Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+components:
+  schemas:
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+        input:
+          title: Input
+        ctx:
+          type: object
+          title: Context
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-Api-Key
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    CookieAuth:
+      type: apiKey
+      in: cookie
+      name: auth_token

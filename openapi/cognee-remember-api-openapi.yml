@@ -1,0 +1,699 @@
+openapi: 3.2.0
+info:
+  title: Cognee Remember API
+  description: Cognee API with Bearer token and Cookie auth
+  version: 1.0.0
+servers:
+- url: https://{tenant}.aws.cognee.ai
+  description: 'Cognee Cloud: your tenant pod, named in the platform.cognee.ai dashboard'
+  variables:
+    tenant:
+      default: your-tenant
+      description: Your tenant name, shown in the Cognee Cloud dashboard
+- url: http://localhost:8000
+  description: 'Self-hosted: a locally running cognee server'
+security:
+- BearerAuth: []
+- ApiKeyAuth: []
+tags:
+- name: remember
+  description: Endpoints for ingesting data into the knowledge graph and storing session memory entries.
+paths:
+  /api/v1/remember:
+    post:
+      tags:
+      - remember
+      summary: 'Remember: ingest data and build the knowledge graph (add + cognify + improve)'
+      description: 'Ingest data and build the knowledge graph in a single call. This endpoint combines the add and cognify steps. Data is ingested
+
+        first, then automatically processed into a structured knowledge graph. ## Request Parameters
+
+        - **data** (List[UploadFile]): Files to upload and process. - **raw_data** (Optional[List[str]]): String inputs, one entry each: raw text, a
+
+        local file or directory path on the server (requires ACCEPT_LOCAL_FILE_PATH), a
+
+        web URL fetched as a page (requires ALLOW_HTTP_REQUESTS), or a GitHub/GitLab
+
+        repository URL, shallow-cloned and indexed as a code graph. Uploads come first,
+
+        then raw_data entries; labels and external_metadata pair with that combined
+
+        order. Normal ingestion only — rejected with content_type. At least one of data
+
+        or raw_data is required for normal ingestion. - **labels** (Optional[str]): JSON array of per-file labels, e.g. ["finance", "people", ""], paired positionally with the uploaded files (one
+
+        entry per file; an empty entry skips that file). Stored on each file''s data
+
+        record. Normal ingestion only — rejected with session_id or content_type. - **external_metadata** (Optional[str]): JSON array of per-file metadata objects,
+
+        e.g. [\{"source": "crm"\}, null], paired positionally with the uploaded files
+
+        (one entry per file; null or \{\} skips that file). Merged into each file''s
+
+        stored external_metadata. Normal ingestion only — rejected with session_id
+
+        or content_type. - **datasetName** (Optional[str]): Name of the target dataset. - **datasetId** (Optional[UUID]): UUID of an existing dataset. - **session_id** (Optional[str]): Session to attribute this memory to. When set,
+
+        data is stored in the session cache and bridged into the permanent graph in the
+
+        background; the session is tracked in the sessions dashboard. When omitted,
+
+        data is ingested directly via add + cognify. - **node_set** (Optional[List[str]]): Node identifiers for graph organisation. - **run_in_background** (Optional[bool]): Run the cognify step asynchronously (default: False). - **self_improvement** (Optional[bool]): Run the improve loop after cognify
+
+        (default: True). False gives a plain add + cognify ingestion. - **custom_prompt** (Optional[str]): Custom prompt for entity extraction. - **chunk_size** (Optional[int]): Maximum tokens per chunk (default: 4096). - **chunks_per_batch** (Optional[int]): Chunks per cognify batch. - **ontology_key** (Optional[List[str]]): Reference to one or more previously uploaded ontology files to use for knowledge graph construction. - **graph_model** (Optional[str]): JSON-serialised graph model schema (same dict format accepted by the cognify endpoint). - **content_type** (Optional[str]): Set to "skills" to ingest SKILL.md files as
+
+        Skill nodes, or "code" to index whole repositories — each raw_data entry is
+
+        then a git URL or server-local repo path and one code graph is built per
+
+        entry (poll progress via GET /v1/datasets/status?pipeline=code_graph_pipeline);
+
+        each repository is one data item, its id on the result item;
+
+        omit for normal ingestion. - **index_vectors** (Optional[bool]): content_type="code" only — also embed the
+
+        extracted code facts for semantic retrievers (default false, no LLM/embedding
+
+        calls otherwise). Either datasetName or datasetId must be provided. - **import_mode** (Optional[str]): COGX archive imports only: ''preserve'' (default),
+
+        ''hybrid'', or ''re-derive''. - **skill_name** (Optional[str]): content_type=''skills'' + skills_text only: name/slug for
+
+        the inline skill (defaults to ''skill''). - **skills_text** (Optional[str]): content_type=''skills'' only: inline SKILL.md markdown to
+
+        ingest without a file upload (no-code path). When set and no files are uploaded, it is
+
+        written to a temporary SKILL.md and ingested via the normal skills pipeline. Pair with
+
+        skill_name to control the resulting skill name.'
+      operationId: remember_api_v1_remember_post
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Body_remember_api_v1_remember_post'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                additionalProperties: true
+                type: object
+                title: Response Remember Api V1 Remember Post
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+      - BearerAuth: []
+      - ApiKeyAuth: []
+  /api/v1/remember/entry:
+    post:
+      tags:
+      - remember
+      summary: Remember a session entry (QA, trace, feedback) into the session cache
+      description: 'Store a typed memory entry in the session cache.
+
+
+        Accepts a discriminated union of ``QAEntry``, ``TraceEntry``,
+
+        ``FeedbackEntry``, or ``SkillRunEntry`` and dispatches to the
+
+        matching ``remember`` path. Session-backed entries require
+
+        ``session_id``; ``SkillRunEntry`` can persist with or without one.
+
+
+        ## Request Parameters
+
+        - **dataset_id** (Optional[UUID]): UUID of an existing writable dataset. Takes precedence
+
+        over dataset_name and is required to target a shared dataset by ID.
+
+        - **dataset_name** (str): Name of the target dataset. Defaults to ''main_dataset''.
+
+        - **entry** (Union[QAEntry, TraceEntry, FeedbackEntry, SkillRunEntry]): Typed memory
+
+        entry (qa, trace, feedback, or skill_run) to store, dispatched by its type field.
+
+        - **session_id** (Optional[str]): Required for qa/trace/feedback entries; optional for
+
+        skill_run entries.
+
+        - **skill_improvement** (Optional[dict]): Skill improvement details forwarded to
+
+        remember when recording a skill run.
+
+
+        ## Response
+
+        The returned ``RememberResult`` includes ``entry_type`` and
+
+        ``entry_id`` — the ``qa_id``/``trace_id`` returned by the cache
+
+        (or the ``qa_id`` a feedback was attached to). Use this to chain
+
+        feedback to a freshly stored QA.'
+      operationId: remember_entry_api_v1_remember_entry_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RememberEntryRequest'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                additionalProperties: true
+                type: object
+                title: Response Remember Entry Api V1 Remember Entry Post
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+      - BearerAuth: []
+      - ApiKeyAuth: []
+components:
+  schemas:
+    FeedbackEntry:
+      properties:
+        type:
+          type: string
+          const: feedback
+          title: Type
+          default: feedback
+        qa_id:
+          type: string
+          title: Qa Id
+          description: entry_id returned by a previous qa remember call — use it to chain feedback to that QA.
+          examples:
+          - c4d5e6f7-8a9b-4c0d-9e1f-2a3b4c5d6e7f
+        feedback_text:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Feedback Text
+        feedback_score:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Feedback Score
+      type: object
+      required:
+      - qa_id
+      title: FeedbackEntry
+      description: 'Feedback attached to an existing QA entry.
+
+
+        Semantically an update rather than a new memory — carried through
+
+        remember() for API minimalism. Dispatched to
+
+        ``SessionManager.add_feedback``.'
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    TraceEntry:
+      properties:
+        node_set:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: 'null'
+          title: Node Set
+          description: Optional node set pinned on the session; kept on the graph nodes improve() builds from it. Immutable once set for a session. A list of non-empty names, stored sorted and deduplicated.
+        type:
+          type: string
+          const: trace
+          title: Type
+          default: trace
+        origin_function:
+          type: string
+          title: Origin Function
+          description: Name of the tool/function whose execution this trace step records.
+          examples:
+          - search_codebase
+        status:
+          type: string
+          enum:
+          - success
+          - error
+          title: Status
+          default: success
+        method_params:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          title: Method Params
+        method_return_value:
+          anyOf:
+          - {}
+          - type: 'null'
+          title: Method Return Value
+        memory_query:
+          type: string
+          title: Memory Query
+          default: ''
+        memory_context:
+          type: string
+          title: Memory Context
+          default: ''
+        error_message:
+          type: string
+          title: Error Message
+          default: ''
+        generate_feedback_with_llm:
+          type: boolean
+          title: Generate Feedback With Llm
+          default: false
+      type: object
+      required:
+      - origin_function
+      title: TraceEntry
+      description: 'One step of an agent trace.
+
+
+        Structured representation of a tool/function call — origin,
+
+        outcome, parameters, return value. Dispatched to
+
+        ``SessionManager.add_agent_trace_step``.'
+    SkillRunEntry:
+      properties:
+        type:
+          type: string
+          const: skill_run
+          title: Type
+          default: skill_run
+        run_id:
+          type: string
+          title: Run Id
+        selected_skill_id:
+          type: string
+          title: Selected Skill Id
+        task_text:
+          type: string
+          title: Task Text
+          default: ''
+        result_summary:
+          type: string
+          title: Result Summary
+          default: ''
+        success_score:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Success Score
+        feedback:
+          type: number
+          title: Feedback
+          default: 0.0
+        error_type:
+          type: string
+          title: Error Type
+          default: ''
+        error_message:
+          type: string
+          title: Error Message
+          default: ''
+        started_at_ms:
+          type: integer
+          title: Started At Ms
+          default: 0
+        latency_ms:
+          type: integer
+          title: Latency Ms
+          default: 0
+        candidate_skill_ids:
+          items:
+            type: string
+          type: array
+          title: Candidate Skill Ids
+        task_pattern_id:
+          type: string
+          title: Task Pattern Id
+          default: ''
+        router_version:
+          type: string
+          title: Router Version
+          default: ''
+        tool_trace:
+          items:
+            additionalProperties: true
+            type: object
+          type: array
+          title: Tool Trace
+        node_set:
+          type: string
+          title: Node Set
+          default: skills
+      type: object
+      required:
+      - selected_skill_id
+      title: SkillRunEntry
+      description: 'A persisted execution record for a skill.
+
+
+        This is graph-backed rather than session-cache-backed. It lets agents
+
+        report explicit skill quality signals through ``cognee.remember()``
+
+        without adding another public API surface.'
+    QAEntry:
+      properties:
+        node_set:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: 'null'
+          title: Node Set
+          description: Optional node set pinned on the session; kept on the graph nodes improve() builds from it. Immutable once set for a session. A list of non-empty names, stored sorted and deduplicated.
+        type:
+          type: string
+          const: qa
+          title: Type
+          default: qa
+        question:
+          type: string
+          title: Question
+          examples:
+          - What is the capital of France?
+        answer:
+          type: string
+          title: Answer
+          examples:
+          - The capital of France is Paris.
+        context:
+          type: string
+          title: Context
+          default: ''
+          examples:
+          - Retrieved from geography_notes.md
+        feedback_text:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Feedback Text
+        feedback_score:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Feedback Score
+        used_graph_element_ids:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          title: Used Graph Element Ids
+      type: object
+      required:
+      - question
+      - answer
+      title: QAEntry
+      description: 'A Q&A turn stored in the session cache.
+
+
+        Represents a user question + assistant answer with optional
+
+        retrieval context. Dispatched to ``SessionManager.add_qa``.'
+    Body_remember_api_v1_remember_post:
+      properties:
+        data:
+          items:
+            type: string
+            format: binary
+          type: array
+          title: Data
+        raw_data:
+          anyOf:
+          - items:
+              type: string
+              example: ''
+            type: array
+          - type: 'null'
+          title: Raw Data
+          description: 'Data given as strings instead of uploads, one entry each: raw text to remember, a local file or directory path on the server''s filesystem (requires ACCEPT_LOCAL_FILE_PATH), a web URL to fetch (requires ALLOW_HTTP_REQUESTS), or a GitHub/GitLab repository URL, which is shallow-cloned and indexed as a code graph. Combined with ''data'': uploads come first, then these entries; labels and external_metadata pair with that combined order. Empty entries are ignored. With content_type=''code'' every entry is a repository spec (git URL or server-local repo path) and one code graph is built per entry; rejected with content_type=''skills'' or ''cogx-archive'', which take file uploads.'
+          examples:
+          - []
+        labels:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Labels
+          description: Per-file labels, e.g. ["finance", "people", ""] — the Nth label applies to the Nth uploaded file, one entry per file, an empty entry skips that file. The comma-separated form "finance,people," is accepted equivalently (it is what Swagger UI sends when you type a JSON array here), so labels cannot contain commas unless the client sends real JSON. Stored on each file's data record and returned when listing dataset data. Only supported for normal ingestion — rejected when combined with session_id or content_type.
+          examples:
+          - ''
+        external_metadata:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: External Metadata
+          description: 'JSON array of per-file metadata objects, e.g. [\{"source": "crm", "ticket": 42\}, null]. Paired positionally like labels: the Nth entry applies to the Nth uploaded file (null or \{\} skips that file), and one entry per file is required when any is given. Merged into the file''s stored external_metadata (your keys win over loader-derived ones; ''node_set'' is reserved). Only supported for normal ingestion — rejected when combined with session_id or content_type.'
+          examples:
+          - ''
+        datasetName:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Datasetname
+          description: Name of the target dataset (created if it does not exist). Required unless datasetId is provided.
+          examples:
+          - default_dataset
+        datasetId:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: string
+            const: ''
+          - type: 'null'
+          title: Datasetid
+          examples:
+          - ''
+        session_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Session Id
+          description: Session to attribute this memory to (e.g. claude-code-1718000000). When set, the data is stored in the session cache (and bridged into the permanent graph in the background) and the session appears in the sessions dashboard. Leave empty for a direct add+cognify.
+          examples:
+          - ''
+        node_set:
+          anyOf:
+          - items:
+              type: string
+              example: ''
+            type: array
+          - type: 'null'
+          title: Node Set
+          description: Tags the ingested data with named node sets (e.g. per-agent or per-project groups). Extracted graph nodes are linked to these sets, and recall/search can later be restricted to them via their node_name parameter. Leave empty to skip tagging.
+          examples:
+          - []
+        self_improvement:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Self Improvement
+          description: False skips automatic improvement after ingestion, or the background graph bridge for session text. Ingestion/session storage still runs. Omit to preserve the core default (currently true).
+        run_in_background:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Run In Background
+          description: If true, the request returns immediately (status 'running' with a pipeline_run_id) while ingestion and graph building continue server-side — poll GET /v1/datasets/status to track completion. If false, the request blocks until the knowledge graph is fully built, which can take minutes for large files.
+          default: false
+        custom_prompt:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Custom Prompt
+          description: Replaces the default entity-extraction prompt used during graph building. Use it to steer which entities and relationships get extracted (e.g. focus on technical concepts, people, or contracts). Leave empty for the default prompt.
+          default: ''
+        chunk_size:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Chunk Size
+          description: 'Maximum tokens per text chunk during ingestion (default: 4096). Each chunk is processed by the LLM separately for entity extraction: larger chunks give more context per extraction but fewer, coarser passes; smaller chunks give finer-grained extraction at higher LLM cost.'
+          default: 4096
+        chunks_per_batch:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Chunks Per Batch
+          description: 'Number of chunks processed per cognify task batch (default: 36). Controls ingestion parallelism/throughput; rarely needs changing.'
+          default: 36
+        ontology_key:
+          anyOf:
+          - items:
+              type: string
+              example: ''
+            type: array
+          - type: 'null'
+          title: Ontology Key
+          description: Keys of previously uploaded ontologies (see /v1/ontologies) to ground entity extraction. Leave empty to ingest without an ontology.
+          examples:
+          - []
+        graph_model:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Graph Model
+          description: 'JSON-serialised graph model schema (same format as the cognify endpoint), e.g. \{"title": "CompanyGraph", "type": "object", "properties": \{...\}\}. Must include a top-level ''title'' key. Leave empty to use the default KnowledgeGraph model — a restrictive schema here can produce an empty graph. Invalid JSON or an unconvertible schema is rejected with 400.'
+          examples:
+          - ''
+        content_type:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Content Type
+          description: Set to 'skills' to ingest SKILL.md files as dataset-scoped Skill nodes, or 'code' to index whole code repositories (pass git URLs or server-local repo paths via 'raw_data') as an architectural code graph through the enola-backed pipeline. Leave empty for normal ingestion.
+          examples:
+          - ''
+        import_mode:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Import Mode
+          description: 'COGX archive imports only: ''preserve'' (default), ''hybrid'', or ''re-derive''.'
+          examples:
+          - ''
+        skills_text:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Skills Text
+          description: 'content_type=''skills'' only: inline SKILL.md markdown to ingest without a file upload (no-code path). When set and no files are uploaded, it is written to a temporary SKILL.md and ingested via the normal skills pipeline. Pair with skill_name to control the resulting skill name.'
+          examples:
+          - ''
+        skill_name:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Skill Name
+          description: 'content_type=''skills'' + skills_text only: name/slug for the inline skill (defaults to ''skill'').'
+          examples:
+          - ''
+        index_vectors:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Index Vectors
+          description: 'content_type=''code'' only: also embed the extracted code facts so semantic/completion retrievers can see them (requires an embedding provider). Default false — the code graph pipeline is deterministic and makes no LLM or embedding calls, and SearchType.CODE uses graph indexes only.'
+          default: false
+      type: object
+      title: Body_remember_api_v1_remember_post
+    RememberEntryRequest:
+      properties:
+        entry:
+          oneOf:
+          - $ref: '#/components/schemas/QAEntry'
+          - $ref: '#/components/schemas/TraceEntry'
+          - $ref: '#/components/schemas/FeedbackEntry'
+          - $ref: '#/components/schemas/SkillRunEntry'
+          title: Entry
+          discriminator:
+            propertyName: type
+            mapping:
+              feedback: '#/components/schemas/FeedbackEntry'
+              qa: '#/components/schemas/QAEntry'
+              skill_run: '#/components/schemas/SkillRunEntry'
+              trace: '#/components/schemas/TraceEntry'
+        dataset_name:
+          type: string
+          title: Dataset Name
+          default: main_dataset
+        dataset_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Dataset Id
+          description: UUID of an existing writable dataset. Takes precedence over dataset_name and is required to target a shared dataset by ID.
+        session_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Session Id
+          description: Required for qa/trace/feedback entries; optional for skill_run entries.
+          examples:
+          - claude-code-1718000000
+        self_improvement:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Self Improvement
+          description: Forwarded to remember for compatibility. Typed session entries do not run automatic graph improvement, regardless of this value. This does not control explicit skill_improvement.
+        skill_improvement:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          title: Skill Improvement
+      type: object
+      required:
+      - entry
+      title: RememberEntryRequest
+      description: 'JSON body for the typed-entry remember endpoint.
+
+
+        ``entry`` is a discriminated union — set ``type`` to ``qa``,
+
+        ``trace``, ``feedback``, or ``skill_run`` and include the
+
+        corresponding fields.'
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+        input:
+          title: Input
+        ctx:
+          type: object
+          title: Context
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-Api-Key
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    CookieAuth:
+      type: apiKey
+      in: cookie
+      name: auth_token

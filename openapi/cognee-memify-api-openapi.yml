@@ -1,0 +1,245 @@
+openapi: 3.2.0
+info:
+  title: Cognee Memify API
+  description: Cognee API with Bearer token and Cookie auth
+  version: 1.0.0
+servers:
+- url: https://{tenant}.aws.cognee.ai
+  description: 'Cognee Cloud: your tenant pod, named in the platform.cognee.ai dashboard'
+  variables:
+    tenant:
+      default: your-tenant
+      description: Your tenant name, shown in the Cognee Cloud dashboard
+- url: http://localhost:8000
+  description: 'Self-hosted: a locally running cognee server'
+security:
+- BearerAuth: []
+- ApiKeyAuth: []
+tags:
+- name: memify
+  description: Endpoint for running enrichment pipelines over existing graphs or supplied data.
+paths:
+  /api/v1/memify:
+    post:
+      tags:
+      - memify
+      summary: Memify
+      description: '**Deprecated** and removed in the next release. Use `POST /api/v1/improve` to
+
+        enrich a dataset. Triplet embeddings were removed, so a call without tasks runs
+
+        nothing and returns `{}`.
+
+
+        Runs the named enrichment tasks over an existing graph. If no data is provided the
+
+        existing knowledge graph is used as data.
+
+
+        ## Request Parameters
+
+        - **extractionTasks** Optional[List[str]]: Names of built-in Cognee Tasks to execute for graph/data extraction.
+
+        Supported names: extract_subgraph, extract_subgraph_chunks,
+
+        extract_user_sessions, extract_agent_trace_feedbacks, detect_entity_duplicates,
+
+        extract_code_docs (reads the dataset''s code graph itself; no graph is projected for it).
+
+        Unknown names are rejected with 422. Tasks requiring parameters are SDK-only.
+
+        - **enrichmentTasks** Optional[List[str]]: Names of built-in Cognee Tasks to handle enrichment of provided graph/data from extraction tasks.
+
+        Supported names: cognify_session, cognify_agent_trace_feedback, apply_feedback_weights,
+
+        merge_entity_duplicates, index_data_points, cognify_code_doc_chunks, add_data_points,
+
+        add_code_doc_edges.
+
+        - **data** Optional[List[str]]: The data to ingest. Can be any text data when custom extraction and enrichment tasks are used.
+
+        Data provided here will be forwarded to the first extraction task in the pipeline as input.
+
+        If no data is provided the whole graph (or subgraph if node_name/node_type is specified) will be forwarded,
+
+        except to an extraction task that reads the graph itself (extract_code_docs), which is seeded with a placeholder.
+
+        - **dataset_name** (Optional[str]): Name of the datasets to memify
+
+        - **dataset_id** (Optional[UUID]): List of UUIDs of an already existing dataset
+
+        - **node_name** (Optional[List[str]]): Filter graph to specific named entities (for targeted search). Used when no data is provided.
+
+        - **run_in_background** (Optional[bool]): Whether to execute processing asynchronously. Defaults to False (blocking).
+
+
+        Either datasetName or datasetId must be provided.
+
+
+        ## Response
+
+        Returns information about the add operation containing:
+
+        - Status of the operation
+
+        - Details about the processed data
+
+        - Any relevant metadata from the ingestion process
+
+
+        ## Error Codes
+
+        - **400 Bad Request**: Neither datasetId nor datasetName provided
+
+        - **409 Conflict**: Error during memify operation
+
+        - **403 Forbidden**: User doesn''t have permission to use dataset
+
+        - **422 Unprocessable Content**: Unknown task name in extractionTasks/enrichmentTasks
+
+
+        ## Notes
+
+        - To memify datasets not owned by the user, use dataset_id (when ENABLE_BACKEND_ACCESS_CONTROL is set to True)
+
+        - datasetId value can only be the UUID of an already existing dataset'
+      operationId: memify_api_v1_memify_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MemifyPayloadDTO'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                additionalProperties: true
+                type: object
+                title: Response Memify Api V1 Memify Post
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/cognee__api__DTO__ErrorResponse'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/cognee__api__DTO__ErrorResponse'
+        '422':
+          description: Unprocessable Content
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/cognee__api__DTO__ErrorResponse'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/cognee__api__DTO__ErrorResponse'
+      deprecated: true
+      security:
+      - BearerAuth: []
+      - ApiKeyAuth: []
+components:
+  schemas:
+    cognee__api__DTO__ErrorResponse:
+      properties:
+        error:
+          type: string
+          title: Error
+        detail:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Detail
+      type: object
+      required:
+      - error
+      title: ErrorResponse
+      description: 'Error body returned by routers that answer 4xx/5xx themselves.
+
+
+        ``error`` is the human-readable message. Errors raised as ``CogneeApiError`` are
+
+        rendered instead by the app-level handler in ``cognee/api/client.py`` as
+
+        ``{"detail": "<message> [<ErrorName>]"}`` plus ``"remediation"`` when a fix is known,
+
+        and ``"code"``/``"param"`` when the error carries a stable reason (SearchType.CODE).'
+    MemifyPayloadDTO:
+      properties:
+        extractionTasks:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: 'null'
+          title: Extractiontasks
+          examples:
+          - []
+        enrichmentTasks:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: 'null'
+          title: Enrichmenttasks
+          examples:
+          - []
+        data:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Data
+        datasetName:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Datasetname
+        datasetId:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: string
+            const: ''
+          - type: 'null'
+          title: Datasetid
+          examples:
+          - ''
+        nodeName:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: 'null'
+          title: Nodename
+          examples:
+          - []
+        runInBackground:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Runinbackground
+          default: false
+      type: object
+      title: MemifyPayloadDTO
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-Api-Key
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    CookieAuth:
+      type: apiKey
+      in: cookie
+      name: auth_token

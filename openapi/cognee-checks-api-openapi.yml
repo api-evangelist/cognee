@@ -1,0 +1,51 @@
+openapi: 3.2.0
+info:
+  title: Cognee Checks API
+  description: Cognee API with Bearer token and Cookie auth
+  version: 1.0.0
+servers:
+- url: https://{tenant}.aws.cognee.ai
+  description: 'Cognee Cloud: your tenant pod, named in the platform.cognee.ai dashboard'
+  variables:
+    tenant:
+      default: your-tenant
+      description: Your tenant name, shown in the Cognee Cloud dashboard
+- url: http://localhost:8000
+  description: 'Self-hosted: a locally running cognee server'
+security:
+- BearerAuth: []
+- ApiKeyAuth: []
+tags:
+- name: Checks
+  description: Diagnostic endpoint for validating a Cognee Cloud API key supplied in the X-Api-Key header.
+paths:
+  /api/v1/checks/connection:
+    post:
+      tags:
+      - Checks
+      summary: Get Connection Check Endpoint
+      description: Get connection check endpoint — POST /api/v1/checks/connection.
+      operationId: get_connection_check_endpoint_api_v1_checks_connection_post
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+      security:
+      - BearerAuth: []
+      - ApiKeyAuth: []
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-Api-Key
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    CookieAuth:
+      type: apiKey
+      in: cookie
+      name: auth_token

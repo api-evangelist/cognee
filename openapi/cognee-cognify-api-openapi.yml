@@ -1,192 +1,332 @@
 openapi: 3.2.0
 info:
-  title: Cognee REST Cognify API
-  description: The Cognee REST API provides endpoints for the complete AI memory lifecycle, including data ingestion, knowledge graph construction, and semantic retrieval. Core endpoints cover adding raw text or documents, triggering the cognify pipeline that extracts entities and relationships via LLM, executing multi-mode search queries, managing datasets, and creating agent identities. The API uses X-Api-Key header authentication for cloud deployments and Bearer token auth for self-hosted instances.
+  title: Cognee Cognify API
+  description: Cognee API with Bearer token and Cookie auth
   version: 1.0.0
-  contact:
-    name: Cognee Support
-    url: https://docs.cognee.ai/api-reference/introduction
-  license:
-    name: Apache 2.0
-    url: https://github.com/topoteretes/cognee/blob/main/LICENSE
 servers:
-- url: https://api.cognee.ai
-  description: Cognee Cloud (managed)
+- url: https://{tenant}.aws.cognee.ai
+  description: 'Cognee Cloud: your tenant pod, named in the platform.cognee.ai dashboard'
+  variables:
+    tenant:
+      default: your-tenant
+      description: Your tenant name, shown in the Cognee Cloud dashboard
 - url: http://localhost:8000
-  description: Self-hosted (Docker / local)
+  description: 'Self-hosted: a locally running cognee server'
 security:
 - BearerAuth: []
 - ApiKeyAuth: []
 tags:
 - name: cognify
-  description: Knowledge graph construction pipeline
+  description: Knowledge processing endpoints to transform raw data into knowledge graphs.
 paths:
   /api/v1/cognify:
     post:
-      operationId: cognifyDatasets
-      summary: Transform datasets into knowledge graphs
-      description: Core intelligence endpoint that converts raw data into semantic knowledge graphs. Performs document classification, text chunking, entity extraction via LLM, relationship detection, vector embedding generation, and content summarization.
       tags:
       - cognify
-      security:
-      - BearerAuth: []
-      - ApiKeyAuth: []
+      summary: 'Cognify (low level): build the knowledge graph from already-added data'
+      description: 'Transform datasets into structured knowledge graphs through cognitive processing.
+
+
+        This endpoint is the core of Cognee''s intelligence layer, responsible for converting
+
+        raw text, documents, and data added through the add endpoint into semantic knowledge graphs.
+
+        It performs deep analysis to extract entities, relationships, and insights from ingested content.
+
+
+        ## Processing Pipeline
+
+        1. Document classification and permission validation
+
+        2. Text chunking and semantic segmentation
+
+        3. Entity extraction using LLM-powered analysis
+
+        4. Relationship detection and graph construction
+
+        5. Vector embeddings generation for semantic search
+
+        6. Content summarization and indexing
+
+
+        ## Request Parameters
+
+        - **datasets** (Optional[List[str]]): List of dataset names to process. Dataset names are resolved to datasets owned by the authenticated user.
+
+        - **dataset_ids** (Optional[List[UUID]]): List of existing dataset UUIDs to process. UUIDs allow processing of datasets not owned by the user (if permitted).
+
+        - **run_in_background** (Optional[bool]): Whether to execute processing asynchronously. Defaults to False (blocking).
+
+        - **graph_model** (Optional[dict]): JSON schema describing a custom graph model for entity extraction. When omitted or \{\}, the default KnowledgeGraph model is used.
+
+        - **custom_prompt** (Optional[str]): Custom prompt for entity extraction and graph generation. If provided, this prompt will be used instead of the default prompts for knowledge graph extraction.
+
+        - **chunk_size** (Optional[int]): Maximum tokens per chunk. If omitted, Cognee chooses
+
+        a size from the configured LLM and embedding limits.
+
+        - **ontology_key** (Optional[List[str]]): Reference to one or more previously uploaded ontology files to use for knowledge graph construction.
+
+        - **chunks_per_batch** (Optional[int]): Number of chunks to process per task batch in Cognify. Uses the pipeline default when omitted.
+
+        - **data_per_batch** (Optional[int]): Maximum number of data items to process concurrently within a dataset. Defaults to 20.
+
+
+        ## Response
+
+        - **Blocking execution**: Complete pipeline run information with entity counts, processing duration, and success/failure status
+
+        - **Background execution**: Pipeline run metadata including pipeline_run_id for status monitoring via WebSocket subscription
+
+
+        ## Error Codes
+
+        - **400 Bad Request**: When neither datasets nor dataset_ids are provided
+
+        - **409 Conflict**: When a referenced ontology_key does not exist
+
+        - **500 Internal Server Error**: When the pipeline run errors (e.g. missing LLM API key, database connection failure, or a dataset that does not exist)
+
+
+        ## Example Request
+
+        ```json
+
+        {
+
+        "datasets": ["research_papers", "documentation"],
+
+        "run_in_background": false,
+
+        "custom_prompt": "Extract entities focusing on technical concepts and their relationships. Identify key technologies, methodologies, and their interconnections.",
+
+        "ontology_key": ["medical_ontology_v1"]
+
+        }
+
+        ```
+
+
+        ## Notes
+
+        To cognify data in datasets not owned by the user and for which the current user has write permission,
+
+        the dataset_id must be used (when ENABLE_BACKEND_ACCESS_CONTROL is set to True).
+
+
+        ## Next Steps
+
+        After successful processing, use the search endpoints to query the generated knowledge graph for insights, relationships, and semantic search.'
+      operationId: cognify_api_v1_cognify_post
       requestBody:
-        required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CognifyPayload'
+              $ref: '#/components/schemas/CognifyPayloadDTO'
             example:
               datasets:
-              - research_papers
-              run_in_background: false
-              custom_prompt: 'Extract entities focusing on technical concepts and their relationships.
-
-                '
-              ontology_key:
-              - medical_ontology_v1
+              - main_dataset
+        required: true
       responses:
         '200':
-          description: 'Blocking: complete pipeline run info with entity counts and duration. Background: pipeline run metadata including pipeline_run_id.
-
-            '
+          description: Successful Response
           content:
             application/json:
               schema:
+                additionalProperties:
+                  $ref: '#/components/schemas/PipelineRunInfo'
+                propertyNames:
+                  format: uuid
                 type: object
+                title: Response Cognify Api V1 Cognify Post
         '400':
-          description: No datasets or dataset_ids provided, or datasets not found
+          description: Bad Request
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/cognee__api__DTO__ErrorResponse'
         '403':
-          description: Permission denied
+          description: Forbidden
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/cognee__api__DTO__ErrorResponse'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/cognee__api__DTO__ErrorResponse'
         '422':
-          description: Validation error
+          description: Unprocessable Content
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/cognee__api__DTO__ErrorResponse'
         '500':
-          description: Pipeline failed
+          description: Internal Server Error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
-  /api/v1/cognify/subscribe/{pipeline_run_id}:
-    get:
-      operationId: subscribeToCognifyProgress
-      summary: Subscribe to cognify pipeline progress via WebSocket
-      description: WebSocket endpoint to receive real-time pipeline run events. Sends JSON messages with pipeline_run_id, status, and graph payload until the run completes or the client disconnects.
-      tags:
-      - cognify
-      parameters:
-      - name: pipeline_run_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-        description: UUID of the pipeline run to subscribe to
-      responses:
-        '101':
-          description: WebSocket connection established
-        '403':
-          description: Authentication required (cookie-based JWT)
+                $ref: '#/components/schemas/cognee__api__DTO__ErrorResponse'
+      security:
+      - BearerAuth: []
+      - ApiKeyAuth: []
 components:
   schemas:
-    CognifyPayload:
-      type: object
-      properties:
-        datasets:
-          type:
-          - array
-          - 'null'
-          items:
-            type: string
-          description: Dataset names to process (resolved to datasets owned by caller)
-        dataset_ids:
-          type:
-          - array
-          - 'null'
-          items:
-            type: string
-            format: uuid
-          description: Dataset UUIDs to process
-          example: []
-        run_in_background:
-          type: boolean
-          description: Execute pipeline asynchronously
-          default: false
-        graph_model:
-          type:
-          - object
-          - 'null'
-          description: Custom graph model schema for entity extraction
-          example: {}
-        custom_prompt:
-          type:
-          - string
-          - 'null'
-          description: Custom prompt for entity extraction and graph generation
-          default: ''
-        chunk_size:
-          type:
-          - integer
-          - 'null'
-          description: Maximum tokens per chunk (auto-sized if omitted)
-          example: 4096
-        ontology_key:
-          type:
-          - array
-          - 'null'
-          items:
-            type: string
-          description: Keys of previously uploaded ontology files to use
-          example: []
-        chunks_per_batch:
-          type:
-          - integer
-          - 'null'
-          description: Number of chunks to process per task batch
-          example: 36
-        data_per_batch:
-          type:
-          - integer
-          - 'null'
-          description: Maximum data items to process concurrently within a dataset
-          default: 20
-          example: 20
-    ErrorResponse:
-      type: object
+    cognee__api__DTO__ErrorResponse:
       properties:
         error:
           type: string
-          description: Short error message
+          title: Error
         detail:
-          type:
-          - string
-          - 'null'
-          description: Detailed error description
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Detail
+      type: object
       required:
       - error
+      title: ErrorResponse
+      description: 'Error body returned by routers that answer 4xx/5xx themselves.
+
+
+        ``error`` is the human-readable message. Errors raised as ``CogneeApiError`` are
+
+        rendered instead by the app-level handler in ``cognee/api/client.py`` as
+
+        ``{"detail": "<message> [<ErrorName>]"}`` plus ``"remediation"`` when a fix is known,
+
+        and ``"code"``/``"param"`` when the error carries a stable reason (SearchType.CODE).'
+    PipelineRunInfo:
+      properties:
+        status:
+          type: string
+          title: Status
+        pipeline_run_id:
+          type: string
+          format: uuid
+          title: Pipeline Run Id
+        dataset_id:
+          type: string
+          format: uuid
+          title: Dataset Id
+        dataset_name:
+          type: string
+          title: Dataset Name
+        payload:
+          anyOf:
+          - {}
+          - type: 'null'
+          title: Payload
+        data_ingestion_info:
+          anyOf:
+          - items: {}
+            type: array
+          - type: 'null'
+          title: Data Ingestion Info
+      type: object
+      required:
+      - status
+      - pipeline_run_id
+      - dataset_id
+      - dataset_name
+      title: PipelineRunInfo
+    CognifyPayloadDTO:
+      properties:
+        datasets:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: 'null'
+          title: Datasets
+          description: Dataset names to process; resolved against datasets owned by the authenticated user.
+          examples:
+          - - default_dataset
+        datasetIds:
+          anyOf:
+          - items:
+              type: string
+              format: uuid
+            type: array
+          - type: 'null'
+          title: Datasetids
+          description: Dataset UUIDs to process (required for datasets shared with you). Takes precedence over the datasets name list when both are provided.
+          examples:
+          - []
+        runInBackground:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Runinbackground
+          description: If true, the request returns immediately with a pipeline_run_id while the graph builds server-side — track completion via GET /v1/datasets/status or the /v1/cognify/subscribe WebSocket. If false, the request blocks until the knowledge graph is fully built, which can take minutes for large datasets.
+          default: false
+        graphModel:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          title: Graphmodel
+          description: JSON schema describing a custom graph model for entity extraction, including a top-level 'title' key. When omitted or \{\}, the default KnowledgeGraph model is used — a restrictive schema here can produce an empty graph.
+          examples:
+          - {}
+        customPrompt:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Customprompt
+          description: Replaces the default entity-extraction prompt to steer which entities and relationships get extracted (e.g. 'Extract entities focusing on technical concepts and their relationships.'). Leave empty for the default prompt.
+          default: ''
+          examples:
+          - ''
+        chunkSize:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Chunksize
+          description: Maximum tokens per chunk (e.g. 4096). Leave null for automatic model-based sizing. Larger chunks give more context per LLM extraction pass; smaller chunks give finer-grained extraction at higher LLM cost.
+          examples:
+          - null
+        ontologyKey:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: 'null'
+          title: Ontologykey
+          description: Keys of previously uploaded ontologies (see /v1/ontologies) to ground entity extraction. Leave empty to process without an ontology.
+          examples:
+          - []
+        chunksPerBatch:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Chunksperbatch
+          description: Number of chunks to process per task batch (e.g. 36). Controls processing parallelism/throughput; leave null for the pipeline default. Higher the value higher the parallelism/throughput
+          examples:
+          - null
+        dataPerBatch:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Dataperbatch
+          description: Maximum number of data items to process concurrently within a dataset.
+          default: 20
+          examples:
+          - 20
+      type: object
+      title: CognifyPayloadDTO
   securitySchemes:
-    BearerAuth:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
-      description: Bearer token authentication for self-hosted instances
     ApiKeyAuth:
       type: apiKey
       in: header
       name: X-Api-Key
-      description: API key authentication for Cognee Cloud deployments
-externalDocs:
-  description: Cognee API Reference
-  url: https://docs.cognee.ai/api-reference/introduction
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    CookieAuth:
+      type: apiKey
+      in: cookie
+      name: auth_token

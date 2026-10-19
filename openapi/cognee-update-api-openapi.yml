@@ -1,0 +1,416 @@
+openapi: 3.2.0
+info:
+  title: Cognee Update API
+  description: Cognee API with Bearer token and Cookie auth
+  version: 1.0.0
+servers:
+- url: https://{tenant}.aws.cognee.ai
+  description: 'Cognee Cloud: your tenant pod, named in the platform.cognee.ai dashboard'
+  variables:
+    tenant:
+      default: your-tenant
+      description: Your tenant name, shown in the Cognee Cloud dashboard
+- url: http://localhost:8000
+  description: 'Self-hosted: a locally running cognee server'
+security:
+- BearerAuth: []
+- ApiKeyAuth: []
+tags:
+- name: Update
+  description: Endpoint for updating existing data in a dataset.
+paths:
+  /api/v1/update:
+    patch:
+      tags:
+      - Update
+      summary: Update
+      description: 'Update data in a dataset.
+
+
+        This endpoint updates existing documents in a specified dataset by providing the data_id of the existing document
+
+        to update and the new document with the changes as the data.
+
+        The document is updated, analyzed, and the changes are integrated into the knowledge graph.
+
+
+        ## Request Parameters
+
+        - **data_id** (UUID, required, query): UUID of the existing document to update (returned by GET /api/v1/datasets/\{dataset_id\}/data)
+
+        - **dataset_id** (UUID, required, query): UUID of the dataset containing the document to update
+
+        - **data** (List[UploadFile]): New version of the document that replaces the existing one.
+
+        - **node_set** (Optional[List[str]]): List of node identifiers used to organize and filter
+
+        data points in the knowledge graph. Not an access-control mechanism.
+
+        - **chunk_level_diff** (bool, query, default true): Replace only the chunks affected
+
+        by the edit instead of re-ingesting the whole document.
+
+
+        ## Response
+
+        One body on every path (`UpdateResult`), a superset of the chunk-level summary
+
+        returned before:
+
+        - **status**: `"incremental"` (chunks replaced), `"unchanged"` (no content change),
+
+        `"full_rebuild"` (memory dropped and rebuilt from the new content) or `"failed"` (the rebuild''s
+
+        cognify run errored; `error` says why, and the call can be retried).
+
+        - **regions**, **deleted_chunks**, **added_chunks**, **reused_chunks**,
+
+        **redated_chunks**, **kept_chunks**, **reindexed_chunks**, **total_chunks**:
+
+        the chunk-level counters; `null` on a rebuild, which has no diff.
+
+        - **data_id**, **dataset_id**: the document, the handle to retry with.
+
+        - **duration_seconds**: wall-clock time of the update.
+
+        - **pipeline_run_id**: the run to inspect; `null` for a no-op.
+
+        - **fallback**: set on every rebuild; its `reason` names why the chunk-level path
+
+        did not run (`disabled`, `unsupported_metadata`, `custom_extraction_config`,
+
+        `per_call_db_config`, `unsupported_backend`, `unsupported_chunker`,
+
+        `no_baseline`, `chunks_not_tiling`, `unreadable_text`) and `detail` says it in
+
+        a sentence.
+
+        - **error**: `error_class` and `message` when `status` is `"failed"`.
+
+
+        ## Error Codes
+
+        - **422 Unprocessable Entity**: data_id or dataset_id missing or not a valid UUID
+
+        - **403 Forbidden**: User lacks write permission on the dataset
+
+        - **404 Not Found**: data_id resolves to no document in the dataset
+
+        - **500 Internal Server Error**: the rebuild''s cognify run errored (body is the
+
+        `UpdateResult` with status `"failed"`) or an unexpected error occurred
+
+
+        ## Notes
+
+        - Chunk-level updates keep unaffected chunks, their entities, and their summaries
+
+        untouched; only the edited region is re-extracted.'
+      operationId: update_api_v1_update_patch
+      security:
+      - BearerAuth: []
+      - ApiKeyAuth: []
+      parameters:
+      - name: data_id
+        in: query
+        required: true
+        schema:
+          type: string
+          format: uuid
+          description: UUID of the existing document to update (returned by GET /api/v1/datasets/\{dataset_id\}/data).
+          examples:
+          - 9c4e4a4b-2b1a-4f6e-9d3a-1c2b3d4e5f6a
+          title: Data Id
+        description: UUID of the existing document to update (returned by GET /api/v1/datasets/\{dataset_id\}/data).
+      - name: dataset_id
+        in: query
+        required: true
+        schema:
+          type: string
+          format: uuid
+          description: UUID of the dataset containing the document to update.
+          examples:
+          - a1b2c3d4-e5f6-7890-abcd-ef1234567890
+          title: Dataset Id
+        description: UUID of the dataset containing the document to update.
+      - name: chunk_level_diff
+        in: query
+        required: false
+        schema:
+          type: boolean
+          description: Diff the new content against the stored text and re-ingest only the affected chunks. Falls back to the full rebuild (memory dropped, row refreshed) when chunk-level preconditions are not met.
+          default: true
+          title: Chunk Level Diff
+        description: Diff the new content against the stored text and re-ingest only the affected chunks. Falls back to the full rebuild (memory dropped, row refreshed) when chunk-level preconditions are not met.
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Body_update_api_v1_update_patch'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateResult'
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/cognee__api__DTO__ErrorResponse'
+          description: Forbidden
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/cognee__api__DTO__ErrorResponse'
+          description: Unprocessable Content
+        '500':
+          description: The rebuild's cognify run errored (an UpdateResult with status "failed", naming the error) or an unexpected error occurred.
+          content:
+            application/json:
+              schema:
+                anyOf:
+                - $ref: '#/components/schemas/UpdateResult'
+                - $ref: '#/components/schemas/cognee__api__DTO__ErrorResponse'
+                title: Response 500 Update Api V1 Update Patch
+components:
+  schemas:
+    Fallback:
+      properties:
+        reason:
+          $ref: '#/components/schemas/RefusalReason'
+        detail:
+          type: string
+          title: Detail
+      type: object
+      required:
+      - reason
+      - detail
+      title: Fallback
+      description: Why the full rebuild ran instead of the chunk-level update.
+    UpdateResult:
+      properties:
+        status:
+          type: string
+          enum:
+          - incremental
+          - unchanged
+          - full_rebuild
+          - failed
+          title: Status
+        regions:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Regions
+        deleted_chunks:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Deleted Chunks
+        added_chunks:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Added Chunks
+        reused_chunks:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Reused Chunks
+        redated_chunks:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Redated Chunks
+        kept_chunks:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Kept Chunks
+        reindexed_chunks:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Reindexed Chunks
+        total_chunks:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Total Chunks
+        data_id:
+          type: string
+          format: uuid
+          title: Data Id
+        dataset_id:
+          type: string
+          format: uuid
+          title: Dataset Id
+        duration_seconds:
+          type: number
+          title: Duration Seconds
+        pipeline_run_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Pipeline Run Id
+        fallback:
+          anyOf:
+          - $ref: '#/components/schemas/Fallback'
+          - type: 'null'
+        error:
+          anyOf:
+          - $ref: '#/components/schemas/UpdateError'
+          - type: 'null'
+      type: object
+      required:
+      - status
+      - data_id
+      - dataset_id
+      - duration_seconds
+      title: UpdateResult
+      description: 'Per-document outcome of ``update()``.
+
+
+        ``status`` says what happened: the chunk-level path replaced chunks
+
+        (``incremental``) or found nothing to change (``unchanged``), the whole
+
+        document was rebuilt (``full_rebuild``), or the rebuild''s cognify run
+
+        errored (``failed``, with ``error`` naming the cause so the call can be
+
+        retried). A rebuild always carries ``fallback``, naming why the chunk-level
+
+        path did not run or that the caller switched it off, and
+
+        ``duration_seconds`` makes a slow update visible next to its reason.
+
+
+        The chunk counters are work done by the chunk-level path — ``added`` can
+
+        exceed the net change when a re-cut chunk with unchanged content is
+
+        re-extracted in place — and ``total_chunks`` is the count after the
+
+        update. ``redated_chunks`` are kept chunks whose text did not change but
+
+        whose date context did (an edit upstream changed the year a year-less
+
+        date inherits), so they were re-extracted at their final position under
+
+        their own id; they are included in ``added_chunks`` and excluded from
+
+        ``reindexed_chunks``, which counts only kept chunks renumbered in place.
+
+        The counters are ``None`` on a rebuild, which has no diff. The document
+
+        keeps its ``data_id`` on every path.'
+    RefusalReason:
+      type: string
+      enum:
+      - disabled
+      - custom_extraction_config
+      - per_call_db_config
+      - unsupported_backend
+      - unsupported_chunker
+      - unsupported_metadata
+      - no_baseline
+      - chunks_not_tiling
+      - unreadable_text
+      title: RefusalReason
+      description: 'Why a chunk-level update fell back to the full flow.
+
+
+        Every refusal used to surface as one free-text message and one log line, so
+
+        a permanent misconfiguration (an incompatible chunker, an unsupported
+
+        backend) looked exactly like a first ingestion. The reason is logged as a
+
+        structured field and returned in ``UpdateResult.fallback`` so they
+
+        are separable. The first three come from ``update()`` before this engine
+
+        is consulted; the rest are this engine''s own refusals.'
+    cognee__api__DTO__ErrorResponse:
+      properties:
+        error:
+          type: string
+          title: Error
+        detail:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Detail
+      type: object
+      required:
+      - error
+      title: ErrorResponse
+      description: 'Error body returned by routers that answer 4xx/5xx themselves.
+
+
+        ``error`` is the human-readable message. Errors raised as ``CogneeApiError`` are
+
+        rendered instead by the app-level handler in ``cognee/api/client.py`` as
+
+        ``{"detail": "<message> [<ErrorName>]"}`` plus ``"remediation"`` when a fix is known,
+
+        and ``"code"``/``"param"`` when the error carries a stable reason (SearchType.CODE).'
+    UpdateError:
+      properties:
+        error_class:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Error Class
+        message:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Message
+      type: object
+      title: UpdateError
+      description: Why the rebuild's cognify run failed.
+    Body_update_api_v1_update_patch:
+      properties:
+        data:
+          items:
+            type: string
+            format: binary
+          type: array
+          title: Data
+          description: New version of the document that replaces the existing one. With chunk_level_diff enabled (default) only the chunks affected by the edit are replaced; otherwise the document is deleted and re-ingested.
+        node_set:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: 'null'
+          title: Node Set
+          description: Node identifiers used to organize and filter data points in the graph.
+          default:
+          - ''
+          examples:
+          - - user_memories
+      type: object
+      required:
+      - data
+      title: Body_update_api_v1_update_patch
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-Api-Key
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    CookieAuth:
+      type: apiKey
+      in: cookie
+      name: auth_token

@@ -1,32 +1,49 @@
 {
   "provider": "cognee",
   "sources": [
-    "_original/cognee-rest-api-openapi.yml"
+    "_original/cognee-openapi.json"
   ],
   "outputs": [
-    "cognee-agents-api-openapi.yml",
+    "cognee-activity-api-openapi.yml",
+    "cognee-add-api-openapi.yml",
+    "cognee-agent-connections-api-openapi.yml",
+    "cognee-agent-management-api-openapi.yml",
+    "cognee-auth-api-openapi.yml",
+    "cognee-checks-api-openapi.yml",
     "cognee-cognify-api-openapi.yml",
-    "cognee-data-api-openapi.yml",
+    "cognee-configuration-api-openapi.yml",
     "cognee-datasets-api-openapi.yml",
+    "cognee-delete-api-openapi.yml",
+    "cognee-forget-api-openapi.yml",
     "cognee-health-api-openapi.yml",
+    "cognee-improve-api-openapi.yml",
+    "cognee-integrations-api-openapi.yml",
+    "cognee-llm-api-openapi.yml",
+    "cognee-memify-api-openapi.yml",
+    "cognee-ontologies-api-openapi.yml",
+    "cognee-permissions-api-openapi.yml",
+    "cognee-recall-api-openapi.yml",
+    "cognee-remember-api-openapi.yml",
+    "cognee-responses-api-openapi.yml",
+    "cognee-schema-api-openapi.yml",
     "cognee-search-api-openapi.yml",
-    "cognee-settings-api-openapi.yml"
+    "cognee-sessions-api-openapi.yml",
+    "cognee-settings-api-openapi.yml",
+    "cognee-skills-api-openapi.yml",
+    "cognee-slack-api-openapi.yml",
+    "cognee-sync-api-openapi.yml",
+    "cognee-update-api-openapi.yml",
+    "cognee-users-api-openapi.yml",
+    "cognee-validate-api-openapi.yml",
+    "cognee-visualize-api-openapi.yml"
   ],
   "archived": [],
   "errors": [],
   "warnings": [],
   "notes": [
     "sourced from openapi/_original/ (1 archived document(s)); previously refined output at the top level was skipped rather than re-split",
-    "cognee-rest-api-openapi.yml: upgraded openapi 3.0.3 -> OpenAPI 3.2.0",
-    "apis.yml register: already-registered"
+    "cognee-openapi.json: upgraded openapi 3.1.0 -> OpenAPI 3.2.0",
+    "apis.yml register: written (+27 apis, 32 total)"
   ],
-  "skipped": [
-    "cognee-agents-api-openapi.yml: previously refined output, superseded by openapi/_original/",
-    "cognee-cognify-api-openapi.yml: previously refined output, superseded by openapi/_original/",
-    "cognee-data-api-openapi.yml: previously refined output, superseded by openapi/_original/",
-    "cognee-datasets-api-openapi.yml: previously refined output, superseded by openapi/_original/",
-    "cognee-health-api-openapi.yml: previously refined output, superseded by openapi/_original/",
-    "cognee-search-api-openapi.yml: previously refined output, superseded by openapi/_original/",
-    "cognee-settings-api-openapi.yml: previously refined output, superseded by openapi/_original/"
-  ]
+  "skipped": []
 }

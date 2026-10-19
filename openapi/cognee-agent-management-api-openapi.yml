@@ -1,0 +1,235 @@
+openapi: 3.2.0
+info:
+  title: Cognee agent management API
+  description: Cognee API with Bearer token and Cookie auth
+  version: 1.0.0
+servers:
+- url: https://{tenant}.aws.cognee.ai
+  description: 'Cognee Cloud: your tenant pod, named in the platform.cognee.ai dashboard'
+  variables:
+    tenant:
+      default: your-tenant
+      description: Your tenant name, shown in the Cognee Cloud dashboard
+- url: http://localhost:8000
+  description: 'Self-hosted: a locally running cognee server'
+security:
+- BearerAuth: []
+- ApiKeyAuth: []
+tags:
+- name: agent management
+  description: Endpoints for creating, listing, retrieving, and deleting agents.
+paths:
+  /api/v1/agents/list:
+    get:
+      tags:
+      - agent management
+      summary: List Agents Endpoint
+      description: List agents endpoint — GET /api/v1/agents/list.
+      operationId: list_agents_endpoint_api_v1_agents_list_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/AgentDTO'
+                type: array
+                title: Response List Agents Endpoint Api V1 Agents List Get
+      security:
+      - BearerAuth: []
+      - ApiKeyAuth: []
+  /api/v1/agents/create:
+    post:
+      tags:
+      - agent management
+      summary: Create Agent Endpoint
+      description: 'Create agent endpoint — POST /api/v1/agents/create.
+
+
+        ## Query Parameters
+
+        - **name** (str): Unique name for the new agent user; a conflict is returned if an
+
+        agent with this name exists.'
+      operationId: create_agent_endpoint_api_v1_agents_create_post
+      security:
+      - BearerAuth: []
+      - ApiKeyAuth: []
+      parameters:
+      - name: name
+        in: query
+        required: true
+        schema:
+          type: string
+          title: Name
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentWithApiKeyDTO'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/agents/{agent_id}:
+    get:
+      tags:
+      - agent management
+      summary: Get Agent Endpoint
+      description: 'Get agent endpoint — GET /api/v1/agents/\{agent_id\}.
+
+
+        ## Path Parameters
+
+        - **agent_id** (UUID): The agent''s user ID (from GET /api/v1/agents/list).'
+      operationId: get_agent_endpoint_api_v1_agents__agent_id__get
+      security:
+      - BearerAuth: []
+      - ApiKeyAuth: []
+      parameters:
+      - name: agent_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Agent Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentDTO'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    delete:
+      tags:
+      - agent management
+      summary: Delete Agent Endpoint
+      description: 'Delete agent endpoint — DELETE /api/v1/agents/\{agent_id\}.
+
+
+        ## Path Parameters
+
+        - **agent_id** (UUID): The agent''s user ID (from GET /api/v1/agents/list).'
+      operationId: delete_agent_endpoint_api_v1_agents__agent_id__delete
+      security:
+      - BearerAuth: []
+      - ApiKeyAuth: []
+      parameters:
+      - name: agent_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Agent Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+components:
+  schemas:
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    AgentWithApiKeyDTO:
+      properties:
+        agentId:
+          type: string
+          format: uuid
+          title: Agentid
+        agentEmail:
+          type: string
+          title: Agentemail
+        agentApiKey:
+          type: string
+          title: Agentapikey
+      type: object
+      required:
+      - agentId
+      - agentEmail
+      - agentApiKey
+      title: AgentWithApiKeyDTO
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+        input:
+          title: Input
+        ctx:
+          type: object
+          title: Context
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError
+    AgentDTO:
+      properties:
+        agentId:
+          type: string
+          format: uuid
+          title: Agentid
+        agentEmail:
+          type: string
+          title: Agentemail
+        apiKeyLabel:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Apikeylabel
+      type: object
+      required:
+      - agentId
+      - agentEmail
+      title: AgentDTO
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-Api-Key
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    CookieAuth:
+      type: apiKey
+      in: cookie
+      name: auth_token

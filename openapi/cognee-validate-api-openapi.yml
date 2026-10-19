@@ -1,0 +1,177 @@
+openapi: 3.2.0
+info:
+  title: Cognee Validate API
+  description: Cognee API with Bearer token and Cookie auth
+  version: 1.0.0
+servers:
+- url: https://{tenant}.aws.cognee.ai
+  description: 'Cognee Cloud: your tenant pod, named in the platform.cognee.ai dashboard'
+  variables:
+    tenant:
+      default: your-tenant
+      description: Your tenant name, shown in the Cognee Cloud dashboard
+- url: http://localhost:8000
+  description: 'Self-hosted: a locally running cognee server'
+security:
+- BearerAuth: []
+- ApiKeyAuth: []
+tags:
+- name: Validate
+  description: Diagnostic endpoint for checking consistency between a dataset's graph and vector stores.
+paths:
+  /api/v1/validate:
+    get:
+      tags:
+      - Validate
+      summary: Run Validate
+      description: 'Cross-check the graph and vector stores of a dataset for consistency.
+
+
+        Detects orphaned edges (referencing deleted nodes), nodes whose id no
+
+        longer matches cognee''s own dedup contract, and nodes present in the
+
+        graph but missing from the vector index (unreachable by semantic
+
+        search). Read-only — never modifies any store.
+
+
+        ## Query Parameters
+
+        - **dataset** (List[str]): Dataset name(s) to validate. Omit to validate the default
+
+        dataset.'
+      operationId: run_validate_api_v1_validate_get
+      security:
+      - BearerAuth: []
+      - ApiKeyAuth: []
+      parameters:
+      - name: dataset
+        in: query
+        required: false
+        schema:
+          type: array
+          items:
+            type: string
+          description: Dataset name(s) to validate. Omit to validate the default dataset.
+          default:
+          - main_dataset
+          title: Dataset
+        description: Dataset name(s) to validate. Omit to validate the default dataset.
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationReport'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+components:
+  schemas:
+    IssueType:
+      type: string
+      enum:
+      - orphaned_edge
+      - identity_id_mismatch
+      - missing_vector_entry
+      title: IssueType
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    ValidationIssue:
+      properties:
+        severity:
+          $ref: '#/components/schemas/IssueSeverity'
+        type:
+          $ref: '#/components/schemas/IssueType'
+        detail:
+          type: string
+          title: Detail
+      type: object
+      required:
+      - severity
+      - type
+      - detail
+      title: ValidationIssue
+    ValidationStatus:
+      type: string
+      enum:
+      - healthy
+      - degraded
+      - unhealthy
+      title: ValidationStatus
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+        input:
+          title: Input
+        ctx:
+          type: object
+          title: Context
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError
+    IssueSeverity:
+      type: string
+      enum:
+      - error
+      - warning
+      title: IssueSeverity
+    ValidationReport:
+      properties:
+        status:
+          $ref: '#/components/schemas/ValidationStatus'
+        summary:
+          additionalProperties: true
+          type: object
+          title: Summary
+        issues:
+          items:
+            $ref: '#/components/schemas/ValidationIssue'
+          type: array
+          title: Issues
+      type: object
+      required:
+      - status
+      - summary
+      - issues
+      title: ValidationReport
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-Api-Key
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    CookieAuth:
+      type: apiKey
+      in: cookie
+      name: auth_token

@@ -1,0 +1,437 @@
+openapi: 3.2.0
+info:
+  title: Cognee Improve API
+  description: Cognee API with Bearer token and Cookie auth
+  version: 1.0.0
+servers:
+- url: https://{tenant}.aws.cognee.ai
+  description: 'Cognee Cloud: your tenant pod, named in the platform.cognee.ai dashboard'
+  variables:
+    tenant:
+      default: your-tenant
+      description: Your tenant name, shown in the Cognee Cloud dashboard
+- url: http://localhost:8000
+  description: 'Self-hosted: a locally running cognee server'
+security:
+- BearerAuth: []
+- ApiKeyAuth: []
+tags:
+- name: improve
+  description: Endpoint for enriching and improving an existing knowledge graph.
+paths:
+  /api/v1/improve:
+    post:
+      tags:
+      - improve
+      summary: 'Improve: enrich and index the graph, optionally bridging sessions into it'
+      description: 'Run the self-improvement loop over a dataset and report what each stage did.
+
+
+        The nine stages run in a fixed order; each first *gates* (declines work it
+
+        cannot do under the current settings, with no LLM calls) and only then runs:
+
+        `feedback_weights`, `persist_session_qa`, `persist_agent_traces`,
+
+        `extract_agent_context`, `distill_sessions`, `update_user_preferences`,
+
+        `build_truth_subspace`, `review_conflicts`, `global_context_index`.
+
+        Stages 1-7 need `sessionIds`; stages 7 and 9 are opt-in via the `build*` flags.
+
+
+        ## Request Parameters
+
+        - **dataset_name** (Optional[str]): Dataset name.
+
+        - **dataset_id** (Optional[UUID]): Dataset UUID.
+
+        - **extraction_tasks**, **enrichment_tasks**, **data**, **node_name**: Deprecated and
+
+        removed in the next release. Built-in task names still run after the stages (result
+
+        stage `custom_tasks`); `data` and `node_name` scope them and are ignored without
+
+        tasks. Use a custom pipeline instead.
+
+        - **run_in_background** (Optional[bool]): Run all stages as one background
+
+        task and return immediately with `status == "running"` (default: False).
+
+        - **build_global_context_index** (Optional[bool]): Build the global context index
+
+        (default: False).
+
+        - **review_conflicts** (bool): Review conflicts using source documents and dates.
+
+        - **build_truth_subspace** (Optional[bool]): Build the truth subspace from the
+
+        sessions'' distilled learnings (default: False; needs `sessionIds` and a
+
+        backend with truth state).
+
+        - **feedback_alpha** (Optional[float]): Learning rate in (0, 1] for the
+
+        feedback-weight stage. Omitted means the server''s `IMPROVE_FEEDBACK_ALPHA`.
+
+        - **sessionIds** (Optional[List[str]]): Session identifiers whose cached memory
+
+        is bridged into the permanent graph.
+
+
+        Either dataset_name or dataset_id must be provided.
+
+
+        ## Response
+
+        An `ImproveResult`: `status` (`completed`, `errored`, `skipped`, `running`) and
+
+        one `stages[]` entry per stage, in order, each with `status`
+
+        (`completed` / `already_completed` / `skipped` / `errored`), a `reason` when
+
+        skipped, `counts`, `duration_ms` and the pipeline `run` when the stage is a
+
+        pipeline. A non-fatal stage error is reported inside the body with a 200;
+
+        inspect `status`. A stage that fails because the LLM budget is exhausted
+
+        ends the run: the stages after it are `skipped` with reason
+
+        `budget_exhausted`.
+
+
+        ## Error Codes
+
+        - **400 Bad Request**: Neither dataset_id nor dataset_name provided
+
+        - **402 Payment Required**: The fatal `persist_session_qa` stage stopped
+
+        on an exhausted LLM budget. Same body as the 409 below.
+
+        - **409 Conflict**: The fatal `persist_session_qa` stage failed — for a
+
+        Cognee error the body carries the abort reason and the partial
+
+        `improve_result` (what ran before the abort); a non-Cognee error
+
+        returns a deliberately generic body (details go to the logs, never
+
+        the wire). Other Cognee errors return their own status codes.'
+      operationId: improve_api_v1_improve_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ImprovePayloadDTO'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImproveResult'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+      - BearerAuth: []
+      - ApiKeyAuth: []
+components:
+  schemas:
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    PipelineRunInfo:
+      properties:
+        status:
+          type: string
+          title: Status
+        pipeline_run_id:
+          type: string
+          format: uuid
+          title: Pipeline Run Id
+        dataset_id:
+          type: string
+          format: uuid
+          title: Dataset Id
+        dataset_name:
+          type: string
+          title: Dataset Name
+        payload:
+          anyOf:
+          - {}
+          - type: 'null'
+          title: Payload
+        data_ingestion_info:
+          anyOf:
+          - items: {}
+            type: array
+          - type: 'null'
+          title: Data Ingestion Info
+      type: object
+      required:
+      - status
+      - pipeline_run_id
+      - dataset_id
+      - dataset_name
+      title: PipelineRunInfo
+    ImproveResult:
+      properties:
+        dataset_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Dataset Id
+        dataset_name:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Dataset Name
+        session_ids:
+          items:
+            type: string
+          type: array
+          title: Session Ids
+        stages:
+          items:
+            $ref: '#/components/schemas/StageResult'
+          type: array
+          title: Stages
+        background:
+          type: boolean
+          title: Background
+          default: false
+        finished:
+          type: boolean
+          title: Finished
+          default: true
+        error:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Error
+        rerun_requested:
+          type: boolean
+          title: Rerun Requested
+          default: false
+        rerun_passes:
+          items:
+            items:
+              $ref: '#/components/schemas/StageResult'
+            type: array
+          type: array
+          title: Rerun Passes
+        memify_run:
+          title: Memify Run
+          deprecated: true
+        status:
+          type: string
+          enum:
+          - completed
+          - errored
+          - skipped
+          - running
+          title: Status
+          readOnly: true
+      type: object
+      required:
+      - status
+      title: ImproveResult
+      description: 'One entry per stage, in registry order, for one ``improve()`` run.
+
+
+        ``status`` summarises the stages: ``running`` while a background run is
+
+        still going, ``errored`` when any stage errored, ``skipped`` when every
+
+        stage was skipped (a lost lock claim, an unchanged graph with nothing
+
+        opted in), ``completed`` otherwise. ``await result.wait()`` blocks on a
+
+        background run and returns the same, now finished, object.'
+    StageResult:
+      properties:
+        stage:
+          type: string
+          title: Stage
+        status:
+          type: string
+          enum:
+          - completed
+          - already_completed
+          - skipped
+          - errored
+          title: Status
+        reason:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Reason
+        error:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Error
+        counts:
+          additionalProperties:
+            type: integer
+          type: object
+          title: Counts
+        duration_ms:
+          type: integer
+          title: Duration Ms
+          default: 0
+        run:
+          anyOf:
+          - $ref: '#/components/schemas/PipelineRunInfo'
+          - type: 'null'
+      type: object
+      required:
+      - stage
+      - status
+      title: StageResult
+      description: What one stage did in one run.
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+        input:
+          title: Input
+        ctx:
+          type: object
+          title: Context
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError
+    ImprovePayloadDTO:
+      properties:
+        extractionTasks:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: 'null'
+          title: Extractiontasks
+          deprecated: true
+          examples:
+          - []
+        enrichmentTasks:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: 'null'
+          title: Enrichmenttasks
+          deprecated: true
+          examples:
+          - []
+        data:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Data
+          deprecated: true
+        datasetName:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Datasetname
+        datasetId:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: string
+            const: ''
+          - type: 'null'
+          title: Datasetid
+          examples:
+          - ''
+        nodeName:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: 'null'
+          title: Nodename
+          deprecated: true
+          examples:
+          - []
+        runInBackground:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Runinbackground
+          default: false
+        buildGlobalContextIndex:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Buildglobalcontextindex
+          default: false
+        buildTruthSubspace:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Buildtruthsubspace
+          default: false
+        reviewConflicts:
+          type: boolean
+          title: Reviewconflicts
+          default: false
+        feedbackAlpha:
+          anyOf:
+          - type: number
+            maximum: 1.0
+            exclusiveMinimum: 0.0
+          - type: 'null'
+          title: Feedbackalpha
+        sessionIds:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: 'null'
+          title: Sessionids
+          examples:
+          - []
+      type: object
+      title: ImprovePayloadDTO
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-Api-Key
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    CookieAuth:
+      type: apiKey
+      in: cookie
+      name: auth_token

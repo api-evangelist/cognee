@@ -1,0 +1,354 @@
+openapi: 3.2.0
+info:
+  title: Cognee Sync API
+  description: Cognee API with Bearer token and Cookie auth
+  version: 1.0.0
+servers:
+- url: https://{tenant}.aws.cognee.ai
+  description: 'Cognee Cloud: your tenant pod, named in the platform.cognee.ai dashboard'
+  variables:
+    tenant:
+      default: your-tenant
+      description: Your tenant name, shown in the Cognee Cloud dashboard
+- url: http://localhost:8000
+  description: 'Self-hosted: a locally running cognee server'
+security:
+- BearerAuth: []
+- ApiKeyAuth: []
+tags:
+- name: Sync
+  description: Endpoints for syncing local data to Cognee Cloud and checking sync status.
+paths:
+  /api/v1/sync:
+    post:
+      tags:
+      - Sync
+      summary: Sync To Cloud
+      description: 'Sync local data to Cognee Cloud.
+
+
+        This endpoint triggers synchronization of local Cognee data to your cloud instance.
+
+        It uploads your local datasets, knowledge graphs, and processed data to the cloud
+
+        for backup, sharing, or cloud-based processing.
+
+
+        ## Request Body (JSON)
+
+        ```json
+
+        {
+
+        "dataset_ids": ["123e4567-e89b-12d3-a456-426614174000", "456e7890-e12b-34c5-d678-901234567000"]
+
+        }
+
+        ```
+
+
+        ## Response
+
+        Returns immediate response for the sync operation:
+
+        - **run_id**: Unique identifier for tracking the background sync operation
+
+        - **status**: Always "started" (operation runs in background)
+
+        - **dataset_ids**: List of dataset IDs being synced
+
+        - **dataset_names**: List of dataset names being synced
+
+        - **message**: Description of the background operation
+
+        - **timestamp**: When the sync was initiated
+
+        - **user_id**: User who initiated the sync
+
+
+        ## Cloud Sync Features
+
+        - **Automatic Authentication**: Uses your Cognee Cloud credentials
+
+        - **Data Compression**: Optimizes transfer size for faster uploads
+
+        - **Smart Sync**: Automatically handles data updates efficiently
+
+        - **Progress Tracking**: Monitor sync status with sync_id
+
+        - **Error Recovery**: Automatic retry for failed transfers
+
+        - **Data Validation**: Ensures data integrity during transfer
+
+
+        ## Example Usage
+
+        ```bash
+
+        # Sync multiple datasets to cloud by IDs (JSON request)
+
+        curl -X POST "http://localhost:8000/api/v1/sync" \
+
+        -H "Content-Type: application/json" \
+
+        -H "Cookie: auth_token=your-token" \
+
+        -d ''{"dataset_ids": ["123e4567-e89b-12d3-a456-426614174000", "456e7890-e12b-34c5-d678-901234567000"]}''
+
+
+        # Sync all user datasets (empty request body or null dataset_ids)
+
+        curl -X POST "http://localhost:8000/api/v1/sync" \
+
+        -H "Content-Type: application/json" \
+
+        -H "Cookie: auth_token=your-token" \
+
+        -d ''{}''
+
+        ```
+
+
+        ## Error Codes
+
+        - **400 Bad Request**: Invalid dataset_ids format
+
+        - **401 Unauthorized**: Invalid or missing authentication
+
+        - **403 Forbidden**: User doesn''t have permission to access dataset
+
+        - **404 Not Found**: Dataset not found
+
+        - **409 Conflict**: Sync operation conflict or cloud service unavailable
+
+        - **413 Payload Too Large**: Dataset too large for current cloud plan
+
+        - **429 Too Many Requests**: Rate limit exceeded
+
+
+        ## Notes
+
+        - Sync operations run in the background - you get an immediate response
+
+        - Use the returned run_id to track progress (status API coming soon)
+
+        - Large datasets are automatically chunked for efficient transfer
+
+        - Cloud storage usage counts against your plan limits
+
+        - The sync will continue even if you close your connection'
+      operationId: sync_to_cloud_api_v1_sync_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SyncRequest'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                additionalProperties:
+                  $ref: '#/components/schemas/SyncResponse'
+                type: object
+                title: Response Sync To Cloud Api V1 Sync Post
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+      - BearerAuth: []
+      - ApiKeyAuth: []
+  /api/v1/sync/status:
+    get:
+      tags:
+      - Sync
+      summary: Get Sync Status Overview
+      description: 'Check if there are any running sync operations for the current user.
+
+
+        This endpoint provides a simple check to see if the user has any active sync operations
+
+        without needing to know specific run IDs.
+
+
+        ## Response
+
+        Returns a simple status overview:
+
+        - **has_running_sync**: Boolean indicating if there are any running syncs
+
+        - **running_sync_count**: Number of currently running sync operations
+
+        - **latest_running_sync** (optional): Information about the most recent running sync if any exists
+
+
+        ## Example Usage
+
+        ```bash
+
+        curl -X GET "http://localhost:8000/api/v1/sync/status" \
+
+        -H "Cookie: auth_token=your-token"
+
+        ```
+
+
+        ## Example Responses
+
+
+        **No running syncs:**
+
+        ```json
+
+        {
+
+        "has_running_sync": false,
+
+        "running_sync_count": 0
+
+        }
+
+        ```
+
+
+        **With running sync:**
+
+        ```json
+
+        {
+
+        "has_running_sync": true,
+
+        "running_sync_count": 1,
+
+        "latest_running_sync": {
+
+        "run_id": "12345678-1234-5678-9012-123456789012",
+
+        "dataset_name": "My Dataset",
+
+        "progress_percentage": 45,
+
+        "created_at": "2025-01-01T00:00:00Z"
+
+        }
+
+        }
+
+        ```'
+      operationId: get_sync_status_overview_api_v1_sync_status_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+      security:
+      - BearerAuth: []
+      - ApiKeyAuth: []
+components:
+  schemas:
+    SyncResponse:
+      properties:
+        run_id:
+          type: string
+          title: Run Id
+        status:
+          type: string
+          title: Status
+        dataset_ids:
+          items:
+            type: string
+          type: array
+          title: Dataset Ids
+        dataset_names:
+          items:
+            type: string
+          type: array
+          title: Dataset Names
+        message:
+          type: string
+          title: Message
+        timestamp:
+          type: string
+          title: Timestamp
+        user_id:
+          type: string
+          title: User Id
+      type: object
+      required:
+      - run_id
+      - status
+      - dataset_ids
+      - dataset_names
+      - message
+      - timestamp
+      - user_id
+      title: SyncResponse
+      description: Response model for sync operations.
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+        input:
+          title: Input
+        ctx:
+          type: object
+          title: Context
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError
+    SyncRequest:
+      properties:
+        datasetIds:
+          anyOf:
+          - items:
+              type: string
+              format: uuid
+            type: array
+          - type: 'null'
+          title: Datasetids
+      type: object
+      title: SyncRequest
+      description: Request model for sync operations.
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-Api-Key
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    CookieAuth:
+      type: apiKey
+      in: cookie
+      name: auth_token

@@ -1,0 +1,835 @@
+openapi: 3.2.0
+info:
+  title: Cognee Recall API
+  description: Cognee API with Bearer token and Cookie auth
+  version: 1.0.0
+servers:
+- url: https://{tenant}.aws.cognee.ai
+  description: 'Cognee Cloud: your tenant pod, named in the platform.cognee.ai dashboard'
+  variables:
+    tenant:
+      default: your-tenant
+      description: Your tenant name, shown in the Cognee Cloud dashboard
+- url: http://localhost:8000
+  description: 'Self-hosted: a locally running cognee server'
+security:
+- BearerAuth: []
+- ApiKeyAuth: []
+tags:
+- name: recall
+  description: Endpoints for querying the knowledge graph and reviewing past recall history.
+paths:
+  /api/v1/recall:
+    get:
+      tags:
+      - recall
+      summary: List the caller's recent recall history
+      description: Get search/recall history for the authenticated user.
+      operationId: get_recall_history_api_v1_recall_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/RecallHistoryItem'
+                type: array
+                title: Response Get Recall History Api V1 Recall Get
+      security:
+      - BearerAuth: []
+      - ApiKeyAuth: []
+    post:
+      tags:
+      - recall
+      summary: 'Recall: query memory with auto-routed search type and session-first lookup'
+      description: 'Recall information from the knowledge graph.
+
+
+        This is a memory-oriented alias for the search endpoint. All search
+
+        types and options from v1 are supported.
+
+
+        ## Request Parameters
+
+        Field names are shown camelCased in the schema (e.g. searchType, datasetIds,
+
+        topK); both camelCase and snake_case are accepted.
+
+
+        - **search_type** (Optional[SearchType]): Type of search to perform. Omit
+
+        (default: null) to auto-route the query with the rule-based router
+
+        (HYBRID_COMPLETION fallback); pass a value to pin one.
+
+        - **datasets** (Optional[List[str]]): Dataset names to search within
+
+        - **dataset_ids** (Optional[List[UUID]]): Dataset UUIDs to search within;
+
+        take precedence over dataset names when both are provided
+
+        - **query** (str): The search query string
+
+        - **system_prompt** (Optional[str]): System prompt for completion searches
+
+        - **node_name** (Optional[List[str]]): Filter to specific node sets
+
+        - **top_k** (Optional[int]): Maximum results (default: 15)
+
+        - **only_context** (bool): Return what the LLM would have received instead of
+
+        its answer — for completion types each item''s text is the user prompt
+
+        (conversation history, question plus retrieval context, session guidance)
+
+        and its system_prompt field the retriever''s task template; retrieval-only
+
+        types return their context
+
+        - **verbose** (bool): Verbose output
+
+        - **include_references** (bool): Include source/provenance references in
+
+        completion results (default: true)
+
+        - **stream** (Optional[bool]): Stream the answer as server-sent events
+
+        (`text/event-stream`). Defaults to content negotiation on `Accept`.
+
+        - **session_id** (Optional[str]): Session whose cached QA and trace entries
+
+        should be searched
+
+        - **scope** (Optional[str | List[str]]): Memory sources to include: "graph",
+
+        "session", "session_first", "trace", "session_context", "tools", "code",
+
+        "all", "auto", or a list of these (default: "auto" — session first when
+
+        session_id is set, else graph). "session_first" requests that short-circuit
+
+        explicitly rather than by omitting searchType. "code" is explicit opt-in only
+
+        and returns deterministic code-graph facts tagged source="code"
+
+        (e.g. scope=["graph", "code"])
+
+        - **code_query** (Optional[dict]): "code" scope only — operation and arguments
+
+        for the code-graph query (same format as /v1/search code_query); omit for
+
+        the default "explore" with the query text as seed
+
+        - **response_schema** (Optional[dict]): JSON Schema for structured
+
+        completion output; validated results land in each result''s
+
+        ``structured`` field. 422 on schemas outside the supported subset.
+
+        - **contextProfile** (str): Profile to render for the ''session_context'' scope: ''qa''
+
+        (conversational) or ''agent'' (tool/workflow). Ignored by other scopes. Defaults to ''qa''.
+
+        - **toolConnections** (Optional[List[str]]): Names of authorized external database
+
+        connections for the ''tools'' scope. Omit to use every connection visible to the caller.
+
+        - **toolsTrigger** (str): When the ''tools'' scope runs: ''always'', or ''on_empty'' to query the
+
+        external database only when every other requested source returned nothing. Defaults to
+
+        ''always''.
+
+
+        ## Error Codes
+
+        - **402/403/404/409/422**: Cognee errors (payment required, permission
+
+        denied, missing user, session-dataset conflict, prerequisites not met) return their own
+
+        status code and message via the global error handler
+
+        - **409 Conflict**: Unexpected non-Cognee error during recall'
+      operationId: recall_api_v1_recall_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RecallPayloadDTO'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                items:
+                  oneOf:
+                  - $ref: '#/components/schemas/ResponseQAEntry'
+                  - $ref: '#/components/schemas/ResponseAgentTraceEntry'
+                  - $ref: '#/components/schemas/ResponseSessionContextEntry'
+                  - $ref: '#/components/schemas/ResponseGraphEntry'
+                  - $ref: '#/components/schemas/ResponseCodeEntry'
+                  - $ref: '#/components/schemas/ResponseToolEntry'
+                  - $ref: '#/components/schemas/ResponseSkillEntry'
+                  - $ref: '#/components/schemas/ResponseMarkerEntry'
+                  discriminator:
+                    propertyName: source
+                    mapping:
+                      session: '#/components/schemas/ResponseQAEntry'
+                      trace: '#/components/schemas/ResponseAgentTraceEntry'
+                      session_context: '#/components/schemas/ResponseSessionContextEntry'
+                      graph: '#/components/schemas/ResponseGraphEntry'
+                      code: '#/components/schemas/ResponseCodeEntry'
+                      tools: '#/components/schemas/ResponseToolEntry'
+                      skills: '#/components/schemas/ResponseSkillEntry'
+                      system: '#/components/schemas/ResponseMarkerEntry'
+                type: array
+                title: Response Recall Api V1 Recall Post
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+      - BearerAuth: []
+      - ApiKeyAuth: []
+components:
+  schemas:
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    ResponseCodeEntry:
+      properties:
+        kind:
+          $ref: '#/components/schemas/SearchResultKind'
+        search_type:
+          $ref: '#/components/schemas/SearchType'
+        text:
+          type: string
+          title: Text
+        system_prompt:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: System Prompt
+        score:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Score
+        dataset_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Dataset Id
+        dataset_name:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Dataset Name
+        metadata:
+          additionalProperties: true
+          type: object
+          title: Metadata
+          default: {}
+        raw:
+          additionalProperties: true
+          type: object
+          title: Raw
+          default: {}
+        structured:
+          anyOf:
+          - {}
+          - type: 'null'
+          title: Structured
+        source:
+          type: string
+          const: code
+          title: Source
+      type: object
+      required:
+      - kind
+      - search_type
+      - text
+      - source
+      title: ResponseCodeEntry
+      description: 'One deterministic code-graph fact from the recall "code" scope.
+
+
+        Same normalized shape as graph entries (kind CODE, payload under
+
+        ``raw``) — only the source discriminator differs, so callers can
+
+        route code facts separately from semantic graph results.'
+    RecallPayloadDTO:
+      properties:
+        searchType:
+          anyOf:
+          - $ref: '#/components/schemas/SearchType'
+          - type: 'null'
+          description: Search strategy, e.g. HYBRID_COMPLETION, GRAPH_COMPLETION, RAG_COMPLETION, CHUNKS. Omit (or pass null) to let cognee auto-route the query (rule-based, no LLM call, HYBRID_COMPLETION fallback; see docs/recall-vs-search.md for the rule table). Pass a value to pin one.
+        datasets:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: 'null'
+          title: Datasets
+          description: Dataset names to search within. Omit (null) to search all datasets you have read access to.
+          examples:
+          - - default_dataset
+        datasetIds:
+          anyOf:
+          - items:
+              type: string
+              format: uuid
+            type: array
+          - type: 'null'
+          title: Datasetids
+          description: Dataset UUIDs to search within; takes precedence over 'datasets' names when both are provided. Leave empty to resolve by name.
+          examples:
+          - null
+        query:
+          type: string
+          title: Query
+          description: The question to answer. Required; there is no default query.
+          examples:
+          - What is in the document?
+        systemPrompt:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Systemprompt
+          default: Answer the question using the provided context. Be as brief as possible.
+        nodeName:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: 'null'
+          title: Nodename
+          description: Restrict results to these node sets (the node_set values passed to /v1/add or /v1/remember). Omit to search all nodes.
+          examples:
+          - null
+        topK:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Topk
+          default: 15
+        onlyContext:
+          type: boolean
+          title: Onlycontext
+          description: Return what the LLM would have received instead of its answer. For completion search types each item's text is the user prompt (conversation history, then question plus retrieval context through the retriever's template, then the session guidance block) and its system_prompt field carries the retriever's task template. Retrieval-only types return their context. No LLM call is made and nothing is written to the session.
+          default: false
+        verbose:
+          type: boolean
+          title: Verbose
+          default: false
+        includeReferences:
+          type: boolean
+          title: Includereferences
+          description: Include source/provenance references in completion results.
+          default: false
+        sessionId:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Sessionid
+          description: 'Session whose cached QA and trace entries should be searched. With search_type omitted the session becomes a search source: alone it short-circuits the graph on a hit, alongside datasets both contribute. Pinning search_type leaves the graph as the only source.'
+          examples:
+          - null
+        scope:
+          anyOf:
+          - type: string
+          - items:
+              type: string
+            type: array
+          - type: 'null'
+          title: Scope
+          description: 'Which memory sources to include: ''graph'', ''session'', ''session_first'', ''trace'', ''session_context'', ''tools'', ''code'', ''all'', ''auto'', or a list of these. Defaults to ''auto'' (session first when session_id is set, else graph). ''session_first'' asks for that short-circuit explicitly — a session hit answers alone — instead of getting it by omitting search_type. ''tools'' and ''code'' are explicit opt-in only — never implied by ''auto'' or ''all''. ''tools'' requires TOOL_CALLS_ENABLED on the server; ''code'' runs a deterministic code-graph query (see code_query) and tags results source=''code''.'
+          examples:
+          - null
+        toolConnections:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: 'null'
+          title: Toolconnections
+          description: Names of authorized external database connections for the 'tools' scope. Omit to use every connection visible to the caller.
+          examples:
+          - null
+        stream:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Stream
+          description: 'Stream the answer as server-sent events. When omitted, the `Accept` header decides: streaming happens only for a client that ranks `text/event-stream` above `application/json`, so `*/*` and the two listed together both stay on the JSON response.'
+        toolsTrigger:
+          type: string
+          title: Toolstrigger
+          description: 'When the ''tools'' scope runs: ''always'', or ''on_empty'' to query the external database only when every other requested source returned nothing.'
+          default: always
+        codeQuery:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          title: Codequery
+          description: '''code'' scope only: structured operation and arguments for the deterministic code-graph query (same format and operations as /v1/search code_query, e.g. \{"operation": "impact_analysis", "seeds": ["UserService"]\} or \{"operation": "ask", "question": "where are tokens validated?"\}). Omit to run the default ''explore'' operation with the query text as seed. A seed the code graph cannot resolve, a dataset without a code graph, or flows on a graph without them contribute no results rather than failing the recall; an unknown operation or invalid argument answers 422 with a stable ''code'' and ''param''.'
+          examples:
+          - null
+        contextProfile:
+          type: string
+          title: Contextprofile
+          description: 'Profile to render for the ''session_context'' scope: ''qa'' (conversational) or ''agent'' (tool/workflow). Ignored by other scopes.'
+          default: qa
+        responseSchema:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          title: Responseschema
+          description: 'JSON Schema for structured completion output (typically MyModel.model_json_schema()). The completion is validated against it and each result carries the validated payload in its ''structured'' field. Supported by completion-style search types only. Structural subset: objects, primitives, arrays, enums, optionals, $defs references; value constraints (minLength, ...) are not enforced server-side.'
+          examples:
+          - null
+      type: object
+      required:
+      - query
+      title: RecallPayloadDTO
+    ResponseMarkerEntry:
+      properties:
+        source:
+          type: string
+          const: system
+          title: Source
+        status:
+          type: string
+          title: Status
+        text:
+          type: string
+          title: Text
+        datapoint_count:
+          type: integer
+          title: Datapoint Count
+        threshold:
+          type: integer
+          title: Threshold
+        error_class:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Error Class
+        error_message:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Error Message
+      type: object
+      required:
+      - source
+      - status
+      - text
+      - datapoint_count
+      - threshold
+      title: ResponseMarkerEntry
+      description: 'System-generated marker (not data), e.g. "memory still warming up".
+
+
+        ``text`` carries a human-readable message so generic consumers that fall
+
+        back to text rendering display something sensible.'
+    ResponseToolEntry:
+      properties:
+        source:
+          type: string
+          const: tools
+          title: Source
+        tool_name:
+          type: string
+          title: Tool Name
+        question:
+          type: string
+          title: Question
+        text:
+          type: string
+          title: Text
+        success:
+          type: boolean
+          title: Success
+          default: true
+        error:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Error
+        structured:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          title: Structured
+      type: object
+      required:
+      - source
+      - tool_name
+      - question
+      - text
+      title: ResponseToolEntry
+      description: 'One tool invocation''s result from the recall "tools" scope.
+
+
+        Generic across tools: ``tool_name`` discriminates the tool (only
+
+        ``text_to_sql`` in v1) and ``structured`` carries the tool-specific
+
+        payload, so adding a tool never changes this union. Secrets (connection
+
+        strings) never appear here.'
+    ResponseSkillEntry:
+      properties:
+        source:
+          type: string
+          const: skills
+          title: Source
+        text:
+          type: string
+          title: Text
+        skill:
+          additionalProperties: true
+          type: object
+          title: Skill
+        score:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Score
+      type: object
+      required:
+      - source
+      - text
+      - skill
+      title: ResponseSkillEntry
+      description: 'One skill surfaced by the deterministic skill gate.
+
+
+        Metadata-only: ``skill`` carries the projected Skill fields and never the
+
+        procedure body — progressive disclosure keeps bodies behind the
+
+        ``load_skill`` tool or ``GET /skills/{skill_id}``. ``text`` is a
+
+        renderable "name: description" line; ``score`` is the raw vector distance
+
+        (lower is better) when available.'
+    ResponseSessionContextEntry:
+      properties:
+        source:
+          type: string
+          const: session_context
+          title: Source
+        content:
+          type: string
+          title: Content
+        context_profile:
+          type: string
+          title: Context Profile
+      type: object
+      required:
+      - source
+      - content
+      - context_profile
+      title: ResponseSessionContextEntry
+    ResponseQAEntry:
+      properties:
+        time:
+          type: string
+          title: Time
+        question:
+          type: string
+          title: Question
+        context:
+          type: string
+          title: Context
+        answer:
+          type: string
+          title: Answer
+        qa_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Qa Id
+        feedback_text:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Feedback Text
+        feedback_score:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Feedback Score
+        used_graph_element_ids:
+          anyOf:
+          - additionalProperties:
+              items:
+                type: string
+              type: array
+            type: object
+          - type: 'null'
+          title: Used Graph Element Ids
+        memify_metadata:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          title: Memify Metadata
+        used_session_context_ids:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: 'null'
+          title: Used Session Context Ids
+        source:
+          type: string
+          const: session
+          title: Source
+      type: object
+      required:
+      - time
+      - question
+      - context
+      - answer
+      - source
+      title: ResponseQAEntry
+    ResponseAgentTraceEntry:
+      properties:
+        trace_id:
+          type: string
+          title: Trace Id
+        origin_function:
+          type: string
+          title: Origin Function
+        status:
+          type: string
+          title: Status
+        memory_query:
+          type: string
+          title: Memory Query
+          default: ''
+        memory_context:
+          type: string
+          title: Memory Context
+          default: ''
+        method_params:
+          additionalProperties: true
+          type: object
+          title: Method Params
+        method_return_value:
+          title: Method Return Value
+        error_message:
+          type: string
+          title: Error Message
+          default: ''
+        session_feedback:
+          type: string
+          title: Session Feedback
+          default: ''
+        source:
+          type: string
+          const: trace
+          title: Source
+      type: object
+      required:
+      - trace_id
+      - origin_function
+      - status
+      - source
+      title: ResponseAgentTraceEntry
+    SearchResultKind:
+      type: string
+      enum:
+      - graph_completion
+      - rag_completion
+      - triplet_completion
+      - cypher
+      - chunk
+      - summary
+      - coding_rule
+      - code
+      - skill
+      - natural_language
+      - temporal
+      - structured
+      - unknown
+      title: SearchResultKind
+      description: 'Semantic kind of a search result item.
+
+
+        More precise than ``search_type`` alone — tells the caller which
+
+        normalization shape was applied. LLM completion types all collapse
+
+        to ``*_COMPLETION`` kinds; non-LLM retrievers produce structural
+
+        kinds (``CHUNK``, ``SUMMARY``, ``CYPHER`` row).'
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+        input:
+          title: Input
+        ctx:
+          type: object
+          title: Context
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError
+    RecallHistoryItem:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: Id
+        text:
+          type: string
+          title: Text
+        user:
+          type: string
+          title: User
+        createdAt:
+          type: string
+          format: date-time
+          title: Createdat
+        datasetId:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Datasetid
+      type: object
+      required:
+      - id
+      - text
+      - user
+      - createdAt
+      title: RecallHistoryItem
+    ResponseGraphEntry:
+      properties:
+        kind:
+          $ref: '#/components/schemas/SearchResultKind'
+        search_type:
+          $ref: '#/components/schemas/SearchType'
+        text:
+          type: string
+          title: Text
+        system_prompt:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: System Prompt
+        score:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Score
+        dataset_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Dataset Id
+        dataset_name:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Dataset Name
+        metadata:
+          additionalProperties: true
+          type: object
+          title: Metadata
+          default: {}
+        raw:
+          additionalProperties: true
+          type: object
+          title: Raw
+          default: {}
+        structured:
+          anyOf:
+          - {}
+          - type: 'null'
+          title: Structured
+        source:
+          type: string
+          const: graph
+          title: Source
+      type: object
+      required:
+      - kind
+      - search_type
+      - text
+      - source
+      title: ResponseGraphEntry
+    SearchType:
+      type: string
+      enum:
+      - SUMMARIES
+      - CHUNKS
+      - RAG_COMPLETION
+      - HYBRID_COMPLETION
+      - GRAPH_COMPLETION
+      - GRAPH_COMPLETION_DECOMPOSITION
+      - GRAPH_SUMMARY_COMPLETION
+      - CYPHER
+      - NATURAL_LANGUAGE
+      - GRAPH_COMPLETION_COT
+      - GRAPH_COMPLETION_CONTEXT_EXTENSION
+      - FEELING_LUCKY
+      - TEMPORAL
+      - CODING_RULES
+      - CHUNKS_LEXICAL
+      - AGENTIC_COMPLETION
+      - CODE
+      - GRAPH_REPORT
+      - BROAD
+      - SKILLS
+      - TRIPLET_COMPLETION
+      title: SearchType
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-Api-Key
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    CookieAuth:
+      type: apiKey
+      in: cookie
+      name: auth_token

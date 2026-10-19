@@ -1,0 +1,357 @@
+openapi: 3.2.0
+info:
+  title: Cognee Responses API
+  description: Cognee API with Bearer token and Cookie auth
+  version: 1.0.0
+servers:
+- url: https://{tenant}.aws.cognee.ai
+  description: 'Cognee Cloud: your tenant pod, named in the platform.cognee.ai dashboard'
+  variables:
+    tenant:
+      default: your-tenant
+      description: Your tenant name, shown in the Cognee Cloud dashboard
+- url: http://localhost:8000
+  description: 'Self-hosted: a locally running cognee server'
+security:
+- BearerAuth: []
+- ApiKeyAuth: []
+tags:
+- name: Responses
+  description: Response generation endpoints using the knowledge graph.
+paths:
+  /api/v1/responses/:
+    post:
+      tags:
+      - Responses
+      summary: Create Response
+      description: 'OpenAI-compatible responses endpoint with function calling support.
+
+
+        This endpoint provides OpenAI-compatible API responses with integrated
+
+        function calling capabilities for Cognee operations.
+
+
+        ## Request Parameters
+
+        - **input** (str): The input text to process
+
+        - **model** (str): The model to use for processing
+
+        - **tools** (Optional[List[Dict]]): Available tools for function calling
+
+        - **tool_choice** (Any): Tool selection strategy (default: "auto")
+
+        - **temperature** (float): Response randomness (default: 1.0)
+
+        - **maxCompletionTokens** (Optional[int]): Upper bound on tokens generated for the
+
+        completion.
+
+        - **user** (Optional[str]): OpenAI-compatible end-user identifier passed in the
+
+        request body.
+
+
+        ## Response
+
+        Returns an OpenAI-compatible response body with function call results.
+
+
+        ## Error Codes
+
+        - **400 Bad Request**: Invalid request parameters
+
+        - **500 Internal Server Error**: Error processing request
+
+
+        ## Notes
+
+        - Compatible with OpenAI API format
+
+        - Supports function calling with Cognee tools
+
+        - Tool calls run as the authenticated caller, never as another user
+
+        - Uses default tools if none provided'
+      operationId: create_response_api_v1_responses__post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResponseRequest'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseBody'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+      - BearerAuth: []
+      - ApiKeyAuth: []
+components:
+  schemas:
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    ResponseBody:
+      properties:
+        id:
+          type: string
+          title: Id
+        created:
+          type: integer
+          title: Created
+        model:
+          type: string
+          title: Model
+        object:
+          type: string
+          title: Object
+          default: response
+        status:
+          type: string
+          title: Status
+          default: completed
+        toolCalls:
+          items:
+            $ref: '#/components/schemas/ResponseToolCall'
+          type: array
+          title: Toolcalls
+        usage:
+          anyOf:
+          - $ref: '#/components/schemas/ChatUsage'
+          - type: 'null'
+        metadata:
+          additionalProperties: true
+          type: object
+          title: Metadata
+      type: object
+      required:
+      - model
+      - toolCalls
+      title: ResponseBody
+      description: Response body for the new responses endpoint
+    FunctionCall:
+      properties:
+        name:
+          type: string
+          title: Name
+        arguments:
+          type: string
+          title: Arguments
+      type: object
+      required:
+      - name
+      - arguments
+      title: FunctionCall
+      description: Function call made by the assistant
+    FunctionParameters:
+      properties:
+        type:
+          type: string
+          title: Type
+          default: object
+        properties:
+          additionalProperties:
+            additionalProperties: true
+            type: object
+          type: object
+          title: Properties
+        required:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: 'null'
+          title: Required
+      type: object
+      required:
+      - properties
+      title: FunctionParameters
+      description: JSON Schema for function parameters
+    ToolFunction:
+      properties:
+        type:
+          type: string
+          title: Type
+          default: function
+        function:
+          $ref: '#/components/schemas/Function'
+      type: object
+      required:
+      - function
+      title: ToolFunction
+      description: Tool function wrapper (for OpenAI compatibility)
+    ResponseToolCall:
+      properties:
+        id:
+          type: string
+          title: Id
+        type:
+          type: string
+          title: Type
+          default: function
+        function:
+          $ref: '#/components/schemas/FunctionCall'
+        output:
+          anyOf:
+          - $ref: '#/components/schemas/ToolCallOutput'
+          - type: 'null'
+      type: object
+      required:
+      - function
+      title: ResponseToolCall
+      description: Tool call in a response
+    ChatUsage:
+      properties:
+        prompt_tokens:
+          type: integer
+          title: Prompt Tokens
+          default: 0
+        completion_tokens:
+          type: integer
+          title: Completion Tokens
+          default: 0
+        total_tokens:
+          type: integer
+          title: Total Tokens
+          default: 0
+      type: object
+      title: ChatUsage
+      description: Token usage information
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+        input:
+          title: Input
+        ctx:
+          type: object
+          title: Context
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError
+    ResponseRequest:
+      properties:
+        model:
+          $ref: '#/components/schemas/CogneeModel'
+          default: cognee-v1
+        input:
+          type: string
+          title: Input
+        tools:
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/ToolFunction'
+            type: array
+          - type: 'null'
+          title: Tools
+        toolChoice:
+          anyOf:
+          - type: string
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          title: Toolchoice
+          default: auto
+        user:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: User
+        temperature:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Temperature
+          default: 1.0
+        maxCompletionTokens:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Maxcompletiontokens
+      type: object
+      required:
+      - input
+      title: ResponseRequest
+      description: Request body for the new responses endpoint (OpenAI Responses API format)
+    Function:
+      properties:
+        name:
+          type: string
+          title: Name
+        description:
+          type: string
+          title: Description
+        parameters:
+          $ref: '#/components/schemas/FunctionParameters'
+      type: object
+      required:
+      - name
+      - description
+      - parameters
+      title: Function
+      description: Function definition compatible with OpenAI's format
+    CogneeModel:
+      type: string
+      enum:
+      - cognee-v1
+      title: CogneeModel
+      description: Enum for supported model types
+    ToolCallOutput:
+      properties:
+        status:
+          type: string
+          title: Status
+          default: success
+        data:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          title: Data
+      type: object
+      title: ToolCallOutput
+      description: Output of a tool call in the responses API
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-Api-Key
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    CookieAuth:
+      type: apiKey
+      in: cookie
+      name: auth_token

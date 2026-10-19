@@ -1,0 +1,1276 @@
+openapi: 3.2.0
+info:
+  title: Cognee Permissions API
+  description: Cognee API with Bearer token and Cookie auth
+  version: 1.0.0
+servers:
+- url: https://{tenant}.aws.cognee.ai
+  description: 'Cognee Cloud: your tenant pod, named in the platform.cognee.ai dashboard'
+  variables:
+    tenant:
+      default: your-tenant
+      description: Your tenant name, shown in the Cognee Cloud dashboard
+- url: http://localhost:8000
+  description: 'Self-hosted: a locally running cognee server'
+security:
+- BearerAuth: []
+- ApiKeyAuth: []
+tags:
+- name: Permissions
+  description: Permission management for multi-user access control.
+paths:
+  /api/v1/permissions/datasets/{principal_id}:
+    post:
+      tags:
+      - Permissions
+      summary: Give Datasets Permission To Principal
+      description: 'Grant permission on datasets to a principal (user or role).
+
+
+        This endpoint allows granting specific permissions on one or more datasets
+
+        to a principal (which can be a user or role). The authenticated user must
+
+        have appropriate permissions to grant access to the specified datasets.
+
+
+        ## Path Parameters
+
+        - **principal_id** (UUID): The UUID of the principal (user or role) to grant permission to
+
+
+        ## Request Parameters
+
+        - **permission_name** (str, query): Permission to grant. One of "read", "write", "delete", "share".
+
+        - **dataset_ids** (List[UUID], JSON body): Array of dataset UUIDs to grant permission on.
+
+
+        ## Response
+
+        Returns a success message indicating permission was assigned.
+
+
+        ## Error Codes
+
+        - **400 Bad Request**: Invalid request parameters
+
+        - **403 Forbidden**: User doesn''t have permission to grant access
+
+        - **500 Internal Server Error**: Error granting permission'
+      operationId: give_datasets_permission_to_principal_api_v1_permissions_datasets__principal_id__post
+      security:
+      - BearerAuth: []
+      - ApiKeyAuth: []
+      parameters:
+      - name: principal_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Principal Id
+      - name: permission_name
+        in: query
+        required: true
+        schema:
+          type: string
+          description: Permission to grant. One of 'read', 'write', 'delete', 'share'.
+          examples:
+          - read
+          title: Permission Name
+        description: Permission to grant. One of 'read', 'write', 'delete', 'share'.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: string
+                format: uuid
+              description: Dataset UUIDs to grant permission on. List your datasets via GET /api/v1/datasets to get real ids.
+              examples:
+              - - a1b2c3d4-5717-4562-b3fc-2c963f66afa6
+              title: Dataset Ids
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    delete:
+      tags:
+      - Permissions
+      summary: Revoke Datasets Permission From Principal
+      description: 'Revoke permission on datasets from a principal (user or role).
+
+
+        ## Path Parameters
+
+        - **principal_id** (UUID): The UUID of the principal to revoke permission from
+
+
+        ## Request Parameters
+
+        - **permission_name** (str): The name of the permission to revoke (e.g., "read", "write", "delete")
+
+        - **dataset_ids** (List[UUID]): List of dataset UUIDs to revoke permission on'
+      operationId: revoke_datasets_permission_from_principal_api_v1_permissions_datasets__principal_id__delete
+      security:
+      - BearerAuth: []
+      - ApiKeyAuth: []
+      parameters:
+      - name: principal_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Principal Id
+      - name: permission_name
+        in: query
+        required: true
+        schema:
+          type: string
+          title: Permission Name
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: string
+                format: uuid
+              title: Dataset Ids
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/permissions/principals/{principal_id}/datasets:
+    get:
+      tags:
+      - Permissions
+      summary: Get Principal Datasets
+      description: 'List the datasets a principal holds a permission on.
+
+
+        A principal is a user, a role or a tenant. What the caller may ask about
+
+        depends on which: themselves or any user if they can manage users; a role
+
+        of this tenant they belong to, or any of its roles if they can manage
+
+        users; and only the tenant they are currently in. Results are always
+
+        narrowed to the caller''s current tenant.
+
+
+        ## Path Parameters
+
+        - **principal_id** (UUID): The principal UUID — a user, role or tenant.
+
+
+        ## Request Parameters
+
+        - **permission_name** (str): Permission to list. Defaults to "read".
+
+
+        ## Response
+
+        Returns a JSON list of dataset objects the principal has that permission on.
+
+
+        ## Error Codes
+
+        - **403 Forbidden**: Caller may not ask about this principal
+
+        - **404 Not Found**: Principal does not exist in the caller''s tenant'
+      operationId: get_principal_datasets_api_v1_permissions_principals__principal_id__datasets_get
+      security:
+      - BearerAuth: []
+      - ApiKeyAuth: []
+      parameters:
+      - name: principal_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Principal Id
+      - name: permission_name
+        in: query
+        required: false
+        schema:
+          type: string
+          description: Permission to read back. One of 'read', 'write', 'delete', 'share'.
+          examples:
+          - read
+          default: read
+          title: Permission Name
+        description: Permission to read back. One of 'read', 'write', 'delete', 'share'.
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/permissions/roles:
+    post:
+      tags:
+      - Permissions
+      summary: Create Role
+      description: 'Create a new role.
+
+
+        This endpoint creates a new role with the specified name in the caller''s
+
+        current tenant. Roles are used to group permissions and can be assigned to
+
+        users to manage access control more efficiently. The authenticated user
+
+        must be able to manage users in the tenant; the tenant owner always can.
+
+
+        ## Request Parameters
+
+        - **role_name** (str): The name of the role to create
+
+
+        ## Response
+
+        Returns a success message indicating the role was created.
+
+
+        ## Error Codes
+
+        - **400 Bad Request**: Invalid role name or role already exists
+
+        - **403 Forbidden**: User cannot manage users in their current tenant
+
+        - **500 Internal Server Error**: Error creating the role'
+      operationId: create_role_api_v1_permissions_roles_post
+      security:
+      - BearerAuth: []
+      - ApiKeyAuth: []
+      parameters:
+      - name: role_name
+        in: query
+        required: true
+        schema:
+          type: string
+          description: Name of the role to create. Must be unique within the caller's tenant.
+          examples:
+          - engineering
+          title: Role Name
+        description: Name of the role to create. Must be unique within the caller's tenant.
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/permissions/roles/{role_id}:
+    delete:
+      tags:
+      - Permissions
+      summary: Delete Role Endpoint
+      description: 'Delete a role and all its associations.
+
+
+        Removes all user-role memberships and ACL entries for this role,
+
+        then deletes the role. The authenticated user must be able to manage
+
+        users in the tenant.
+
+
+        ## Path Parameters
+
+        - **role_id** (UUID): The UUID of the role to delete'
+      operationId: delete_role_endpoint_api_v1_permissions_roles__role_id__delete
+      security:
+      - BearerAuth: []
+      - ApiKeyAuth: []
+      parameters:
+      - name: role_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Role Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/permissions/users/{user_id}/roles:
+    post:
+      tags:
+      - Permissions
+      summary: Add User To Role
+      description: 'Add a user to a role.
+
+
+        This endpoint assigns a user to a specific role, granting them all the
+
+        permissions associated with that role. The authenticated user must be
+
+        able to manage users in the role''s tenant, and must hold every
+
+        capability the role carries: managing users is not a way to reach
+
+        capabilities the caller was never given. The tenant owner always can.
+
+
+        ## Path Parameters
+
+        - **user_id** (UUID): The UUID of the user to add to the role
+
+
+        ## Request Parameters
+
+        - **role_id** (UUID, query): The UUID of the role to assign the user to
+
+
+        ## Response
+
+        Returns a success message indicating the user was added to the role.
+
+
+        ## Error Codes
+
+        - **400 Bad Request**: Invalid user or role ID
+
+        - **403 Forbidden**: User cannot manage users in the tenant, or the role
+
+        carries a capability the user does not hold
+
+        - **404 Not Found**: User or role doesn''t exist, or the user is not a
+
+        member of the role''s tenant
+
+        - **409 Conflict**: The user already has the role
+
+        - **500 Internal Server Error**: Error adding user to role'
+      operationId: add_user_to_role_api_v1_permissions_users__user_id__roles_post
+      security:
+      - BearerAuth: []
+      - ApiKeyAuth: []
+      parameters:
+      - name: user_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: User Id
+      - name: role_id
+        in: query
+        required: true
+        schema:
+          type: string
+          format: uuid
+          description: UUID of the role to assign. Returned by POST /api/v1/permissions/roles or GET /api/v1/permissions/tenants/\{tenant_id\}/roles.
+          examples:
+          - b2c3d4e5-6717-4562-b3fc-2c963f66afa7
+          title: Role Id
+        description: UUID of the role to assign. Returned by POST /api/v1/permissions/roles or GET /api/v1/permissions/tenants/\{tenant_id\}/roles.
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    delete:
+      tags:
+      - Permissions
+      summary: Remove User From Role Endpoint
+      description: 'Remove a user from a role.
+
+
+        The authenticated user must be able to manage users in the tenant.
+
+
+        ## Path Parameters
+
+        - **user_id** (UUID): The UUID of the user to remove from the role
+
+
+        ## Request Parameters
+
+        - **role_id** (UUID): The UUID of the role to remove the user from'
+      operationId: remove_user_from_role_endpoint_api_v1_permissions_users__user_id__roles_delete
+      security:
+      - BearerAuth: []
+      - ApiKeyAuth: []
+      parameters:
+      - name: user_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: User Id
+      - name: role_id
+        in: query
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Role Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/permissions/users/{user_id}/tenants:
+    post:
+      tags:
+      - Permissions
+      summary: Add User To Tenant
+      description: 'Add a user to a tenant.
+
+
+        This endpoint assigns a user to a specific tenant, allowing them to access
+
+        resources and data associated with that tenant. The authenticated user must
+
+        be able to manage users in the tenant; the tenant owner always can.
+
+
+        ## Path Parameters
+
+        - **user_id** (UUID): The UUID of the user to add to the tenant
+
+
+        ## Request Parameters
+
+        - **tenant_id** (UUID): The UUID of the tenant to assign the user to
+
+
+        ## Response
+
+        Returns a success message indicating the user was added to the tenant.
+
+
+        ## Error Codes
+
+        - **400 Bad Request**: Invalid user or tenant ID
+
+        - **403 Forbidden**: User doesn''t have permission to assign tenants
+
+        - **404 Not Found**: User or tenant doesn''t exist
+
+        - **500 Internal Server Error**: Error adding user to tenant'
+      operationId: add_user_to_tenant_api_v1_permissions_users__user_id__tenants_post
+      security:
+      - BearerAuth: []
+      - ApiKeyAuth: []
+      parameters:
+      - name: user_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: User Id
+      - name: tenant_id
+        in: query
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Tenant Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/permissions/tenants/{tenant_id}/users/{user_id}:
+    delete:
+      tags:
+      - Permissions
+      summary: Remove User From Tenant Endpoint
+      description: 'Remove a user from a tenant.
+
+
+        The tenant owner or any user with ``has_user_management_permission`` in the
+
+        tenant (e.g. users in the Admin role) can remove users from the tenant. The
+
+        tenant owner cannot be removed from their own tenant. This removes the user
+
+        from all roles in the tenant and revokes their permissions on datasets
+
+        belonging to the tenant. Data owned by the removed user (e.g. datasets they
+
+        created) remains in the tenant.
+
+
+        ## Path Parameters
+
+        - **tenant_id** (UUID): The UUID of the tenant
+
+        - **user_id** (UUID): The UUID of the user to remove from the tenant
+
+
+        ## Response
+
+        Returns a success message indicating the user was removed from the tenant.
+
+
+        ## Error Codes
+
+        - **400 Bad Request**: Attempt to remove the tenant owner from their own tenant
+
+        - **403 Forbidden**: Requester is not the tenant owner and does not have
+
+        ``has_user_management_permission`` (e.g. Admin role) in the tenant
+
+        - **404 Not Found**: Tenant not found, user not found, or user not in tenant
+
+        - **500 Internal Server Error**: Error removing user from tenant'
+      operationId: remove_user_from_tenant_endpoint_api_v1_permissions_tenants__tenant_id__users__user_id__delete
+      security:
+      - BearerAuth: []
+      - ApiKeyAuth: []
+      parameters:
+      - name: tenant_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Tenant Id
+      - name: user_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: User Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/permissions/tenants:
+    post:
+      tags:
+      - Permissions
+      summary: Create Tenant
+      description: 'Create a new tenant.
+
+
+        This endpoint creates a new tenant with the specified name. Tenants are used
+
+        to organize users and resources in multi-tenant environments, providing
+
+        isolation and access control between different groups or organizations.
+
+
+        ## Request Parameters
+
+        - **tenant_name** (str): The name of the tenant to create
+
+
+        ## Response
+
+        Returns a success message indicating the tenant was created.
+
+
+        ## Error Codes
+
+        - **400 Bad Request**: Invalid tenant name or tenant already exists
+
+        - **500 Internal Server Error**: Error creating the tenant'
+      operationId: create_tenant_api_v1_permissions_tenants_post
+      security:
+      - BearerAuth: []
+      - ApiKeyAuth: []
+      parameters:
+      - name: tenant_name
+        in: query
+        required: true
+        schema:
+          type: string
+          title: Tenant Name
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/permissions/tenants/select:
+    post:
+      tags:
+      - Permissions
+      summary: Select Tenant
+      description: 'Select current tenant.
+
+
+        This endpoint selects a tenant with the specified UUID. Tenants are used
+
+        to organize users and resources in multi-tenant environments, providing
+
+        isolation and access control between different groups or organizations.
+
+
+        Sending a null/None value as tenant_id selects his default single user tenant
+
+
+        ## Request Parameters
+
+        - **tenant_id** (Union[UUID, None]): UUID of the tenant to select, If null/None is provided use the default single user tenant
+
+
+        ## Response
+
+        Returns a success message along with selected tenant id.'
+      operationId: select_tenant_api_v1_permissions_tenants_select_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SelectTenantDTO'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+      - BearerAuth: []
+      - ApiKeyAuth: []
+  /api/v1/permissions/tenants/{tenant_id}/roles:
+    get:
+      tags:
+      - Permissions
+      summary: Get Tenant Roles
+      description: 'List roles in a tenant.
+
+
+        Callers who are the tenant owner or have user-management permission (e.g.
+
+        Admin role) see every role in the tenant. Other callers see only the roles
+
+        they are a member of.
+
+
+        ## Path Parameters
+
+        - **tenant_id** (UUID): The UUID of the tenant (find yours via GET /api/v1/permissions/tenants/me)
+
+
+        ## Response
+
+        Returns a JSON list of roles: [\{"id", "name", "description", "user_count"\}].'
+      operationId: get_tenant_roles_api_v1_permissions_tenants__tenant_id__roles_get
+      security:
+      - BearerAuth: []
+      - ApiKeyAuth: []
+      parameters:
+      - name: tenant_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Tenant Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/permissions/tenants/{tenant_id}/roles/{role_id}/users:
+    get:
+      tags:
+      - Permissions
+      summary: Get Users In Role
+      description: 'List the users assigned to a role.
+
+
+        Visible to members of the role itself, and to callers with user-management
+
+        permission in the tenant.
+
+
+        ## Path Parameters
+
+        - **tenant_id** (UUID): The UUID of the tenant
+
+        - **role_id** (UUID): The UUID of the role (list roles via GET /api/v1/permissions/tenants/\{tenant_id\}/roles)
+
+
+        ## Response
+
+        Returns a JSON list of users: [\{"id", "name"\}] (name is the user''s email).
+
+
+        ## Error Codes
+
+        - **403 Forbidden**: Caller is not a member of the role and lacks user-management permission
+
+        - **404 Not Found**: The role does not exist in this tenant'
+      operationId: get_users_in_role_api_v1_permissions_tenants__tenant_id__roles__role_id__users_get
+      security:
+      - BearerAuth: []
+      - ApiKeyAuth: []
+      parameters:
+      - name: tenant_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Tenant Id
+      - name: role_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Role Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/permissions/tenants/{tenant_id}/roles/users/{user_id}:
+    get:
+      tags:
+      - Permissions
+      summary: Get User Roles
+      description: 'List the roles assigned to a specific user.
+
+
+        The authenticated user must have user-management permission in the tenant.
+
+
+        ## Path Parameters
+
+        - **tenant_id** (UUID): The UUID of the tenant
+
+        - **user_id** (UUID): The UUID of the user whose roles to list (find user ids via GET /api/v1/permissions/tenants/\{tenant_id\}/users)
+
+
+        ## Response
+
+        Returns a JSON list of roles scoped to this tenant: [\{"id", "name"\}].
+
+        A member with no roles in the tenant receives an empty list.
+
+
+        ## Error Codes
+
+        - **403 Forbidden**: Caller lacks user-management permission in the tenant
+
+        - **404 Not Found**: User does not exist or is not a member of this tenant'
+      operationId: get_user_roles_api_v1_permissions_tenants__tenant_id__roles_users__user_id__get
+      security:
+      - BearerAuth: []
+      - ApiKeyAuth: []
+      parameters:
+      - name: tenant_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Tenant Id
+      - name: user_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: User Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/permissions/tenants/{tenant_id}/users:
+    get:
+      tags:
+      - Permissions
+      summary: Get Users In Tenant
+      description: 'List all users in a tenant, with their roles.
+
+
+        The authenticated user must be the tenant owner or have user-management
+
+        permission (e.g. Admin role) in the tenant.
+
+
+        ## Path Parameters
+
+        - **tenant_id** (UUID): The UUID of the tenant (find yours via GET /api/v1/permissions/tenants/me)
+
+
+        ## Response
+
+        Returns a JSON list of users: [\{"id", "email", "roles": [\{"id", "name"\}]\}].
+
+
+        ## Error Codes
+
+        - **403 Forbidden**: Caller lacks user-management permission in the tenant'
+      operationId: get_users_in_tenant_api_v1_permissions_tenants__tenant_id__users_get
+      security:
+      - BearerAuth: []
+      - ApiKeyAuth: []
+      parameters:
+      - name: tenant_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Tenant Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/permissions/tenants/me:
+    get:
+      tags:
+      - Permissions
+      summary: Get My Tenants
+      description: 'List the tenants the authenticated user belongs to.
+
+
+        Use the returned ids as the tenant_id path parameter for the other
+
+        /permissions/tenants/... endpoints.
+
+
+        ## Response
+
+        Returns a JSON list of tenants: [\{"id", "name"\}].'
+      operationId: get_my_tenants_api_v1_permissions_tenants_me_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+      security:
+      - BearerAuth: []
+      - ApiKeyAuth: []
+  /api/v1/permissions/tenants/{tenant_id}/capabilities/me:
+    get:
+      tags:
+      - Permissions
+      summary: Get My Capabilities In Tenant
+      description: 'List the capabilities the authenticated user has in a tenant.
+
+
+        Capabilities are tenant-scoped actions (as opposed to dataset permissions)
+
+        and are the union of what the tenant and the caller''s roles in it grant.
+
+        The tenant owner holds all of them.
+
+
+        The caller must belong to the tenant. A tenant they are not a member of
+
+        and one that does not exist both answer 403, so the endpoint cannot be
+
+        used to discover which tenant ids are real.
+
+
+        Intended for the client to decide which controls to show. It is not an
+
+        authorization boundary on its own: every endpoint still enforces its own
+
+        capability, since anyone who knows the URL can call it without the UI.
+
+
+        ## Path Parameters
+
+        - **tenant_id** (UUID): The UUID of the tenant (find yours via GET /api/v1/permissions/tenants/me)
+
+
+        ## Response
+
+        Returns a JSON object: \{"capabilities": ["manage_users", ...]\}.
+
+
+        ## Error Codes
+
+        - **403 Forbidden**: Caller is not a member of the tenant, or it does not exist'
+      operationId: get_my_capabilities_in_tenant_api_v1_permissions_tenants__tenant_id__capabilities_me_get
+      security:
+      - BearerAuth: []
+      - ApiKeyAuth: []
+      parameters:
+      - name: tenant_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Tenant Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/permissions/capabilities/{principal_id}:
+    post:
+      tags:
+      - Permissions
+      summary: Give Capability To Principal
+      description: 'Grant one or more capabilities to a principal: a user, a role, or a
+
+        whole tenant.
+
+
+        Granting to the tenant reaches every current and future member; granting
+
+        to a role reaches its members; granting to a user reaches that person in
+
+        the given tenant only. The same endpoint serves all three because a
+
+        capability row is (principal, tenant, capability) regardless of what the
+
+        principal is.
+
+
+        The caller needs the grant_capabilities capability in the target
+
+        tenant, and must hold every capability they grant: granting passes on
+
+        what the caller has, never more. The tenant owner holds everything,
+
+        which is how the first grant gets made. The caller is recorded as the
+
+        granter of each new grant.
+
+
+        Several capabilities can be granted in one call by repeating the
+
+        capability parameter. The batch is all or nothing: an unknown name
+
+        rejects the whole request and nothing is written. Granting is
+
+        idempotent.
+
+
+        ## Error Codes
+
+        - **400 Bad Request**: A capability is not in the catalog
+
+        - **403 Forbidden**: Caller lacks grant_capabilities in the target
+
+        tenant, or the principal or tenant does not exist. These answer the
+
+        same, so the endpoint cannot be used to discover which ids are real.
+
+        Also when the caller does not hold a capability they try to grant,
+
+        or the principal is a user who is not a member of the tenant (that
+
+        one says so: add the user to the tenant first)'
+      operationId: give_capability_to_principal_api_v1_permissions_capabilities__principal_id__post
+      security:
+      - BearerAuth: []
+      - ApiKeyAuth: []
+      parameters:
+      - name: principal_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Principal Id
+      - name: capability
+        in: query
+        required: true
+        schema:
+          type: array
+          items:
+            type: string
+          description: 'Capability to grant. Must be in the capability catalog. Repeat the parameter to grant several at once: ?capability=a&capability=b.'
+          examples:
+          - - manage_users
+          title: Capability
+        description: 'Capability to grant. Must be in the capability catalog. Repeat the parameter to grant several at once: ?capability=a&capability=b.'
+      - name: tenant_id
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          description: Tenant the grant is scoped to when the principal is a user. Defaults to the caller's current tenant. Ignored for a role or a tenant, whose own tenant is always used.
+          title: Tenant Id
+        description: Tenant the grant is scoped to when the principal is a user. Defaults to the caller's current tenant. Ignored for a role or a tenant, whose own tenant is always used.
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    delete:
+      tags:
+      - Permissions
+      summary: Revoke Capability From Principal
+      description: 'Take one or more capabilities away from a principal: a user, a role, or
+
+        a tenant.
+
+
+        A member keeps the capability if another level still grants it, since
+
+        resolution is a union. Revoking something the principal never had
+
+        succeeds and changes nothing, so a retry is safe.
+
+
+        The caller needs the revoke_capabilities capability in the target
+
+        tenant; the tenant owner always has it.
+
+
+        Several capabilities can be revoked in one call by repeating the
+
+        capability parameter, all or nothing like granting.
+
+
+        ## Error Codes
+
+        - **400 Bad Request**: A capability is not in the catalog
+
+        - **403 Forbidden**: Caller lacks revoke_capabilities in the target
+
+        tenant, or the principal or tenant does not exist. These answer the
+
+        same, so the endpoint cannot be used to discover which ids are real'
+      operationId: revoke_capability_from_principal_api_v1_permissions_capabilities__principal_id__delete
+      security:
+      - BearerAuth: []
+      - ApiKeyAuth: []
+      parameters:
+      - name: principal_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Principal Id
+      - name: capability
+        in: query
+        required: true
+        schema:
+          type: array
+          items:
+            type: string
+          description: 'Capability to take away. Repeat the parameter to revoke several at once: ?capability=a&capability=b.'
+          examples:
+          - - manage_users
+          title: Capability
+        description: 'Capability to take away. Repeat the parameter to revoke several at once: ?capability=a&capability=b.'
+      - name: tenant_id
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          description: Tenant the revoke is scoped to when the principal is a user. Defaults to the caller's current tenant. Ignored for a role or a tenant, whose own tenant is always used.
+          title: Tenant Id
+        description: Tenant the revoke is scoped to when the principal is a user. Defaults to the caller's current tenant. Ignored for a role or a tenant, whose own tenant is always used.
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+components:
+  schemas:
+    SelectTenantDTO:
+      properties:
+        tenantId:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Tenantid
+      type: object
+      title: SelectTenantDTO
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+        input:
+          title: Input
+        ctx:
+          type: object
+          title: Context
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-Api-Key
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    CookieAuth:
+      type: apiKey
+      in: cookie
+      name: auth_token

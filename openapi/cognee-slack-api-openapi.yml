@@ -1,0 +1,500 @@
+openapi: 3.2.0
+info:
+  title: Cognee Slack API
+  description: Cognee API with Bearer token and Cookie auth
+  version: 1.0.0
+servers:
+- url: https://{tenant}.aws.cognee.ai
+  description: 'Cognee Cloud: your tenant pod, named in the platform.cognee.ai dashboard'
+  variables:
+    tenant:
+      default: your-tenant
+      description: Your tenant name, shown in the Cognee Cloud dashboard
+- url: http://localhost:8000
+  description: 'Self-hosted: a locally running cognee server'
+security:
+- BearerAuth: []
+- ApiKeyAuth: []
+tags:
+- name: Slack
+  description: Endpoints for listing workspace channels, setting channel allowlists, and linking Slack accounts.
+paths:
+  /api/v1/slack/history/{team_id}/import:
+    post:
+      tags:
+      - Slack
+      summary: Import History
+      description: 'Fetch and index the selection; returns only after native indexing succeeds.
+
+
+        This is a long-running request. For interactive use, the Slack import
+
+        dialog acknowledges immediately and reports its background result.'
+      operationId: import_history_api_v1_slack_history__team_id__import_post
+      security:
+      - BearerAuth: []
+      - ApiKeyAuth: []
+      parameters:
+      - name: team_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Team Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SlackHistoryRequest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SlackHistoryResult'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/slack/history/{team_id}/sync:
+    put:
+      tags:
+      - Slack
+      summary: Set Sync
+      operationId: set_sync_api_v1_slack_history__team_id__sync_put
+      security:
+      - BearerAuth: []
+      - ApiKeyAuth: []
+      parameters:
+      - name: team_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Team Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SlackSyncSettings'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SlackSyncSettings'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/slack/history/{team_id}:
+    get:
+      tags:
+      - Slack
+      summary: History Status
+      operationId: history_status_api_v1_slack_history__team_id__get
+      security:
+      - BearerAuth: []
+      - ApiKeyAuth: []
+      parameters:
+      - name: team_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Team Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/slack/channels:
+    get:
+      tags:
+      - Slack
+      summary: Get Channels
+      description: List the connected workspace's public channels, flagging the current allowlist.
+      operationId: get_channels_api_v1_slack_channels_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChannelListDTO'
+      security:
+      - BearerAuth: []
+      - ApiKeyAuth: []
+    put:
+      tags:
+      - Slack
+      summary: Set Allowed Channels
+      description: 'Restrict slash commands to exactly these channel ids.
+
+
+        An empty list means unrestricted (the default) — channel scoping is
+
+        opt-in, so a workspace that never visits this settings screen keeps
+
+        working everywhere, exactly as before this feature existed.
+
+
+        ## Request Parameters
+
+        - **channelIds** (List[str]): Slack channel IDs allowed to run slash commands; an
+
+        empty list removes all channel restrictions.'
+      operationId: set_allowed_channels_api_v1_slack_channels_put
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SetAllowedChannelsPayload'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SetAllowedChannelsResultDTO'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+      - BearerAuth: []
+      - ApiKeyAuth: []
+  /api/v1/slack/link:
+    post:
+      tags:
+      - Slack
+      summary: Link
+      description: 'Confirm a ``/cognee-link`` magic-link code for the authenticated caller.
+
+
+        Backs the ``/link-slack`` frontend page — the browser session here
+
+        (not anything typed into Slack) is what proves which cognee account
+
+        the invoking Slack member should be linked to.
+
+
+        ## Request Parameters
+
+        - **code** (str): Magic-link code issued by /cognee-link, confirmed to bind the
+
+        Slack member to this account.'
+      operationId: link_api_v1_slack_link_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConfirmLinkPayload'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConfirmLinkResultDTO'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+      - BearerAuth: []
+      - ApiKeyAuth: []
+components:
+  schemas:
+    SlackSyncSettings:
+      properties:
+        enabled:
+          type: boolean
+          title: Enabled
+          default: false
+        selection:
+          anyOf:
+          - $ref: '#/components/schemas/SlackHistoryRequest'
+          - type: 'null'
+        interval_seconds:
+          type: integer
+          maximum: 604800.0
+          minimum: 600.0
+          title: Interval Seconds
+          default: 21600
+      additionalProperties: false
+      type: object
+      title: SlackSyncSettings
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    ChannelListDTO:
+      properties:
+        channels:
+          items:
+            $ref: '#/components/schemas/ChannelDTO'
+          type: array
+          title: Channels
+      type: object
+      required:
+      - channels
+      title: ChannelListDTO
+    ChannelDTO:
+      properties:
+        id:
+          type: string
+          title: Id
+        name:
+          type: string
+          title: Name
+        isPrivate:
+          type: boolean
+          title: Isprivate
+        allowed:
+          type: boolean
+          title: Allowed
+      type: object
+      required:
+      - id
+      - name
+      - isPrivate
+      - allowed
+      title: ChannelDTO
+    ConfirmLinkResultDTO:
+      properties:
+        linked:
+          type: boolean
+          title: Linked
+      type: object
+      required:
+      - linked
+      title: ConfirmLinkResultDTO
+    SetAllowedChannelsPayload:
+      properties:
+        channelIds:
+          items:
+            type: string
+          type: array
+          title: Channelids
+      type: object
+      required:
+      - channelIds
+      title: SetAllowedChannelsPayload
+    SlackHistoryRequest:
+      properties:
+        dataset_id:
+          type: string
+          format: uuid
+          title: Dataset Id
+        channel_ids:
+          items:
+            type: string
+          type: array
+          maxItems: 50
+          title: Channel Ids
+        thread_links:
+          items:
+            type: string
+          type: array
+          maxItems: 50
+          title: Thread Links
+        threads:
+          items:
+            $ref: '#/components/schemas/SlackThread'
+          type: array
+          maxItems: 50
+          title: Threads
+        days:
+          anyOf:
+          - type: integer
+            maximum: 3650.0
+            minimum: 1.0
+          - type: 'null'
+          title: Days
+        oldest:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Oldest
+        latest:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Latest
+        thread_mode:
+          type: string
+          enum:
+          - started
+          - active
+          title: Thread Mode
+          default: started
+        max_requests:
+          type: integer
+          maximum: 10000.0
+          minimum: 1.0
+          title: Max Requests
+          default: 1000
+        max_messages:
+          type: integer
+          maximum: 500000.0
+          minimum: 1.0
+          title: Max Messages
+          default: 50000
+      additionalProperties: false
+      type: object
+      required:
+      - dataset_id
+      title: SlackHistoryRequest
+      description: 'Date bounds select conversations; selected threads include all available replies.
+
+
+        ``started`` selects roots in the window. ``active`` also scans older roots
+
+        and selects threads with a message in the window. Neither is a retention
+
+        policy. Explicit thread links select entire conversations independently
+
+        of the date window. All bounds are timezone-aware.'
+    SlackHistoryResult:
+      properties:
+        dataset_id:
+          type: string
+          format: uuid
+          title: Dataset Id
+        conversations:
+          type: integer
+          title: Conversations
+          default: 0
+        messages:
+          type: integer
+          title: Messages
+          default: 0
+        added:
+          type: integer
+          title: Added
+          default: 0
+        updated:
+          type: integer
+          title: Updated
+          default: 0
+        unchanged:
+          type: integer
+          title: Unchanged
+          default: 0
+        deleted:
+          type: integer
+          title: Deleted
+          default: 0
+        status:
+          type: string
+          const: completed
+          title: Status
+          default: completed
+      type: object
+      required:
+      - dataset_id
+      title: SlackHistoryResult
+    ConfirmLinkPayload:
+      properties:
+        code:
+          type: string
+          title: Code
+      type: object
+      required:
+      - code
+      title: ConfirmLinkPayload
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+        input:
+          title: Input
+        ctx:
+          type: object
+          title: Context
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError
+    SetAllowedChannelsResultDTO:
+      properties:
+        allowedChannelIds:
+          items:
+            type: string
+          type: array
+          title: Allowedchannelids
+      type: object
+      required:
+      - allowedChannelIds
+      title: SetAllowedChannelsResultDTO
+    SlackThread:
+      properties:
+        channel_id:
+          type: string
+          pattern: ^[CG][A-Z0-9]+$
+          title: Channel Id
+        ts:
+          type: string
+          pattern: ^\d{10,}\.\d{6}$
+          title: Ts
+      additionalProperties: false
+      type: object
+      required:
+      - channel_id
+      - ts
+      title: SlackThread
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-Api-Key
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    CookieAuth:
+      type: apiKey
+      in: cookie
+      name: auth_token

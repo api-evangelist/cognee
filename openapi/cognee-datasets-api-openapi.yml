@@ -1,480 +1,1504 @@
 openapi: 3.2.0
 info:
-  title: Cognee REST Datasets API
-  description: The Cognee REST API provides endpoints for the complete AI memory lifecycle, including data ingestion, knowledge graph construction, and semantic retrieval. Core endpoints cover adding raw text or documents, triggering the cognify pipeline that extracts entities and relationships via LLM, executing multi-mode search queries, managing datasets, and creating agent identities. The API uses X-Api-Key header authentication for cloud deployments and Bearer token auth for self-hosted instances.
+  title: Cognee Datasets API
+  description: Cognee API with Bearer token and Cookie auth
   version: 1.0.0
-  contact:
-    name: Cognee Support
-    url: https://docs.cognee.ai/api-reference/introduction
-  license:
-    name: Apache 2.0
-    url: https://github.com/topoteretes/cognee/blob/main/LICENSE
 servers:
-- url: https://api.cognee.ai
-  description: Cognee Cloud (managed)
+- url: https://{tenant}.aws.cognee.ai
+  description: 'Cognee Cloud: your tenant pod, named in the platform.cognee.ai dashboard'
+  variables:
+    tenant:
+      default: your-tenant
+      description: Your tenant name, shown in the Cognee Cloud dashboard
 - url: http://localhost:8000
-  description: Self-hosted (Docker / local)
+  description: 'Self-hosted: a locally running cognee server'
 security:
 - BearerAuth: []
 - ApiKeyAuth: []
 tags:
 - name: Datasets
-  description: Dataset management and introspection
+  description: Dataset management endpoints for listing, creating, and deleting datasets.
 paths:
   /api/v1/datasets:
     get:
-      operationId: getDatasets
-      summary: List all accessible datasets
-      description: Retrieves all datasets the authenticated user has read permission for, including metadata such as ID, name, creation time, and owner.
       tags:
       - Datasets
+      summary: Get Datasets
+      description: 'Get all datasets accessible to the authenticated user.
+
+
+        This endpoint retrieves all datasets that the authenticated user has
+
+        read permissions for. The datasets are returned with their metadata
+
+        including ID, name, creation time, and owner information.
+
+
+        ## Response
+
+        Returns a list of dataset objects containing:
+
+        - **id**: Unique dataset identifier
+
+        - **name**: Dataset name
+
+        - **created_at**: When the dataset was created
+
+        - **updated_at**: When the dataset was last updated
+
+        - **owner_id**: ID of the dataset owner
+
+
+        ## Error Codes
+
+        - **500 Internal Server Error**: Error retrieving datasets'
+      operationId: get_datasets_api_v1_datasets_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/DatasetDTO'
+                type: array
+                title: Response Get Datasets Api V1 Datasets Get
       security:
       - BearerAuth: []
       - ApiKeyAuth: []
+    post:
+      tags:
+      - Datasets
+      summary: Create New Dataset
+      description: 'Create a new dataset or return existing dataset with the same name.
+
+
+        This endpoint creates a new dataset with the specified name. If a dataset
+
+        with the same name already exists for the user, it returns the existing
+
+        dataset instead of creating a duplicate. The user is automatically granted
+
+        all permissions (read, write, share, delete) on the created dataset.
+
+
+        ## Request Parameters
+
+        - **dataset_data** (DatasetCreationPayload): Dataset creation parameters containing:
+
+        - **name**: The name for the new dataset
+
+
+        ## Response
+
+        Returns the created or existing dataset object containing:
+
+        - **id**: Unique dataset identifier
+
+        - **name**: Dataset name
+
+        - **created_at**: When the dataset was created
+
+        - **updated_at**: When the dataset was last updated
+
+        - **owner_id**: ID of the dataset owner
+
+
+        ## Error Codes
+
+        - **500 Internal Server Error**: Error creating dataset'
+      operationId: create_new_dataset_api_v1_datasets_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DatasetCreationPayload'
+            example:
+              name: my_dataset
+              description: A test dataset
+        required: true
       responses:
         '200':
-          description: List of datasets
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DatasetDTO'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+      - BearerAuth: []
+      - ApiKeyAuth: []
+    delete:
+      tags:
+      - Datasets
+      summary: Delete All
+      description: 'Delete all user''s data.
+
+
+        This endpoint permanently deletes all datasets that user created and all its associated data.
+
+        The user must have delete permissions on the dataset to perform this operation.
+
+
+        ## Response
+
+        No content returned on successful deletion.
+
+        If no datasets exist for the users, nothing happens.'
+      operationId: delete_all_api_v1_datasets_delete
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+      security:
+      - BearerAuth: []
+      - ApiKeyAuth: []
+  /api/v1/datasets/{dataset_id}:
+    delete:
+      tags:
+      - Datasets
+      summary: Delete Dataset
+      description: 'Delete a dataset by its ID.
+
+
+        This endpoint permanently deletes a dataset and all its associated data.
+
+        The user must have delete permissions on the dataset to perform this operation.
+
+
+        ## Path Parameters
+
+        - **dataset_id** (UUID): The unique identifier of the dataset to delete
+
+
+        ## Response
+
+        No content returned on successful deletion.
+
+
+        ## Error Codes
+
+        - **401/403 Unauthorized/Forbidden**: Dataset doesn''t exist or user lacks delete permission
+
+        - **500 Internal Server Error**: Error during deletion'
+      operationId: delete_dataset_api_v1_datasets__dataset_id__delete
+      security:
+      - BearerAuth: []
+      - ApiKeyAuth: []
+      parameters:
+      - name: dataset_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          description: Dataset UUID, the id field from GET /api/v1/datasets (not the name)
+          examples:
+          - b8a7c3de-4f5a-4b6c-8d9e-0f1a2b3c4d5e
+          title: Dataset Id
+        description: Dataset UUID, the id field from GET /api/v1/datasets (not the name)
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDTO'
+          description: Not Found
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/datasets/{dataset_id}/data/{data_id}:
+    delete:
+      tags:
+      - Datasets
+      summary: Delete Data
+      description: 'Delete a specific data item from a dataset.
+
+
+        This endpoint removes a specific data item from a dataset while keeping
+
+        the dataset itself intact. The user must have delete permissions on the
+
+        dataset to perform this operation.
+
+
+        ## Path Parameters
+
+        - **dataset_id** (UUID): The unique identifier of the dataset containing the data
+
+        - **data_id** (UUID): The unique identifier of the data item to delete
+
+
+        ## Response
+
+        No content returned on successful deletion.
+
+
+        ## Error Codes
+
+        - **401 Unauthorized**: Dataset doesn''t exist or user lacks delete permission
+
+        - **500 Internal Server Error**: Error during deletion
+
+
+        ## Notes
+
+        Deleting a data_id not tracked in the dataset is treated as a custom-graph-model
+
+        deletion and returns success.'
+      operationId: delete_data_api_v1_datasets__dataset_id__data__data_id__delete
+      security:
+      - BearerAuth: []
+      - ApiKeyAuth: []
+      parameters:
+      - name: dataset_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          description: Dataset UUID, the id field from GET /api/v1/datasets (not the name)
+          examples:
+          - b8a7c3de-4f5a-4b6c-8d9e-0f1a2b3c4d5e
+          title: Dataset Id
+        description: Dataset UUID, the id field from GET /api/v1/datasets (not the name)
+      - name: data_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          description: Data item UUID, from GET /api/v1/datasets/\{dataset_id\}/data
+          examples:
+          - f47ac10b-58cc-4372-a567-0e02b2c3d479
+          title: Data Id
+        description: Data item UUID, from GET /api/v1/datasets/\{dataset_id\}/data
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDTO'
+          description: Not Found
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/datasets/{dataset_id}/graph:
+    get:
+      tags:
+      - Datasets
+      summary: Get Dataset Graph
+      description: 'Get the knowledge graph visualization for a dataset.
+
+
+        This endpoint retrieves the knowledge graph data for a specific dataset,
+
+        including nodes and edges that represent the relationships between entities
+
+        in the dataset. The graph data is formatted for visualization purposes.
+
+
+        ## Path Parameters
+
+        - **dataset_id** (UUID): The unique identifier of the dataset
+
+
+        ## Response
+
+        Returns the graph data containing:
+
+        - **nodes**: List of graph nodes with id, label, type, and properties
+
+        - **edges**: List of graph edges with source, target, and label
+
+
+        ## Error Codes
+
+        - **404 Not Found**: Dataset doesn''t exist or user doesn''t have access
+
+        - **500 Internal Server Error**: Error retrieving graph data'
+      operationId: get_dataset_graph_api_v1_datasets__dataset_id__graph_get
+      security:
+      - BearerAuth: []
+      - ApiKeyAuth: []
+      parameters:
+      - name: dataset_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          description: Dataset UUID, the id field from GET /api/v1/datasets (not the name)
+          examples:
+          - b8a7c3de-4f5a-4b6c-8d9e-0f1a2b3c4d5e
+          title: Dataset Id
+        description: Dataset UUID, the id field from GET /api/v1/datasets (not the name)
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GraphDTO'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/datasets/{dataset_id}/data:
+    get:
+      tags:
+      - Datasets
+      summary: Get Dataset Data
+      description: 'Get a page of data items in a dataset.
+
+
+        This endpoint retrieves data items (documents, files, etc.) that belong
+
+        to a specific dataset. Each data item includes metadata such as name, type,
+
+        creation time, and storage location.
+
+
+        Results are paginated. The response is capped at **limit** items (100 by
+
+        default), so this endpoint stays fast on datasets with many documents; page
+
+        through with **offset**. Use `GET /{dataset_id}/data/count` for the total.
+
+        That total is uncapped; offsets above 1,000,000 are rejected, so datasets
+
+        larger than 1,001,000 items cannot be fully traversed by this endpoint.
+
+        Concurrent inserts/deletes can shift offsets; this is not a snapshot.
+
+
+        ## Path Parameters
+
+        - **dataset_id** (UUID): The unique identifier of the dataset
+
+
+        ## Query Parameters
+
+        - **limit** (int, 1-1000, default 100): Maximum number of items to return
+
+        - **offset** (int, default 0): Number of items to skip
+
+
+        ## Response
+
+        Returns a list of data objects containing:
+
+        - **id**: Unique data item identifier
+
+        - **name**: Data item name
+
+        - **created_at**: When the data was added
+
+        - **updated_at**: When the data was last updated
+
+        - **extension**: File extension
+
+        - **mime_type**: MIME type of the data
+
+        - **raw_data_location**: Storage location of the raw data
+
+        - **dataset_id**: ID of the containing dataset
+
+        - **label**: Label attached to the data item at upload, if any
+
+        - **external_metadata**: Stored metadata dict (upload-provided keys merged over
+
+        loader-derived ones), if any
+
+
+        ## Error Codes
+
+        - **404 Not Found**: Dataset doesn''t exist or user doesn''t have access
+
+        - **500 Internal Server Error**: Error retrieving data'
+      operationId: get_dataset_data_api_v1_datasets__dataset_id__data_get
+      security:
+      - BearerAuth: []
+      - ApiKeyAuth: []
+      parameters:
+      - name: dataset_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          description: Dataset UUID, the id field from GET /api/v1/datasets (not the name)
+          examples:
+          - b8a7c3de-4f5a-4b6c-8d9e-0f1a2b3c4d5e
+          title: Dataset Id
+        description: Dataset UUID, the id field from GET /api/v1/datasets (not the name)
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 1000
+          minimum: 1
+          description: Maximum number of data items to return.
+          default: 100
+          title: Limit
+        description: Maximum number of data items to return.
+      - name: offset
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 1000000
+          minimum: 0
+          description: Number of data items to skip before returning results.
+          default: 0
+          title: Offset
+        description: Number of data items to skip before returning results.
+      responses:
+        '200':
+          description: Successful Response
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Dataset'
-        '418':
-          description: Error retrieving datasets
+                  $ref: '#/components/schemas/DataDTO'
+                title: Response Get Dataset Data Api V1 Datasets  Dataset Id  Data Get
+        '404':
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
-    post:
-      operationId: createDataset
-      summary: Create a new dataset
-      description: Creates a new dataset with the specified name. If a dataset with the same name already exists for the user, returns the existing dataset. The user is automatically granted all permissions on the created dataset.
+                $ref: '#/components/schemas/ErrorResponseDTO'
+          description: Not Found
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/datasets/{dataset_id}/data/count:
+    get:
       tags:
       - Datasets
+      summary: Get Dataset Data Count
+      description: 'Count the data items in a dataset.
+
+
+        Exists so callers that only need "how many documents" do not have to
+
+        fetch the items to count them. `GET /{dataset_id}/data` is paginated,
+
+        so its length is a page size, not a total.
+
+
+        ## Path Parameters
+
+        - **dataset_id** (UUID): The unique identifier of the dataset
+
+
+        ## Response
+
+        - **count**: Number of data items in the dataset
+
+
+        ## Error Codes
+
+        - **404 Not Found**: Dataset doesn''t exist or user doesn''t have access
+
+        - **500 Internal Server Error**: Error counting data'
+      operationId: get_dataset_data_count_api_v1_datasets__dataset_id__data_count_get
       security:
       - BearerAuth: []
       - ApiKeyAuth: []
-      requestBody:
+      parameters:
+      - name: dataset_id
+        in: path
         required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-              - name
-              properties:
-                name:
-                  type: string
-                  description: Name for the new dataset
-                  example: my_documents
+        schema:
+          type: string
+          format: uuid
+          description: Dataset UUID, the id field from GET /api/v1/datasets (not the name)
+          examples:
+          - b8a7c3de-4f5a-4b6c-8d9e-0f1a2b3c4d5e
+          title: Dataset Id
+        description: Dataset UUID, the id field from GET /api/v1/datasets (not the name)
       responses:
         '200':
-          description: Created or existing dataset
+          description: Successful Response
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Dataset'
-        '418':
-          description: Error creating dataset
+                $ref: '#/components/schemas/DataCountDTO'
+        '404':
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
-    delete:
-      operationId: deleteAllDatasets
-      summary: Delete all user datasets
-      description: Permanently deletes all datasets and associated data owned by the authenticated user. If no datasets exist, this operation is a no-op.
-      tags:
-      - Datasets
-      security:
-      - BearerAuth: []
-      - ApiKeyAuth: []
-      responses:
-        '200':
-          description: All datasets deleted
+                $ref: '#/components/schemas/ErrorResponseDTO'
+          description: Not Found
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
   /api/v1/datasets/status:
     get:
-      operationId: getDatasetStatus
-      summary: Get dataset processing status
-      description: 'Retrieves the current processing status for one or more datasets. If one pipeline is specified, returns a flat {dataset_id: status} map. If multiple pipelines are specified, returns a nested {dataset_id: {pipeline: status}} map.'
       tags:
       - Datasets
+      summary: Get Dataset Status
+      description: 'Get the processing status of datasets.
+
+
+        This endpoint retrieves the current processing status of one or more datasets,
+
+        indicating whether they are being processed, have completed processing, or
+
+        encountered errors during pipeline execution.
+
+
+        ## Query Parameters
+
+        - **dataset** (List[UUID]): List of dataset UUIDs to check status for.
+
+        If omitted, returns status for all datasets the user has read permission on
+
+        - **pipeline** (List[str], optional): One or more pipeline names to check.
+
+        - If omitted, defaults to **cognify_pipeline** (backward-compatible behavior)
+
+        - If one pipeline is provided, response is a flat map
+
+        - If multiple pipelines are provided, response is nested per dataset and pipeline
+
+        - **Available options: add_pipeline, cognify_pipeline, code_graph_pipeline**
+
+        - Note: a background code ingest creates its pipeline run only once the
+
+        repository is cloned — a dataset missing from the response means the run
+
+        has not started yet, not that it failed
+
+
+        ## Response
+
+        Returns status information in one of two shapes:
+
+        - Single pipeline (default): \{dataset_id: status\}
+
+        - Multiple pipelines: \{dataset_id: \{pipeline_name: status\}\}
+
+
+        Status values:
+
+        - **pending**: Dataset is queued for processing
+
+        - **running**: Dataset is currently being processed
+
+        - **completed**: Dataset processing completed successfully
+
+        - **failed**: Dataset processing encountered an error
+
+
+        For in-flight progress (files completed / total, current stage), see
+
+        **GET /v1/datasets/status/progress** — a separate endpoint with its own
+
+        fixed response shape, rather than a flag here that would change what
+
+        this endpoint returns depending on how it''s called.
+
+
+        ## Error Codes
+
+        - **403 Forbidden**: The request owner cannot read every requested dataset
+
+        - **409 Conflict**: An unexpected error occurred while retrieving status'
+      operationId: get_dataset_status_api_v1_datasets_status_get
       security:
       - BearerAuth: []
       - ApiKeyAuth: []
       parameters:
       - name: dataset
         in: query
-        style: form
-        explode: true
+        required: false
         schema:
           type: array
           items:
             type: string
             format: uuid
-        description: List of dataset UUIDs to check
+          description: Dataset UUIDs to check (from GET /api/v1/datasets). Omit to get status for all datasets you can read.
+          examples:
+          - - b8a7c3de-4f5a-4b6c-8d9e-0f1a2b3c4d5e
+          default: []
+          title: Dataset
+        description: Dataset UUIDs to check (from GET /api/v1/datasets). Omit to get status for all datasets you can read.
       - name: pipeline
         in: query
-        style: form
-        explode: true
+        required: false
         schema:
           type: array
           items:
             type: string
-            enum:
-            - add_pipeline
-            - cognify_pipeline
-        description: Pipeline names to check (default cognify_pipeline)
+          description: 'Pipeline names to check: ''add_pipeline'', ''cognify_pipeline'', or ''code_graph_pipeline'' (code ingestion via remember content_type=''code''). Omit to default to cognify_pipeline.'
+          examples:
+          - - cognify_pipeline
+          default: []
+          title: Pipeline
+        description: 'Pipeline names to check: ''add_pipeline'', ''cognify_pipeline'', or ''code_graph_pipeline'' (code ingestion via remember content_type=''code''). Omit to default to cognify_pipeline.'
       responses:
         '200':
-          description: Status map for requested datasets
+          description: Successful Response
           content:
             application/json:
               schema:
-                type: object
-                additionalProperties:
-                  type: string
-                  enum:
-                  - pending
-                  - running
-                  - completed
-                  - failed
-        '500':
-          description: Error retrieving status
-  /api/v1/datasets/{dataset_id}:
-    delete:
-      operationId: deleteDataset
-      summary: Delete a dataset by ID
-      description: Permanently deletes a dataset and all its associated data. Requires delete permissions on the dataset.
-      tags:
-      - Datasets
-      security:
-      - BearerAuth: []
-      - ApiKeyAuth: []
-      parameters:
-      - $ref: '#/components/parameters/DatasetId'
-      responses:
-        '200':
-          description: Dataset deleted
-        '404':
-          description: Dataset not found or access denied
-        '500':
-          description: Error during deletion
-  /api/v1/datasets/{dataset_id}/data:
+                anyOf:
+                - type: object
+                  additionalProperties:
+                    $ref: '#/components/schemas/PipelineRunStatus'
+                - type: object
+                  additionalProperties:
+                    type: object
+                    additionalProperties:
+                      $ref: '#/components/schemas/PipelineRunStatus'
+                title: Response Get Dataset Status Api V1 Datasets Status Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/datasets/status/progress:
     get:
-      operationId: getDatasetData
-      summary: List all data items in a dataset
-      description: Returns metadata for all data items (documents, files, etc.) in the specified dataset. Each item includes name, type, MIME type, and storage location.
       tags:
       - Datasets
+      summary: Get Dataset Progress
+      description: 'Get the processing status of datasets, together with in-flight progress.
+
+
+        Same dataset/pipeline selection as **GET /v1/datasets/status**, but each
+
+        status value is always an object \{status, progress\} instead of a bare
+
+        status — a dedicated endpoint rather than a flag on /status, so neither
+
+        endpoint''s response shape ever depends on how it was called.
+
+
+        ## Query Parameters
+
+        - **dataset** (List[UUID]): Dataset UUIDs to check (from GET /api/v1/datasets). Omit to get
+
+        status for all datasets you can read.
+
+        - **pipeline** (List[str]): Pipeline names to check: ''add_pipeline'', ''cognify_pipeline'', or
+
+        ''code_graph_pipeline'' (code ingestion via remember content_type=''code''). Omit to default
+
+        to cognify_pipeline.
+
+
+        ## Response
+
+        - Single pipeline (default): \{dataset_id: \{status, progress\}\}
+
+        - Multiple pipelines: \{dataset_id: \{pipeline_name: \{status, progress\}\}\}
+
+
+        **progress** is `null` until the first in-flight progress tick, then an
+
+        object with `completed_items`, `total_items`, and `current_stage` —
+
+        present only while the pipeline is running; terminal runs (completed/
+
+        errored) do not carry a progress snapshot.
+
+
+        ## Error Codes
+
+        - **409 Conflict**: Error retrieving status (e.g. requesting a dataset you don''t have
+
+        read permission for)'
+      operationId: get_dataset_progress_api_v1_datasets_status_progress_get
       security:
       - BearerAuth: []
       - ApiKeyAuth: []
       parameters:
-      - $ref: '#/components/parameters/DatasetId'
+      - name: dataset
+        in: query
+        required: false
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Dataset UUIDs to check (from GET /api/v1/datasets). Omit to get status for all datasets you can read.
+          examples:
+          - - b8a7c3de-4f5a-4b6c-8d9e-0f1a2b3c4d5e
+          default: []
+          title: Dataset
+        description: Dataset UUIDs to check (from GET /api/v1/datasets). Omit to get status for all datasets you can read.
+      - name: pipeline
+        in: query
+        required: false
+        schema:
+          type: array
+          items:
+            type: string
+          description: 'Pipeline names to check: ''add_pipeline'', ''cognify_pipeline'', or ''code_graph_pipeline'' (code ingestion via remember content_type=''code''). Omit to default to cognify_pipeline.'
+          examples:
+          - - cognify_pipeline
+          default: []
+          title: Pipeline
+        description: 'Pipeline names to check: ''add_pipeline'', ''cognify_pipeline'', or ''code_graph_pipeline'' (code ingestion via remember content_type=''code''). Omit to default to cognify_pipeline.'
       responses:
         '200':
-          description: List of data items
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                anyOf:
+                - type: object
+                  additionalProperties:
+                    $ref: '#/components/schemas/PipelineRunStatusWithProgress'
+                - type: object
+                  additionalProperties:
+                    type: object
+                    additionalProperties:
+                      $ref: '#/components/schemas/PipelineRunStatusWithProgress'
+                title: Response Get Dataset Progress Api V1 Datasets Status Progress Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/datasets/graph-summary:
+    get:
+      tags:
+      - Datasets
+      summary: Get Datasets Graph Summary
+      description: 'Get node/edge counts per dataset, cached per cognify run.
+
+
+        Counts are computed once per dataset''s latest cognify run and cached in
+
+        GraphMetrics, keyed by pipeline_run_id — orders of magnitude cheaper on
+
+        repeat polls than GET /\{dataset_id\}/graph, which does a full traversal.
+
+
+        ## Query Parameters
+
+        - **dataset_ids** (List[UUID], optional): Dataset UUIDs to summarize.
+
+        If omitted, summarizes every dataset the user has read permission on.
+
+
+        ## Response
+
+        Returns a list of summaries containing:
+
+        - **datasetId**: The dataset''s UUID
+
+        - **pipelineRunId**: The dataset''s latest cognify run, or null if it
+
+        has never been cognified
+
+        - **numNodes** / **numEdges**: Graph size for that run
+
+        - **computedAt**: When the count was cached, or null when it wasn''t,
+
+        which happens three ways: the last attempt degraded (graph store
+
+        unavailable, counts are 0 and held for
+
+        GRAPH_COUNTS_FAILED_TTL_SECONDS, default 15s, before another
+
+        attempt); a concurrent caller cached the same run first (counts are
+
+        exact, and the next poll reports a non-null computedAt from that
+
+        row); or caching failed for another reason (counts are exact and
+
+        held for GRAPH_COUNTS_UNCACHED_TTL_SECONDS, default 60s)
+
+
+        ## Error Codes
+
+        - **409 Conflict**: The summary could not be built (generic message;
+
+        the detail is server-logged rather than returned). A single
+
+        unreadable graph store does not cause this — that dataset comes back
+
+        with zero counts — so this means the relational read itself failed.'
+      operationId: get_datasets_graph_summary_api_v1_datasets_graph_summary_get
+      security:
+      - BearerAuth: []
+      - ApiKeyAuth: []
+      parameters:
+      - name: dataset_ids
+        in: query
+        required: false
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Dataset UUIDs to summarize (from GET /api/v1/datasets). Omit to summarize every dataset you can read.
+          examples:
+          - - b8a7c3de-4f5a-4b6c-8d9e-0f1a2b3c4d5e
+          default: []
+          title: Dataset Ids
+        description: Dataset UUIDs to summarize (from GET /api/v1/datasets). Omit to summarize every dataset you can read.
+      responses:
+        '200':
+          description: Successful Response
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/DataItem'
-        '404':
-          description: Dataset not found
-        '500':
-          description: Internal error
-  /api/v1/datasets/{dataset_id}/data/{data_id}:
-    delete:
-      operationId: deleteDataItem
-      summary: Delete a specific data item from a dataset
-      description: Removes a specific data item from a dataset while keeping the dataset intact. Requires delete permissions on the dataset.
-      tags:
-      - Datasets
-      security:
-      - BearerAuth: []
-      - ApiKeyAuth: []
-      parameters:
-      - $ref: '#/components/parameters/DatasetId'
-      - name: data_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-        description: Unique identifier of the data item
-      responses:
-        '200':
-          description: Data item deleted
-        '404':
-          description: Dataset or data item not found
-        '500':
-          description: Error during deletion
-  /api/v1/datasets/{dataset_id}/data/{data_id}/raw:
-    get:
-      operationId: downloadRawData
-      summary: Download the raw data file for a data item
-      description: Returns the original unprocessed data file for a specific data item. Supports local filesystem and S3 storage backends.
-      tags:
-      - Datasets
-      security:
-      - BearerAuth: []
-      - ApiKeyAuth: []
-      parameters:
-      - $ref: '#/components/parameters/DatasetId'
-      - name: data_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-        description: Unique identifier of the data item
-      responses:
-        '200':
-          description: Raw file download
-          content:
-            application/octet-stream:
-              schema:
-                type: string
-                format: binary
-        '404':
-          description: Dataset or data item not found
-        '501':
-          description: Storage scheme not supported
-  /api/v1/datasets/{dataset_id}/graph:
-    get:
-      operationId: getDatasetGraph
-      summary: Get knowledge graph for a dataset
-      description: Retrieves the knowledge graph visualization data for a specific dataset, including all nodes and edges representing entity relationships.
-      tags:
-      - Datasets
-      security:
-      - BearerAuth: []
-      - ApiKeyAuth: []
-      parameters:
-      - $ref: '#/components/parameters/DatasetId'
-      responses:
-        '200':
-          description: Knowledge graph nodes and edges
+                  $ref: '#/components/schemas/DatasetGraphSummaryDTO'
+                title: Response Get Datasets Graph Summary Api V1 Datasets Graph Summary Get
+        '422':
+          description: Validation Error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Graph'
-        '404':
-          description: Dataset not found
-        '500':
-          description: Error retrieving graph
-  /api/v1/datasets/{dataset_id}/schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/datasets/{dataset_id}/data/{data_id}/raw:
     get:
-      operationId: getDatasetSchema
-      summary: Get graph schema for a dataset
-      description: Returns the stored graph schema and custom prompt for a dataset.
       tags:
       - Datasets
+      summary: Get Raw Data
+      description: 'Download the raw data file for a specific data item.
+
+
+        This endpoint allows users to download the original, unprocessed data file
+
+        for a specific data item within a dataset. The file is returned as a direct
+
+        download with appropriate headers.
+
+
+        ## Path Parameters
+
+        - **dataset_id** (UUID): The unique identifier of the dataset containing the data
+
+        - **data_id** (UUID): The unique identifier of the data item to download
+
+
+        ## Response
+
+        Returns the raw data file as a downloadable response.
+
+
+        ## Error Codes
+
+        - **404 Not Found**: Data item doesn''t exist in the dataset, or its raw file is missing
+
+        - **500 Internal Server Error**: Error accessing the raw data file
+
+        - **501 Not Implemented**: Raw data is stored on an unsupported storage scheme'
+      operationId: get_raw_data_api_v1_datasets__dataset_id__data__data_id__raw_get
       security:
       - BearerAuth: []
       - ApiKeyAuth: []
       parameters:
-      - $ref: '#/components/parameters/DatasetId'
+      - name: dataset_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          description: Dataset UUID, the id field from GET /api/v1/datasets (not the name)
+          examples:
+          - b8a7c3de-4f5a-4b6c-8d9e-0f1a2b3c4d5e
+          title: Dataset Id
+        description: Dataset UUID, the id field from GET /api/v1/datasets (not the name)
+      - name: data_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          description: Data item UUID, from GET /api/v1/datasets/\{dataset_id\}/data
+          examples:
+          - f47ac10b-58cc-4372-a567-0e02b2c3d479
+          title: Data Id
+        description: Data item UUID, from GET /api/v1/datasets/\{dataset_id\}/data
       responses:
         '200':
-          description: Dataset schema and custom prompt
+          description: Successful Response
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/datasets/{dataset_id}/schema:
+    get:
+      tags:
+      - Datasets
+      summary: Get Dataset Schema
+      description: 'Return the stored graph schema and custom prompt for a dataset.
+
+
+        ## Path Parameters
+
+        - **dataset_id** (UUID): UUID of the dataset (from GET /api/v1/datasets).'
+      operationId: get_dataset_schema_api_v1_datasets__dataset_id__schema_get
+      security:
+      - BearerAuth: []
+      - ApiKeyAuth: []
+      parameters:
+      - name: dataset_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Dataset Id
+      responses:
+        '200':
+          description: Successful Response
           content:
             application/json:
               schema:
                 type: object
-                properties:
-                  graph_schema:
-                    type:
-                    - object
-                    - 'null'
-                  custom_prompt:
-                    type:
-                    - string
-                    - 'null'
-        '404':
-          description: Dataset not found
+                additionalProperties: true
+                title: Response Get Dataset Schema Api V1 Datasets  Dataset Id  Schema Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
     put:
-      operationId: updateDatasetSchema
-      summary: Update graph schema for a dataset
-      description: Store or update the graph schema and custom prompt for a dataset. Requires write permissions on the dataset.
       tags:
       - Datasets
+      summary: Update Dataset Schema
+      description: 'Store or update the graph schema and custom prompt for a dataset.
+
+
+        ## Path Parameters
+
+        - **dataset_id** (UUID): UUID of the dataset (from GET /api/v1/datasets).
+
+
+        ## Request Parameters
+
+        - **customPrompt** (Optional[str]): Custom extraction prompt to store for the
+
+        dataset; omitting it leaves any existing prompt unchanged.
+
+        - **graphSchema** (Optional[Dict[str, Any]]): JSON graph schema to store for the
+
+        dataset; omitting it leaves any existing schema unchanged.'
+      operationId: update_dataset_schema_api_v1_datasets__dataset_id__schema_put
       security:
       - BearerAuth: []
       - ApiKeyAuth: []
       parameters:
-      - $ref: '#/components/parameters/DatasetId'
+      - name: dataset_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Dataset Id
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                graph_schema:
-                  type:
-                  - object
-                  - 'null'
-                  description: JSON schema for the knowledge graph structure
-                custom_prompt:
-                  type:
-                  - string
-                  - 'null'
-                  description: Custom extraction prompt for this dataset
+              $ref: '#/components/schemas/DatasetSchemaPayloadDTO'
       responses:
         '200':
-          description: Schema updated
+          description: Successful Response
           content:
             application/json:
               schema:
                 type: object
-                properties:
-                  status:
-                    type: string
-                    example: ok
+                additionalProperties: true
+                title: Response Update Dataset Schema Api V1 Datasets  Dataset Id  Schema Put
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/datasets/{dataset_id}/processing-status:
+    get:
+      tags:
+      - Datasets
+      summary: Get Dataset Processing Status
+      description: 'Get item-level processing status for a dataset.
+
+
+        `GET /status` reports whether a pipeline *run* is in progress or done for a
+
+        dataset. This endpoint answers the finer question operators need when
+
+        triaging incremental loads: which of the dataset''s data items carry the
+
+        per-item completion stamp for a pipeline, and which are still pending.
+
+
+        ## Path Parameters
+
+        - **dataset_id** (UUID): The unique identifier of the dataset
+
+
+        ## Query Parameters
+
+        - **pipeline** (str, optional): Pipeline name to inspect. Defaults to
+
+        `cognify_pipeline`.
+
+
+        ## Response
+
+        - **total**: Number of data items in the dataset
+
+        - **completed**: Items whose per-item status for the pipeline is completed
+
+        (both the legacy string and the dict status representation are recognised)
+
+        - **pending**: `total - completed`
+
+        - **items**: `[{id, name, completed}]`, one entry per data item, in the same
+
+        order as `GET /datasets/{id}/data`. `id` is the data_id accepted by
+
+        `DELETE /datasets/{id}/data/{data_id}` and `forget(data_id=...)`
+
+
+        Per-item errored state is not persisted, so it is not reported: a pending
+
+        item may be untouched, in progress, or failed.
+
+
+        ## Error Codes
+
+        - **404 Not Found**: Dataset doesn''t exist or user doesn''t have access
+
+        - **409 Conflict**: Error computing the status'
+      operationId: get_dataset_processing_status_api_v1_datasets__dataset_id__processing_status_get
+      security:
+      - BearerAuth: []
+      - ApiKeyAuth: []
+      parameters:
+      - name: dataset_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          description: Dataset UUID, the id field from GET /api/v1/datasets (not the name)
+          examples:
+          - b8a7c3de-4f5a-4b6c-8d9e-0f1a2b3c4d5e
+          title: Dataset Id
+        description: Dataset UUID, the id field from GET /api/v1/datasets (not the name)
+      - name: pipeline
+        in: query
+        required: false
+        schema:
+          type: string
+          description: 'Pipeline whose per-item completion to count: ''cognify_pipeline'' (default), ''add_pipeline'', or ''code_graph_pipeline''.'
+          examples:
+          - cognify_pipeline
+          default: cognify_pipeline
+          title: Pipeline
+        description: 'Pipeline whose per-item completion to count: ''cognify_pipeline'' (default), ''add_pipeline'', or ''code_graph_pipeline''.'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DatasetProcessingStatusDTO'
         '404':
-          description: Dataset not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDTO'
+          description: Not Found
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
 components:
   schemas:
-    DataItem:
-      type: object
+    GraphEdgeDTO:
       properties:
-        id:
+        source:
           type: string
           format: uuid
+          title: Source
+        target:
+          type: string
+          format: uuid
+          title: Target
+        label:
+          type: string
+          title: Label
+      type: object
+      required:
+      - source
+      - target
+      - label
+      title: GraphEdgeDTO
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    PipelineRunStatus:
+      type: string
+      enum:
+      - DATASET_PROCESSING_INITIATED
+      - DATASET_PROCESSING_STARTED
+      - DATASET_PROCESSING_COMPLETED
+      - DATASET_PROCESSING_ERRORED
+      title: PipelineRunStatus
+    DatasetCreationPayload:
+      properties:
         name:
           type: string
-        created_at:
-          type: string
-          format: date-time
-        updated_at:
-          type:
-          - string
-          - 'null'
-          format: date-time
-        extension:
-          type: string
-        mime_type:
-          type: string
-        raw_data_location:
-          type: string
-        dataset_id:
-          type: string
-          format: uuid
-      required:
-      - id
-      - name
-      - created_at
-      - extension
-      - mime_type
-      - raw_data_location
-      - dataset_id
-    Graph:
+          title: Name
+          description: Name of the dataset to create. If a dataset with this name already exists for the user, the existing dataset is returned instead of creating a duplicate.
+          examples:
+          - main_dataset
       type: object
+      required:
+      - name
+      title: DatasetCreationPayload
+    GraphDTO:
       properties:
         nodes:
-          type: array
           items:
-            $ref: '#/components/schemas/GraphNode'
+            $ref: '#/components/schemas/GraphNodeDTO'
+          type: array
+          title: Nodes
         edges:
-          type: array
           items:
-            $ref: '#/components/schemas/GraphEdge'
+            $ref: '#/components/schemas/GraphEdgeDTO'
+          type: array
+          title: Edges
+      type: object
       required:
       - nodes
       - edges
-    Dataset:
+      title: GraphDTO
+    ErrorResponseDTO:
+      properties:
+        message:
+          type: string
+          title: Message
       type: object
+      required:
+      - message
+      title: ErrorResponseDTO
+    DatasetProcessingStatusDTO:
+      properties:
+        total:
+          type: integer
+          title: Total
+          description: Number of data items in the dataset
+        completed:
+          type: integer
+          title: Completed
+          description: Items carrying the per-item completion stamp
+        pending:
+          type: integer
+          title: Pending
+          description: Items without the stamp (total - completed)
+        items:
+          items:
+            $ref: '#/components/schemas/DataItemProcessingStatusDTO'
+          type: array
+          title: Items
+          description: One entry per data item, in the same order as GET /datasets/\{id\}/data
+      type: object
+      required:
+      - total
+      - completed
+      - pending
+      - items
+      title: DatasetProcessingStatusDTO
+      description: Item-level completion counts for one dataset and one pipeline.
+    PipelineRunStatusWithProgress:
+      properties:
+        status:
+          $ref: '#/components/schemas/PipelineRunStatus'
+        progress:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          title: Progress
+          examples:
+          - completed_items: 3
+            current_stage: extract_graph
+            total_items: 10
+      type: object
+      required:
+      - status
+      title: PipelineRunStatusWithProgress
+    DatasetGraphSummaryDTO:
+      properties:
+        datasetId:
+          type: string
+          format: uuid
+          title: Datasetid
+        pipelineRunId:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Pipelinerunid
+        numNodes:
+          type: integer
+          title: Numnodes
+        numEdges:
+          type: integer
+          title: Numedges
+        computedAt:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Computedat
+      type: object
+      required:
+      - datasetId
+      - numNodes
+      - numEdges
+      title: DatasetGraphSummaryDTO
+    DatasetDTO:
       properties:
         id:
           type: string
           format: uuid
+          title: Id
         name:
           type: string
-        created_at:
+          title: Name
+        createdAt:
           type: string
           format: date-time
-        updated_at:
-          type:
-          - string
-          - 'null'
-          format: date-time
-        owner_id:
+          title: Createdat
+        updatedAt:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Updatedat
+        ownerId:
           type: string
           format: uuid
+          title: Ownerid
+      type: object
       required:
       - id
       - name
-      - created_at
-      - owner_id
-    GraphNode:
+      - createdAt
+      - ownerId
+      title: DatasetDTO
+    DatasetSchemaPayloadDTO:
+      properties:
+        graphSchema:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          title: Graphschema
+        customPrompt:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Customprompt
       type: object
+      title: DatasetSchemaPayloadDTO
+    DataCountDTO:
+      properties:
+        count:
+          type: integer
+          title: Count
+      type: object
+      required:
+      - count
+      title: DataCountDTO
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+        input:
+          title: Input
+        ctx:
+          type: object
+          title: Context
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError
+    DataDTO:
       properties:
         id:
           type: string
           format: uuid
+          title: Id
+        name:
+          type: string
+          title: Name
+        createdAt:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Createdat
+        updatedAt:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Updatedat
+        extension:
+          type: string
+          title: Extension
+        mimeType:
+          type: string
+          title: Mimetype
+        rawDataLocation:
+          type: string
+          title: Rawdatalocation
+        datasetId:
+          type: string
+          format: uuid
+          title: Datasetid
+        label:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Label
+        externalMetadata:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          title: Externalmetadata
+        dataSize:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Datasize
+      type: object
+      required:
+      - id
+      - name
+      - extension
+      - mimeType
+      - rawDataLocation
+      - datasetId
+      title: DataDTO
+    GraphNodeDTO:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: Id
         label:
           type: string
+          title: Label
         type:
           type: string
+          title: Type
         properties:
+          additionalProperties: true
           type: object
+          title: Properties
+      type: object
       required:
       - id
       - label
       - type
       - properties
-    GraphEdge:
-      type: object
+      title: GraphNodeDTO
+    DataItemProcessingStatusDTO:
       properties:
-        source:
+        id:
           type: string
           format: uuid
-        target:
+          title: Id
+        name:
           type: string
-          format: uuid
-        label:
-          type: string
-      required:
-      - source
-      - target
-      - label
-    ErrorResponse:
+          title: Name
+        completed:
+          type: boolean
+          title: Completed
       type: object
-      properties:
-        error:
-          type: string
-          description: Short error message
-        detail:
-          type:
-          - string
-          - 'null'
-          description: Detailed error description
       required:
-      - error
-  parameters:
-    DatasetId:
-      name: dataset_id
-      in: path
-      required: true
-      schema:
-        type: string
-        format: uuid
-      description: Unique identifier of the dataset
+      - id
+      - name
+      - completed
+      title: DataItemProcessingStatusDTO
+      description: One data item's completion state for the requested pipeline.
   securitySchemes:
-    BearerAuth:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
-      description: Bearer token authentication for self-hosted instances
     ApiKeyAuth:
       type: apiKey
       in: header
       name: X-Api-Key
-      description: API key authentication for Cognee Cloud deployments
-externalDocs:
-  description: Cognee API Reference
-  url: https://docs.cognee.ai/api-reference/introduction
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    CookieAuth:
+      type: apiKey
+      in: cookie
+      name: auth_token
