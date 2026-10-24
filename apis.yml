@@ -156,6 +156,8 @@ apis:
   humanURL: https://docs.cognee.ai/api-reference/introduction
   baseURL: https://api.cognee.ai
   tags:
+  - Activity
+  tags_raw:
   - activity
   properties:
   - type: OpenAPI
@@ -169,7 +171,8 @@ apis:
   description: Data ingestion endpoints for adding text, files, and structured data.
   humanURL: https://docs.cognee.ai/api-reference/introduction
   baseURL: https://api.cognee.ai
-  tags:
+  tags: []
+  tags_raw:
   - add
   properties:
   - type: OpenAPI
@@ -185,6 +188,8 @@ apis:
   humanURL: https://docs.cognee.ai/api-reference/introduction
   baseURL: https://api.cognee.ai
   tags:
+  - Agent Connections
+  tags_raw:
   - agent connections
   properties:
   - type: OpenAPI
@@ -199,6 +204,8 @@ apis:
   humanURL: https://docs.cognee.ai/api-reference/introduction
   baseURL: https://api.cognee.ai
   tags:
+  - Agent Management
+  tags_raw:
   - agent management
   properties:
   - type: OpenAPI
@@ -213,6 +220,8 @@ apis:
   humanURL: https://docs.cognee.ai/api-reference/introduction
   baseURL: https://api.cognee.ai
   tags:
+  - Authentication
+  tags_raw:
   - auth
   properties:
   - type: OpenAPI
@@ -228,6 +237,8 @@ apis:
   humanURL: https://docs.cognee.ai/api-reference/introduction
   baseURL: https://api.cognee.ai
   tags:
+  - Checks
+  tags_raw:
   - checks
   properties:
   - type: OpenAPI
@@ -242,6 +253,8 @@ apis:
   humanURL: https://docs.cognee.ai/api-reference/introduction
   baseURL: https://api.cognee.ai
   tags:
+  - Configuration
+  tags_raw:
   - configuration
   properties:
   - type: OpenAPI
@@ -255,7 +268,8 @@ apis:
   description: Data deletion endpoints (deprecated — use datasets endpoints instead).
   humanURL: https://docs.cognee.ai/api-reference/introduction
   baseURL: https://api.cognee.ai
-  tags:
+  tags: []
+  tags_raw:
   - delete
   properties:
   - type: OpenAPI
@@ -270,6 +284,8 @@ apis:
   humanURL: https://docs.cognee.ai/api-reference/introduction
   baseURL: https://api.cognee.ai
   tags:
+  - Forget
+  tags_raw:
   - forget
   properties:
   - type: OpenAPI
@@ -298,6 +314,8 @@ apis:
   humanURL: https://docs.cognee.ai/api-reference/introduction
   baseURL: https://api.cognee.ai
   tags:
+  - Integration
+  tags_raw:
   - integrations
   properties:
   - type: OpenAPI
@@ -313,6 +331,8 @@ apis:
   humanURL: https://docs.cognee.ai/api-reference/introduction
   baseURL: https://api.cognee.ai
   tags:
+  - LLM
+  tags_raw:
   - llm
   properties:
   - type: OpenAPI
@@ -355,6 +375,8 @@ apis:
   humanURL: https://docs.cognee.ai/api-reference/introduction
   baseURL: https://api.cognee.ai
   tags:
+  - Permissions
+  tags_raw:
   - permissions
   properties:
   - type: OpenAPI
@@ -369,6 +391,8 @@ apis:
   humanURL: https://docs.cognee.ai/api-reference/introduction
   baseURL: https://api.cognee.ai
   tags:
+  - Recall
+  tags_raw:
   - recall
   properties:
   - type: OpenAPI
@@ -398,6 +422,8 @@ apis:
   humanURL: https://docs.cognee.ai/api-reference/introduction
   baseURL: https://api.cognee.ai
   tags:
+  - Responses
+  tags_raw:
   - responses
   properties:
   - type: OpenAPI
@@ -414,6 +440,8 @@ apis:
   humanURL: https://docs.cognee.ai/api-reference/introduction
   baseURL: https://api.cognee.ai
   tags:
+  - Schema
+  tags_raw:
   - schema
   properties:
   - type: OpenAPI
@@ -428,6 +456,8 @@ apis:
   humanURL: https://docs.cognee.ai/api-reference/introduction
   baseURL: https://api.cognee.ai
   tags:
+  - Sessions
+  tags_raw:
   - sessions
   properties:
   - type: OpenAPI
@@ -444,6 +474,8 @@ apis:
   humanURL: https://docs.cognee.ai/api-reference/introduction
   baseURL: https://api.cognee.ai
   tags:
+  - Skills
+  tags_raw:
   - skills
   properties:
   - type: OpenAPI
@@ -459,6 +491,8 @@ apis:
   humanURL: https://docs.cognee.ai/api-reference/introduction
   baseURL: https://api.cognee.ai
   tags:
+  - Slack
+  tags_raw:
   - slack
   properties:
   - type: OpenAPI
@@ -473,6 +507,8 @@ apis:
   humanURL: https://docs.cognee.ai/api-reference/introduction
   baseURL: https://api.cognee.ai
   tags:
+  - Sync
+  tags_raw:
   - sync
   properties:
   - type: OpenAPI
@@ -486,7 +522,8 @@ apis:
   description: Endpoint for updating existing data in a dataset.
   humanURL: https://docs.cognee.ai/api-reference/introduction
   baseURL: https://api.cognee.ai
-  tags:
+  tags: []
+  tags_raw:
   - update
   properties:
   - type: OpenAPI
@@ -501,6 +538,8 @@ apis:
   humanURL: https://docs.cognee.ai/api-reference/introduction
   baseURL: https://api.cognee.ai
   tags:
+  - User
+  tags_raw:
   - users
   properties:
   - type: OpenAPI
@@ -516,6 +555,8 @@ apis:
   humanURL: https://docs.cognee.ai/api-reference/introduction
   baseURL: https://api.cognee.ai
   tags:
+  - Validate
+  tags_raw:
   - validate
   properties:
   - type: OpenAPI
@@ -530,6 +571,8 @@ apis:
   humanURL: https://docs.cognee.ai/api-reference/introduction
   baseURL: https://api.cognee.ai
   tags:
+  - Visualize
+  tags_raw:
   - visualize
   properties:
   - type: OpenAPI
