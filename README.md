@@ -1,4 +1,4 @@
-# Cognee (cognee)
+# Cognee
 
 <!-- API-EVANGELIST-PROVENANCE:BEGIN -->
 > ### About this repository
@@ -66,68 +66,160 @@
 
 Cognee is an open-source AI memory and knowledge graph platform that enables developers to build persistent, structured memory for AI agents and LLM applications. The platform provides a REST API and Python/TypeScript SDKs for ingesting documents and data from 28+ sources, processing them through a six-stage ECL (Extract, Cognify, Load) pipeline, and storing the resulting entities and relationships in a hybrid graph-vector-relational store. Developers can query the knowledge graph using 13+ search modes including semantic graph completion, RAG completion, and temporal search. Cognee is available as a managed cloud service on AWS, GCP, and Azure, or as a self-hosted deployment via Docker, Modal, Railway, Fly.io, and Render.
 
-- APIs.json: https://raw.githubusercontent.com/api-evangelist/cognee/refs/heads/main/apis.yml
-- Naftiko: https://github.com/naftiko/fleet?utm_source=api-evangelist&utm_medium=readme&utm_campaign=cognee-api-evangelist&utm_content=repo
+**Areas:** Artificial Intelligence · Memory · Knowledge Graph · RAG · Agents · Graph Database · Vector Search · LLM · Open Source
 
-## Tags
+## Cognee on APIs.io
 
-- AI
-- Memory
-- Knowledge Graph
-- RAG
-- Agents
-- Graph Database
-- Vector Search
-- LLM
-- Open Source
+Everything profiled for Cognee is published on APIs.io rather than in this repository. Start at the provider page — **[apis.io/providers/cognee/](https://apis.io/providers/cognee/)** — or go straight to one of the APIs or properties below.
 
-## APIs
+### APIs (7)
 
-### Cognee REST API
+- [Cognee Agents API](https://apis.io/apis/cognee/cognee-agents-api/) — AI agent identity management
+- [Cognee Cognify API](https://apis.io/apis/cognee/cognee-cognify-api/) — Knowledge graph construction pipeline
+- [Cognee Data API](https://apis.io/apis/cognee/cognee-data-api/) — Data ingestion and deletion operations
+- [Cognee Datasets API](https://apis.io/apis/cognee/cognee-datasets-api/) — Dataset management and introspection
+- [Cognee Health API](https://apis.io/apis/cognee/cognee-health-api/) — Service health probes
+- [Cognee Search API](https://apis.io/apis/cognee/cognee-search-api/) — Semantic and graph search queries
+- [Cognee Settings API](https://apis.io/apis/cognee/cognee-settings-api/) — System configuration (LLM and vector DB)
 
-The Cognee REST API provides endpoints for the complete AI memory lifecycle, including data ingestion, knowledge graph construction, and semantic retrieval. Core endpoints cover adding raw text or documents (POST /api/v1/add), triggering the cognify pipeline that extracts entities and relationships via LLM (POST /api/v1/cognify), executing multi-mode search queries (POST /api/v1/search), managing datasets (DELETE /api/v1/datasets), and creating agent identities (/api/v1/agents/*).
+### Published properties
 
-- Documentation: https://docs.cognee.ai/api-reference/introduction
-- Interactive Docs (Swagger): https://api.cognee.ai/docs
-- Base URL: https://api.cognee.ai
+Each property below is a page on APIs.io carrying the machine-readable artifact and what it says.
 
-## Plans, Rate Limits, and FinOps
+#### Agentic access (1)
 
-- Plans and Pricing: [plans/cognee-plans-pricing.yml](plans/cognee-plans-pricing.yml)
-- Rate Limits: [rate-limits/cognee-rate-limits.yml](rate-limits/cognee-rate-limits.yml)
-- FinOps: [finops/cognee-finops.yml](finops/cognee-finops.yml)
+Which operations an agent can call, which act, and which need a human in the loop.
 
-### Pricing Summary
+- [Cognee Agentic Access](https://apis.io/agentic-access/cognee/cognee-agentic-access/)
 
-| Plan | Price | Documents | Users | API Calls/Month |
-|---|---|---|---|---|
-| Free | $0/month | Unspecified | 1 | Unspecified |
-| Developer | $35/month | 1,000 / 1 GB | 1 | 10,000 |
-| Cloud (Team) | $200/month | 2,500 / 2 GB | 10 | 10,000 |
-| On-Prem (Enterprise) | Custom | Custom | Custom | Custom |
+#### JSON Schema (2)
 
-Additional document top-up packs: +1,000 docs for $35, +3,000 docs for $100, +15,000 docs for $750.
+The data models the API reads and writes.
 
-## Timestamps
+- [Cognee Dataset](https://apis.io/schemas/cognee/cognee-dataset/)
+- [Cognee Search Payload](https://apis.io/schemas/cognee/cognee-search-payload/)
 
-- Created: 2026-06-12
-- Modified: 2026-06-12
+#### JSON-LD (1)
 
-## Common
+Linked-data contexts for the provider's vocabulary.
 
-| Type | URL |
+- [Cognee Context](https://apis.io/jsonld/cognee/cognee-context/)
+
+#### Vocabulary (1)
+
+The provider's domain terms, defined.
+
+- [Cognee API Vocabulary](https://apis.io/vocabularies/cognee/cognee-vocabulary/)
+
+#### Examples (1)
+
+Example requests and responses.
+
+- [Cognee Search Example](https://apis.io/examples/cognee/cognee-search-example/)
+
+#### Collections (7)
+
+Postman and Open Collection request collections.
+
+- [Cognee REST agents API](https://apis.io/collections/cognee/open-cognee-agents-api/)
+- [Cognee REST agents cognify API](https://apis.io/collections/cognee/open-cognee-cognify-api/)
+- [Cognee REST agents data API](https://apis.io/collections/cognee/open-cognee-data-api/)
+- [Cognee REST agents datasets API](https://apis.io/collections/cognee/open-cognee-datasets-api/)
+- [Cognee REST agents health API](https://apis.io/collections/cognee/open-cognee-health-api/)
+- [Cognee REST agents search API](https://apis.io/collections/cognee/open-cognee-search-api/)
+- [Cognee REST agents settings API](https://apis.io/collections/cognee/open-cognee-settings-api/)
+
+#### Governance rules (1)
+
+Spectral rulesets for the provider's contracts.
+
+- [Cognee — jsonschema rules](https://apis.io/rules/cognee/cognee-jsonschema-spectral-rules/)
+
+#### Security (2)
+
+Authentication, trust centre, and vulnerability disclosure.
+
+- [Cognee Authentication](https://apis.io/security/cognee/cognee-authentication/)
+- [Cognee Domain Security](https://apis.io/security/cognee/cognee-domain-security/)
+
+#### Plans and pricing (1)
+
+Published plans, tiers and prices.
+
+- [Cognee Plans Pricing](https://apis.io/plans/cognee/cognee-plans-pricing/)
+
+#### Rate limits (1)
+
+Published request limits.
+
+- [Cognee Rate Limits](https://apis.io/rate-limits/cognee/cognee-rate-limits/)
+
+#### FinOps (1)
+
+What the API costs to run, by operation.
+
+- [Cognee Finops](https://apis.io/finops/cognee/cognee-finops/)
+
+## Where to find this API
+
+Links to the company's own pages. This repository publishes no copy of their specifications — the canonical document is theirs and lives at the URLs below.
+
+- [Website](https://www.cognee.ai/)
+- [Documentation](https://docs.cognee.ai/)
+- [Pricing](https://www.cognee.ai/pricing)
+- [Blog](https://www.cognee.ai/blog)
+
+## API Evangelist rating
+
+**Kin Score 42.6** — developing · rubric 0.25.0 · scored 2026-10-23
+
+| Facet | Score |
 |---|---|
-| Website | https://www.cognee.ai/ |
-| Documentation | https://docs.cognee.ai/ |
-| GitHub Org | https://github.com/topoteretes |
-| GitHub Repository | https://github.com/topoteretes/cognee |
-| LinkedIn | https://www.linkedin.com/company/cognee-ai |
-| Blog | https://www.cognee.ai/blog |
-| Pricing | https://www.cognee.ai/pricing |
-| Cost Calculator | https://www.cognee.ai/cost-calculator |
-| X (Twitter) | https://x.com/cognee_ |
-| Discord | https://discord.gg/m63hxKsp4p |
+| Discoverability | 66.1 |
+| Contract quality | 53.2 |
+| Contract governance | 23.5 |
+| Operational transparency | 36.8 |
+| Developer ergonomics | 28.6 |
+| Access clarity | 18.4 |
 
-## Maintainers
+**Agent readiness 25.8** — agent-aware
 
-- Kin Lane (kin@apievangelist.com)
+| Agent-readiness dimension | Result |
+|---|---|
+| Spec Presence | yes |
+| Agentic Access | derived (partial credit) |
+| Reversibility Documented | — |
+| MCP Server | — |
+| Auth Clarity | bearer (partial credit) |
+| Idempotency | — |
+| Error Semantics | verified |
+| OpenAPI Examples | partial |
+| Rate Limit Signal | derived (partial credit) |
+| Event Surface Described | — |
+| Agent Skills | — |
+| Well Known Catalog | — |
+| Consent Identity | — |
+| Agent Card | — |
+| Dry Run Mode | — |
+| Delegated Identity | — |
+| Protected Resource Metadata | — |
+| Dynamic Client Registration | — |
+| Agentic Commerce | — |
+| Pagination Ratio | — |
+| Operation Distinctiveness | mostly |
+
+**Regulatory alignment 15.5** — Horizontal (data, software, accessibility, platform)
+
+The rubric is published at [github.com/api-evangelist/kin-score](https://github.com/api-evangelist/kin-score). The per-check breakdown behind these numbers — which checks were earned, partial or missed — along with score history and how this provider compares to its peers, is available at [apis.io/providers/cognee/](https://apis.io/providers/cognee/).
+
+## How this profile is made
+
+API Evangelist profiles a company's public API surface the way a developer would find it: the website, developer portal and documentation, the specifications it publishes, its public repositories, and its pricing, status and changelog pages. From that it derives the properties above — contracts split per API, workflows, schemas, collections, governance rules, plans and rate limits — and scores them against the published [Kin Score rubric](https://github.com/api-evangelist/kin-score).
+
+The artifacts are published on [APIs.io](https://apis.io), not in this repository. This repository is the public record for Cognee: the place to say something is wrong, missing or out of date, and to ask for a re-score or a removal.
+
+## Open an issue
+
+- **Something about this listing** — a wrong description, a missing API, a stale artifact or a question about the rating: [open an issue on this repository](https://github.com/api-evangelist/cognee/issues/new).
+- **A new API, or one that is not in the catalog yet** — [submit it on APIs.io](https://apis.io/add/).
+- **Anything else** — [the APIs.io inbox](https://github.com/api-search/inbox/issues/new) or [info@apievangelist.com](mailto:info@apievangelist.com).
